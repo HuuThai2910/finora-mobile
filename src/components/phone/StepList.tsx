@@ -6,6 +6,8 @@ import { FontFamily, FontSize, Spacing, Text_ } from '@/theme';
 export type StepState = 'done' | 'doing' | 'todo';
 
 export type Step = {
+  /** Khoá riêng khi tiêu đề có thể lặp lại (một trạng thái chạy lại nhiều lần). */
+  id?: string;
   title: string;
   /** Chú thích dưới tiêu đề bước, ví dụ "10/07 · 14:20". */
   detail?: string;
@@ -23,7 +25,7 @@ export default function StepList({ steps }: { steps: readonly Step[] }) {
   return (
     <View>
       {steps.map((s, i) => (
-        <View key={s.title} style={styles.step}>
+        <View key={s.id ?? s.title} style={styles.step}>
           <View style={styles.dotColumn}>
             <Dot step={s} index={i} />
             {i < steps.length - 1 ? <View style={styles.connector} /> : null}

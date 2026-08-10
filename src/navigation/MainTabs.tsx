@@ -13,9 +13,11 @@ import {
 import {
   ApplicationDetailScreen,
   ApplyFormScreen,
+  ContractConsentScreen,
   ContractDetailScreen,
   MyApplicationsScreen,
   MyContractsScreen,
+  RepaymentScheduleScreen,
 } from '@/features/applications';
 import {
   PayInstallmentScreen,
@@ -85,6 +87,8 @@ function ProfileTab() {
       <ProfileStack.Screen name="ApplicationDetail" component={ApplicationDetailScreen} />
       <ProfileStack.Screen name="MyContracts" component={MyContractsScreen} />
       <ProfileStack.Screen name="ContractDetail" component={ContractDetailScreen} />
+      <ProfileStack.Screen name="ContractConsent" component={ContractConsentScreen} />
+      <ProfileStack.Screen name="RepaymentSchedule" component={RepaymentScheduleScreen} />
     </ProfileStack.Navigator>
   );
 }

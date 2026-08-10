@@ -46,6 +46,13 @@ export type ProfileStackParamList = {
   ApplicationDetail: { applicationNumber: string };
   MyContracts: undefined;
   ContractDetail: { contractNumber: string };
+  /**
+   * Lịch trả nợ đầy đủ tách khỏi màn chi tiết vì có thể tới 60 kỳ.
+   * Chỉ truyền định danh; màn tự đọc lại từ cache RTK Query thay vì
+   * nhận cả mảng kỳ trả qua params.
+   */
+  RepaymentSchedule: { source: 'application' | 'contract'; number: string };
+  ContractConsent: { contractNumber: string };
 };
 
 export type TabParamList = {
