@@ -252,7 +252,8 @@ src/
 
 - Thiết bị offline, DNS/timeout và backend 5xx.
 - `localhost` không truy cập được từ thiết bị thật: cấu hình API URL theo emulator/LAN, không hardcode trong component.
-- Fineract unavailable khi preview.
+- Fineract unavailable khi preview: giữ nguyên amount/term/date, hiển thị thông điệp nghiệp vụ và một nút thử lại;
+  không tự submit Application, không tự tính lịch thay thế và không retry dồn dập khi request còn chạy.
 - Product vừa bị deactivate trước submit.
 - Pricing disclosure version không khớp backend.
 - Submit timeout nhưng backend đã tạo Application; retry không tạo duplicate.
@@ -350,6 +351,12 @@ Cập nhật khả năng đọc hợp đồng ngày 2026-08-09:
 - nội dung chính không còn làm nổi bật chuỗi SHA-256; hash, terms version và document version được thu gọn trong mục đối chiếu kỹ thuật;
 - Contract V1 hiện có được diễn giải thành điều khoản tiếng Việt nhưng vẫn giữ nguyên văn bản gốc có thể mở; Contract V2 mới hiển thị nguyên văn tài liệu tiếng Việt đã được backend băm;
 - Application detail và Contract detail đều render toàn bộ `periods`; nếu Loan Service cũ chưa trả field này, mobile báo rõ thiếu dữ liệu thay vì khiến borrower hiểu nhầm “kỳ cao nhất” là toàn bộ lịch.
+
+Cập nhật phục hồi Fineract ngày 2026-08-10:
+
+- lỗi `CORE_LENDING_UNAVAILABLE` được đổi thành thông báo dễ hiểu: hệ thống đang chuẩn bị lịch trả và người dùng
+  có thể thử lại sau khoảng 30 giây;
+- màn preview giữ nguyên lựa chọn khoản vay khi lỗi, không đưa mã Fineract/circuit breaker lên UI.
 
 Còn phải hoàn thiện trước khi đổi `READY_FOR_REVIEW`: load-more cho danh sách Application/Contract,
 withdraw UI, polling theo AppState, component test và kiểm thử end-to-end trên emulator/thiết bị.

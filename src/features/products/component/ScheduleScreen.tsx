@@ -35,7 +35,17 @@ export default function ScheduleScreen() {
   );
 
   if (loading) return <Screen><LoadingScreen cards={3} /></Screen>;
-  if (error) return <Screen><ErrorState message={error} onRetry={reload} /></Screen>;
+  if (error) {
+    return (
+      <Screen>
+        <ErrorState
+          message={error}
+          hint="Thông tin khoản vay bạn đã chọn vẫn được giữ nguyên."
+          onRetry={reload}
+        />
+      </Screen>
+    );
+  }
   if (!data) return null;
 
   const method = REPAYMENT_METHOD_LABEL[data.repaymentMethod] ?? data.repaymentMethod;

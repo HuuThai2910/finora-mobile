@@ -32,6 +32,9 @@ export class ApiError extends Error {
 
   /** Thông điệp hiển thị cho người dùng, không lộ chi tiết kỹ thuật. */
   get userMessage(): string {
+    if (this.code === 'CORE_LENDING_UNAVAILABLE') {
+      return 'Hệ thống đang chuẩn bị lịch trả nợ. Vui lòng đợi khoảng 30 giây rồi thử lại.';
+    }
     if (this.serverMessage) return this.serverMessage;
     if (this.status === 401 || this.status === 403) return 'Phiên đăng nhập đã hết hạn.';
     if (this.status === 404) return 'Không tìm thấy dữ liệu.';
