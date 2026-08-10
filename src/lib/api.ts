@@ -1,5 +1,4 @@
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8081/api/v1';
-const AI_BASE_URL = process.env.EXPO_PUBLIC_AI_API_URL ?? 'http://localhost:8000/api/v1/ai';
 
 /**
  * Lỗi từ API, giữ đủ ngữ cảnh để màn hình chọn được thông điệp phù hợp
@@ -7,7 +6,6 @@ const AI_BASE_URL = process.env.EXPO_PUBLIC_AI_API_URL ?? 'http://localhost:8000
  *
  * Các service Java trả `ApiErrorResponse { code, message, details, traceId }`
  * (xem `finora-common`), trong đó `message` đã được viết cho người dùng đọc.
- * FastAPI của `finora-ai` trả `{ detail: { code, message, details } }`.
  */
 export class ApiError extends Error {
   readonly status: number;
@@ -85,16 +83,11 @@ async function request<T>(baseUrl: string, path: string, init?: RequestInit): Pr
 export const apiFetch = <T>(path: string, init?: RequestInit): Promise<T> =>
   request<T>(BASE_URL, path, init);
 
-/** Gọi thẳng `finora-ai` (FastAPI). */
-export const aiFetch = <T>(path: string, init?: RequestInit): Promise<T> =>
-  request<T>(AI_BASE_URL, path, init);
-
 type ParsedError = { code: string; message: string | null; traceId: string | null };
 
 /**
  * Java: `{ code, message, details, traceId }`.
- * FastAPI: `{ detail: { code, message, details } }`, hoặc `{ detail: [...] }`
- * khi Pydantic báo lỗi validate.
+ * Client chỉ gọi Loan Service; chi tiết lỗi của AI/Fineract được Loan Service chuẩn hóa.
  */
 function parseError(body: string): ParsedError {
   try {
@@ -102,7 +95,6 @@ function parseError(body: string): ParsedError {
       code?: string;
       message?: string;
       traceId?: string;
-      detail?: { code?: string; message?: string } | unknown[];
     };
 
     if (parsed.code) {
@@ -110,14 +102,6 @@ function parseError(body: string): ParsedError {
         code: parsed.code,
         message: parsed.message ?? null,
         traceId: parsed.traceId ?? null,
-      };
-    }
-
-    if (parsed.detail && !Array.isArray(parsed.detail)) {
-      return {
-        code: parsed.detail.code ?? 'UNKNOWN',
-        message: parsed.detail.message ?? null,
-        traceId: null,
       };
     }
 

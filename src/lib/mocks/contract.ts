@@ -1,6 +1,5 @@
 import { mockResponse } from './delay';
 import {
-  LOAN_CONTRACT,
   LOAN_PROGRESS,
   LOAN_PROGRESS_STEPS,
   REPAYMENT_ROWS,
@@ -8,7 +7,6 @@ import {
   SETTLEMENT,
 } from './fixtures';
 import type {
-  LoanContract,
   LoanProgress,
   RepaymentPeriodRow,
   SettlementQuote,
@@ -26,10 +24,6 @@ export const getRepaymentSchedule = (): Promise<{
 
 export const getSettlementQuote = (): Promise<SettlementQuote> =>
   mockResponse('servicing', SETTLEMENT);
-
-export const getLoanContract = (): Promise<LoanContract> => mockResponse('signature', LOAN_CONTRACT);
-
-export const sign = (): Promise<{ ok: true }> => mockResponse('signature', { ok: true });
 
 export const requestRestructure = (): Promise<{ ok: true }> =>
   mockResponse('servicing', { ok: true });

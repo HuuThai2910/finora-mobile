@@ -5,11 +5,12 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { Colors } from '@/constants/colors';
 import { IconSize, MIN_TOUCH, Spacing, Text_ } from '@/theme';
 import { BalanceCard, PHeader, PItem, Screen } from '@/components/phone';
-import { Icon, ProgressBar, SectionLabel, Tag } from '@/components/ui';
+import { Icon, SectionLabel, Tag } from '@/components/ui';
 import { ErrorState, LoadingScreen } from '@/components/feedback';
 import { formatDong, formatSigned } from '@/utils/format';
 import { useAuth } from '@/providers/AuthProvider';
 import { useBalance } from '@/features/wallet';
+import { APPLICATION_STATUS, useMyApplications } from '@/features/applications';
 import type { HomeStackParamList, TabParamList } from '@/navigation/types';
 import { useHomeSummary, useUnreadCount } from '../hook/useHome';
 
@@ -24,15 +25,18 @@ export default function HomeScreen() {
   const { session } = useAuth();
   const balance = useBalance();
   const summary = useHomeSummary();
+  const applications = useMyApplications();
   const unread = useUnreadCount();
 
   const firstName = session?.profile.fullName.split(' ').slice(-1)[0] ?? 'bạn';
+  const latestApplication = applications.data?.[0];
 
-  const loading = balance.loading || summary.loading;
-  const error = balance.error ?? summary.error;
+  const loading = balance.loading || summary.loading || applications.loading;
+  const error = balance.error ?? summary.error ?? applications.error;
   const reload = () => {
     balance.reload();
     summary.reload();
+    applications.reload();
     unread.reload();
   };
 
@@ -75,40 +79,35 @@ export default function HomeScreen() {
               { icon: 'file', label: 'Vay', onPress: () => nav.navigate('Sàn', { screen: 'Products' }) },
               {
                 icon: 'coins',
-                label: 'Trả nợ',
-                onPress: () => nav.navigate('Ví', { screen: 'PayInstallment' }),
+                label: 'Hồ sơ',
+                onPress: () => nav.navigate('Hồ sơ', { screen: 'MyApplications' }),
               },
             ]}
           />
 
+          {latestApplication ? (
+            <>
+              <SectionLabel style={styles.section}>Hồ sơ vay gần nhất</SectionLabel>
+
+              <PItem
+                label={latestApplication.applicationNumber}
+                sub={formatDong(latestApplication.requestedAmount)}
+                value={(
+                  <Tag tone={APPLICATION_STATUS[latestApplication.status].tone} small>
+                    {APPLICATION_STATUS[latestApplication.status].label}
+                  </Tag>
+                )}
+                onPress={() => nav.navigate('Hồ sơ', {
+                  screen: 'ApplicationDetail',
+                  params: { applicationNumber: latestApplication.applicationNumber },
+                })}
+                last
+              />
+            </>
+          ) : null}
+
           {summary.data ? (
             <>
-              <SectionLabel style={styles.section}>{`Khoản vay ${summary.data.loan.id}`}</SectionLabel>
-
-              <PItem
-                label={`Kỳ ${summary.data.loan.nextPeriod} · ${summary.data.loan.nextDueDate}`}
-                value={formatDong(summary.data.loan.nextAmount)}
-                last
-              />
-
-              <ProgressBar
-                percent={
-                  (summary.data.loan.paidPeriods / summary.data.loan.totalPeriods) * 100
-                }
-                label="Tiến độ trả nợ"
-                style={styles.bar}
-              />
-
-              <PItem
-                label={
-                  <Text style={styles.muted}>
-                    {`Đã trả ${summary.data.loan.paidPeriods}/${summary.data.loan.totalPeriods} kỳ`}
-                  </Text>
-                }
-                value={<Text style={styles.grade}>{summary.data.loan.gradeLabel}</Text>}
-                last
-              />
-
               <SectionLabel style={styles.section}>Giao dịch gần đây</SectionLabel>
 
               {summary.data.recent.map(tx => (
@@ -150,8 +149,5 @@ const styles = StyleSheet.create({
   },
   badgeText: { ...Text_.captionBold, color: Colors.onDark, fontSize: 11 },
   section: { marginTop: Spacing.xxl },
-  bar: { marginVertical: Spacing.lg },
-  muted: { ...Text_.micro, color: Colors.ink3 },
-  grade: { ...Text_.microBold, color: Colors.emerald },
   chain: { ...Text_.body, color: Colors.violet },
 });

@@ -69,12 +69,19 @@ export default function AccountScreen() {
       <PItem
         label="Hồ sơ vay của tôi"
         icon="coins"
-        onPress={() => nav.navigate('MyLoanProgress')}
+        onPress={() => nav.navigate('MyApplications')}
       />
       <PItem
-        label="Lịch trả nợ"
+        label="Hợp đồng vay của tôi"
+        sub="Đọc, ký hoặc từ chối hợp đồng đang chờ xác nhận"
+        icon="file"
+        onPress={() => nav.navigate('MyContracts')}
+      />
+      <PItem
+        label="Lịch trả nợ sau giải ngân"
+        sub="Chưa có dữ liệu vận hành từ hệ thống"
         icon="clock"
-        onPress={() => nav.navigate('RepaymentSchedule')}
+        value={<Tag tone="gray" small>Sắp triển khai</Tag>}
       />
 
       {menu.data?.map((m, i) => (

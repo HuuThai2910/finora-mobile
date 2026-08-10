@@ -1,0 +1,26 @@
+# Dependencies and Expo local state
+node_modules/
+.expo/
+
+# Build and test output
+dist/
+web-build/
+coverage/
+
+# Local environment (keep the template)
+.env
+.env.*
+!.env.example
+
+# Native signing and local credentials
+*.jks
+*.keystore
+*.mobileprovision
+
+# Tool and OS files
+*.log
+.DS_Store
+Thumbs.db
+
+.env
+.env

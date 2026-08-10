@@ -4,4 +4,5 @@ export { default as BalanceCard, type BalanceAction } from './BalanceCard';
 export { default as Screen } from './Screen';
 export { default as TabBar, TAB_ICONS } from './TabBar';
 export { default as StepList, type Step, type StepState } from './StepList';
+export { default as FormStepProgress } from './FormStepProgress';
 export { default as ShapBar, type ShapFactor } from './ShapBar';

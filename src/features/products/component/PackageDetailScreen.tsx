@@ -27,7 +27,7 @@ export default function PackageDetailScreen() {
         <Button
           label="Bắt đầu vay →"
           variant="navyPill"
-          onPress={() => nav.navigate('ApplyForm', undefined)}
+          onPress={() => nav.navigate('Products')}
         />
       }
     >

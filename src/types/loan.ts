@@ -71,6 +71,7 @@ export type LoanApplicationStatus =
   | 'SCORING'
   | 'SCORING_RETRY_PENDING'
   | 'PENDING_REVIEW'
+  | 'APPROVED'
   | 'REJECTED'
   | 'WITHDRAWN';
 
@@ -111,6 +112,7 @@ export interface CalculationSnapshot {
   totalRepayment: number;
   firstInstallment: number;
   maximumInstallment: number;
+  periods: SchedulePeriod[];
   calculationPolicyVersion: string;
   calculatedAt: string;
 }
@@ -123,7 +125,7 @@ export interface LoanApplication {
   requestedAmount: number;
   requestedTermMonths: number;
   purposeCode: string;
-  purposeDetail: string;
+  purposeDetail: string | null;
   financialInformation: ApplicantFinancial;
   productSnapshot: ProductSnapshot;
   calculationSnapshot: CalculationSnapshot;
@@ -146,8 +148,8 @@ export interface LoanApplicationHistory {
   id: number;
   fromStatus: LoanApplicationStatus;
   toStatus: LoanApplicationStatus;
-  reasonCode: string;
-  reasonDetail: string;
+  reasonCode: string | null;
+  reasonDetail: string | null;
   actorType: 'BORROWER' | 'ADMIN' | 'SYSTEM';
   actorId: string;
   createdAt: string;

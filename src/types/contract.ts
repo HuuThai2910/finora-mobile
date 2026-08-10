@@ -16,6 +16,66 @@ export interface LoanContract {
   documentHash: string;
 }
 
+export type LoanContractStatus = 'PENDING_SIGNATURE' | 'SIGNED' | 'DECLINED' | 'EXPIRED' | 'EFFECTIVE' | 'COMPLETED';
+
+export interface LoanContractSummary {
+  contractNumber: string;
+  applicationNumber: string;
+  principalAmount: number;
+  termMonths: number;
+  annualInterestRate: number;
+  totalRepayment: number;
+  status: LoanContractStatus;
+  expiresAt: string;
+  version: number;
+  createdAt: string;
+}
+
+export interface LoanContractDetail extends LoanContractSummary {
+  repaymentMethod: 'ANNUITY' | 'EQUAL_PRINCIPAL';
+  totalInterest: number;
+  totalFees: number;
+  totalPenalties: number;
+  firstInstallment: number;
+  maximumInstallment: number;
+  expectedDisbursementDate: string;
+  scheduleResponseHash: string;
+  schedulePeriods: SchedulePeriod[];
+  termsVersion: string;
+  documentVersion: string;
+  documentContent: string;
+  documentContentType: string;
+  documentHash: string;
+  signedBy: string | null;
+  signedAt: string | null;
+  signatureMethod: 'CLICK_WRAP_MVP' | null;
+  declinedBy: string | null;
+  declinedAt: string | null;
+  declineReasonCode: string | null;
+  declineReasonDetail: string | null;
+  effectiveAt: string | null;
+  updatedAt: string;
+}
+
+export interface LoanContractHistory {
+  id: number;
+  fromStatus: LoanContractStatus | null;
+  toStatus: LoanContractStatus;
+  reasonCode: string | null;
+  actorType: 'BORROWER' | 'ADMIN' | 'SYSTEM';
+  actorId: string;
+  occurredAt: string;
+}
+
+export interface LoanContractActionResponse {
+  contractNumber: string;
+  status: LoanContractStatus;
+  version: number;
+  documentHash: string;
+  actorId: string;
+  actedAt: string;
+}
+
 export interface RepaymentPeriodRow {
   period: number;
   dueDate: string;
@@ -44,3 +104,4 @@ export interface SettlementQuote {
   total: number;
   interestSaved: number;
 }
+import type { SchedulePeriod } from './loan';

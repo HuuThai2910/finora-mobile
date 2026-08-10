@@ -1,5 +1,4 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
-import type { CreateLoanApplicationRequest } from '@/types/loan';
 
 /**
  * Bản đồ màn hình. Bốn tab lấy đúng theo hàm `TABBAR` của mockup, và mỗi màn
@@ -25,18 +24,10 @@ export type MarketStackParamList = {
   LoanDetail: { loanId: string };
   Products: undefined;
   ProductDetail: { productId: number };
-  Schedule: { productId: number; amount: number; termMonths: number };
+  Schedule: { productId: number; amount: number; termMonths: number; expectedDisbursementDate: string };
   VentoPackages: undefined;
   PackageDetail: { code: string };
-  ApplyForm: { productId?: number } | undefined;
-  /**
-   * Hồ sơ nháp được truyền nguyên vẹn sang màn chấm điểm: màn đó chấm bằng
-   * `finora-ai` rồi nộp đúng nội dung này lên `finora-loan`, không dựng lại
-   * dữ liệu từ đầu.
-   */
-  ScoringResult: { draft: CreateLoanApplicationRequest };
-  // Bước ký hợp đồng số tạm ẩn — luồng vay hiện dừng ở bước nộp hồ sơ.
-  // SignContract: undefined;
+  ApplyForm: { productId: number; amount: number; termMonths: number; expectedDisbursementDate: string };
 };
 
 export type WalletStackParamList = {
@@ -51,9 +42,10 @@ export type WalletStackParamList = {
 
 export type ProfileStackParamList = {
   Profile: undefined;
-  MyLoanProgress: undefined;
-  RepaymentSchedule: undefined;
-  EarlySettlement: undefined;
+  MyApplications: undefined;
+  ApplicationDetail: { applicationNumber: string };
+  MyContracts: undefined;
+  ContractDetail: { contractNumber: string };
 };
 
 export type TabParamList = {

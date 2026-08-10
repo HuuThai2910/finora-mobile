@@ -6,10 +6,6 @@
  * Khi backend của một miền hoàn thành, chỉ cần xoá tên miền đó khỏi biến môi
  * trường — không phải sửa dòng code nào trong màn hình.
  */
-/**
- * `credit` không còn trong danh sách: màn chấm điểm gọi thẳng
- * `POST /api/v1/ai/credit/score` của `finora-ai`, không có bản giả.
- */
 export type MockDomain =
   | 'auth'
   | 'ekyc'

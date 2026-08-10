@@ -1,6 +1,6 @@
 import { isMocked } from '@/lib/mockFlag';
 import * as notificationMock from '@/lib/mocks/notification';
-import { HOME_CHAIN_REF, HOME_LOAN, HOME_RECENT } from '@/lib/mocks/fixtures';
+import { HOME_CHAIN_REF, HOME_RECENT } from '@/lib/mocks/fixtures';
 import { mockResponse } from '@/lib/mocks/delay';
 import { ApiError } from '@/lib/api';
 import type { AppNotification } from '@/types/notification';
@@ -17,19 +17,17 @@ export const getUnreadCount = (): Promise<number> =>
   isMocked('notification') ? notificationMock.unreadCount() : notImplemented('Số thông báo mới');
 
 export type HomeSummary = {
-  loan: typeof HOME_LOAN;
   recent: typeof HOME_RECENT;
   chainRef: typeof HOME_CHAIN_REF;
 };
 
 /**
- * Tóm tắt trang chủ. Khi backend sẵn sàng, phần này gộp từ `finora-loan`
- * (khoản vay đang chạy) và `finora-payment` (giao dịch gần đây).
+ * Hoạt động ví và blockchain trên trang chủ vẫn là dữ liệu demo của các service chưa hoàn thành.
+ * Hồ sơ vay không nằm ở đây vì đã được đọc riêng từ API thật của finora-loan.
  */
 export const getHomeSummary = (): Promise<HomeSummary> =>
   isMocked('servicing')
     ? mockResponse('servicing', {
-        loan: HOME_LOAN,
         recent: HOME_RECENT,
         chainRef: HOME_CHAIN_REF,
       })

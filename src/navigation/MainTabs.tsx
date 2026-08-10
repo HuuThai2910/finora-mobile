@@ -11,13 +11,11 @@ import {
   VentoPackagesScreen,
 } from '@/features/products';
 import {
+  ApplicationDetailScreen,
   ApplyFormScreen,
-  EarlySettlementScreen,
-  MyLoanProgressScreen,
-  RepaymentScheduleScreen,
-  ScoringResultScreen,
-  // Bước ký hợp đồng số tạm ẩn — luồng vay dừng ở bước nộp hồ sơ.
-  // SignContractScreen,
+  ContractDetailScreen,
+  MyApplicationsScreen,
+  MyContractsScreen,
 } from '@/features/applications';
 import {
   PayInstallmentScreen,
@@ -59,8 +57,6 @@ function MarketTab() {
       <MarketStack.Screen name="VentoPackages" component={VentoPackagesScreen} />
       <MarketStack.Screen name="PackageDetail" component={PackageDetailScreen} />
       <MarketStack.Screen name="ApplyForm" component={ApplyFormScreen} />
-      <MarketStack.Screen name="ScoringResult" component={ScoringResultScreen} />
-      {/* <MarketStack.Screen name="SignContract" component={SignContractScreen} /> */}
     </MarketStack.Navigator>
   );
 }
@@ -85,9 +81,10 @@ function ProfileTab() {
   return (
     <ProfileStack.Navigator screenOptions={stackOptions}>
       <ProfileStack.Screen name="Profile" component={AccountScreen} />
-      <ProfileStack.Screen name="MyLoanProgress" component={MyLoanProgressScreen} />
-      <ProfileStack.Screen name="RepaymentSchedule" component={RepaymentScheduleScreen} />
-      <ProfileStack.Screen name="EarlySettlement" component={EarlySettlementScreen} />
+      <ProfileStack.Screen name="MyApplications" component={MyApplicationsScreen} />
+      <ProfileStack.Screen name="ApplicationDetail" component={ApplicationDetailScreen} />
+      <ProfileStack.Screen name="MyContracts" component={MyContractsScreen} />
+      <ProfileStack.Screen name="ContractDetail" component={ContractDetailScreen} />
     </ProfileStack.Navigator>
   );
 }
