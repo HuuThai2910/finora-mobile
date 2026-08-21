@@ -73,12 +73,6 @@ export async function captureBase64(
       base64: true,
     });
 
-    // Chỉ log kích thước (không log ảnh) — để đối chiếu với log `OCR CCCD: size=`
-    // phía server khi chẩn đoán chất lượng chụp.
-    console.log(
-      `[camera] nguồn ${shot.width}x${shot.height} → gửi ${resized.width}x${resized.height}`,
-    );
-
     return resized.base64 ? { uri: resized.uri, base64: resized.base64 } : null;
   } catch (e) {
     console.warn('Chụp ảnh thất bại:', e instanceof Error ? e.message : 'lỗi không xác định');

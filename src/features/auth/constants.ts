@@ -7,11 +7,10 @@ export const APP_TAGLINE = 'Cho vay ngang hàng minh bạch';
 export const OTP_LENGTH = 6;
 
 /**
- * Khớp `MAX_OTP_ATTEMPTS` và `OTP_TTL_MINUTES` trong `RateLimitServiceImpl`.
+ * Khớp `MAX_OTP_ATTEMPTS` trong `RateLimitServiceImpl`.
  * Chỉ dùng để viết nhãn cảnh báo; backend mới là bên thực thi giới hạn.
  */
 export const OTP_MAX_ATTEMPTS = 5;
-export const OTP_TTL_SECONDS = 5 * 60;
 
 /** Khớp `@Size(min = 8)` của `RegisterRequest`/`ResetPasswordRequest`. */
 export const PASSWORD_MIN_LENGTH = 8;
