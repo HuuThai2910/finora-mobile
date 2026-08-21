@@ -1,29 +1,57 @@
-export type LivenessStepStatus = 'passed' | 'processing' | 'pending';
+/**
+ * Contract định danh điện tử — khớp `finora-user`:
+ * `LivenessChallengeResponse`, `EkycVerifyRequest`, `EkycResultResponse`, `EkycResultCode`.
+ *
+ * Không thêm field nào backend không trả. Mọi giá trị ở đây là dữ liệu vận
+ * chuyển; phần hiển thị (nhãn tiếng Việt, phần trăm) nằm ở lớp UI.
+ */
 
-export interface LivenessStep {
-  label: string;
-  status: LivenessStepStatus;
+/** Động tác server yêu cầu trong một phiên liveness. */
+export type LivenessActionCode = 'blink' | 'turn_left' | 'turn_right';
+
+/**
+ * Thử thách cấp cho một lần xác minh.
+ *
+ * `sessionId` chỉ dùng được **một lần** và hết hạn sau `expiresInSeconds`;
+ * đây là cơ chế chặn video quay sẵn nên client không được cache lại.
+ */
+export interface LivenessChallenge {
+  sessionId: string;
+  actions: LivenessActionCode[];
+  expiresInSeconds: number;
 }
 
-export interface LivenessProgress {
-  steps: LivenessStep[];
-  /** Số bước đã xong trên tổng, dùng cho dãy chấm tiến độ. */
-  completed: number;
-  total: number;
+/** Trạng thái eKYC bền vững của hồ sơ. */
+export type EkycStatus = 'PENDING' | 'VERIFIED' | 'FAILED' | 'MANUAL_REVIEW';
+
+/** Lần gọi xác minh vừa rồi dừng ở bước nào. */
+export type EkycResultCode =
+  | 'VERIFIED'
+  | 'PROFILE_NO_CCCD'
+  | 'CHALLENGE_EXPIRED'
+  | 'OCR_FAILED'
+  | 'ID_MISMATCH'
+  | 'LIVENESS_FAILED'
+  | 'FACE_MISMATCH'
+  | 'RATE_LIMITED'
+  | 'AI_UNAVAILABLE';
+
+export interface EkycVerifyRequest {
+  sessionId: string;
+  /** Các frame base64 theo đúng thứ tự thời gian. */
+  frames: string[];
+  /** Ảnh mặt trước CCCD, base64. */
+  cccdImageBase64: string;
 }
 
-export interface EkycResult {
+export interface EkycVerifyResult {
+  status: EkycStatus;
+  resultCode: EkycResultCode;
+  faceMatch: boolean;
+  /** Độ tương đồng khuôn mặt trong khoảng 0–1, đổi sang phần trăm lúc hiển thị. */
   faceMatchScore: number;
-  livenessPassed: boolean;
-  ocrFullName: string;
-  maskedIdNumber: string;
-  status: 'KYC_VERIFIED' | 'PENDING_REVIEW' | 'REJECTED';
-  /** Bằng chứng neo lên sổ cái — mockup hiển thị mã giao dịch và số khối. */
-  chainTxId: string;
-  chainBlock: number;
-}
-
-export interface IdCardCapture {
-  side: 'front' | 'back';
-  captured: boolean;
+  livenessVerified: boolean;
+  /** Trường mềm lệch so với hồ sơ (họ tên, ngày sinh) — không chặn xác minh. */
+  ocrWarnings: string[];
+  message: string;
 }

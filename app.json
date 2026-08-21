@@ -24,7 +24,13 @@
       }
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "FINORA dùng camera để chụp CCCD và xác minh khuôn mặt khi định danh."
+        }
+      ]
     ]
   }
 }

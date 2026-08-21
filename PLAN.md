@@ -17,6 +17,7 @@ DRAFT -> APPROVED -> IN_PROGRESS -> READY_FOR_REVIEW -> ACCEPTED
 | Task | Phạm vi | Backend | Trạng thái | Đặc tả |
 |---|---|---|---|---|
 | MOBILE-LOAN-001 | Product → preview → submit → theo dõi → Contract/consent | LN-003–LN-008 | `IN_PROGRESS` | [Plan](plans/MOBILE-LOAN-001-end-to-end.md) |
+| MOBILE-EKYC-001 | Định danh điện tử: chụp CCCD → active liveness → kết quả | finora-user (liveness-challenge, ekyc-verify) | `DRAFT` | [Plan](plans/MOBILE-EKYC-001-ekyc-verification.md) |
 | MOBILE-LOAN-002 | Theo dõi gọi vốn | LN-009–LN-010 | `BACKLOG` | Chưa tạo |
 | MOBILE-LOAN-003 | Giải ngân, repayment, overdue, settlement | LN-011–LN-015 | `BACKLOG` | Chưa tạo |
 

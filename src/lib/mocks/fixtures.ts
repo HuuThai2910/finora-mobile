@@ -8,7 +8,7 @@
  * Mọi số tiền là số nguyên đồng.
  */
 import type { UserProfile } from '@/types/auth';
-import type { EkycResult, LivenessProgress } from '@/types/ekyc';
+import type { EkycVerifyResult, LivenessChallenge } from '@/types/ekyc';
 import type {
   DueInstallment,
   TopUpInstruction,
@@ -63,24 +63,20 @@ export const PROFILE_MENU = [
 
 /* ---------------- eKYC ---------------- */
 
-export const LIVENESS: LivenessProgress = {
-  steps: [
-    { label: 'Nhìn thẳng', status: 'passed' },
-    { label: 'Quay trái · quay phải', status: 'passed' },
-    { label: 'Nháy mắt', status: 'processing' },
-  ],
-  completed: 3,
-  total: 4,
+export const LIVENESS_CHALLENGE: LivenessChallenge = {
+  sessionId: 'mock-session-01',
+  actions: ['turn_left', 'blink'],
+  expiresInSeconds: 60,
 };
 
-export const EKYC_RESULT: EkycResult = {
-  faceMatchScore: 91.6,
-  livenessPassed: true,
-  ocrFullName: 'TRẦN VĂN HÙNG',
-  maskedIdNumber: '0790XXXXX4521',
-  status: 'KYC_VERIFIED',
-  chainTxId: '0x02cf…6b3a',
-  chainBlock: 48174,
+export const EKYC_VERIFY_RESULT: EkycVerifyResult = {
+  status: 'VERIFIED',
+  resultCode: 'VERIFIED',
+  faceMatch: true,
+  faceMatchScore: 0.916,
+  livenessVerified: true,
+  ocrWarnings: [],
+  message: 'Xác minh eKYC thành công',
 };
 
 /* ---------------- Ví ---------------- */
