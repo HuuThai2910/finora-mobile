@@ -4,12 +4,20 @@ status: DRAFT
 owner: Hai
 approved_by: null
 approved_at: null
-backend_scope: finora-user (liveness-challenge, ekyc-verify), finora-ai (ocr, liveness-active, face-match)
+backend_scope: finora-user (ekyc-verify), finora-ai (ocr — Gemini 2.5 Flash, EasyOCR dự phòng)
 ui_reference: ../../finora-platform/docs/ui/bản-đẹp.html
 ui_reference_sha256: 790FCE4FDEC49AF672FA56F6EB9FD7E314E2A1A3B850BC71A833B0E19FE6F224
 ---
 
 # MOBILE-EKYC-001 — Nối luồng định danh điện tử với backend thật
+
+> **CẬP NHẬT THIẾT KẾ 2026-08-22 (theo yêu cầu của Thái):** đã bỏ hẳn active
+> liveness và face match. Luồng hiện tại: chụp CCCD **mặt trước → mặt sau** →
+> `POST /users/profile/ekyc-verify` (2 ảnh) → backend OCR mặt trước (Gemini
+> 2.5 Flash, EasyOCR dự phòng) → đối chiếu/điền số CCCD và các trường mềm
+> (họ tên, ngày sinh, giới tính, quê quán, nơi thường trú) vào hồ sơ. Đăng ký
+> không thu họ tên nữa — tên chỉ có sau khi quét. Nội dung phía dưới là thiết
+> kế cũ, giữ lại làm hồ sơ.
 
 ## Bản đọc nhanh theo nghiệp vụ
 
