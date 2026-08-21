@@ -57,14 +57,16 @@ function requireTokens(dto: AuthResponseDto): AuthTokens {
 export const login = async (req: LoginRequest): Promise<AuthTokens> =>
   requireTokens(await authFetch<AuthResponseDto>('/auth/login', json(req)));
 
-/** Bước 1 của đăng ký — backend gửi OTP qua email, chưa tạo tài khoản. */
+/**
+ * Bước 1 của đăng ký — backend gửi OTP qua email, chưa tạo tài khoản.
+ * Không gửi họ tên: hồ sơ để trống, tên được điền từ OCR CCCD khi quét eKYC.
+ */
 export const register = (req: RegisterRequest): Promise<RegistrationChallenge> =>
   authFetch<RegistrationChallengeDto>(
     '/auth/register',
     json({
       email: req.email,
       password: req.password,
-      fullName: req.fullName,
       phone: req.phone,
     }),
   );

@@ -45,7 +45,6 @@ export function validateLogin(values: { email: string; password: string }): Fiel
 }
 
 export function validateRegister(values: {
-  fullName: string;
   email: string;
   phone: string;
   password: string;
@@ -54,7 +53,6 @@ export function validateRegister(values: {
 }): FieldErrors {
   const errors: FieldErrors = {};
 
-  if (!values.fullName.trim()) errors.fullName = 'Nhập họ tên đúng như trên CCCD.';
   checkEmail(values.email, errors);
 
   if (!VN_PHONE_PATTERN.test(normalizePhone(values.phone))) {

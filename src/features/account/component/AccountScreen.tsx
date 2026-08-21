@@ -55,7 +55,7 @@ export default function AccountScreen() {
 
         <View style={styles.identity}>
           <Text style={styles.name} accessibilityRole="header">
-            {p.fullName}
+            {p.fullName ?? 'Chưa định danh'}
           </Text>
           <View style={styles.tags}>
             <Tag tone={KYC_TONE[p.kycStatus]} small>

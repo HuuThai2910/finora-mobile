@@ -1,14 +1,15 @@
 import { useCallback, useRef, useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { CameraView } from 'expo-camera';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '@/constants/colors';
-import { Radius, Spacing, Text_ } from '@/theme';
+import { Radius, SCREEN_PADDING, Spacing, Text_ } from '@/theme';
 import { Screen } from '@/components/phone';
 import { Button } from '@/components/ui';
 import type { EkycStackParamList } from '@/navigation/types';
 import { captureBase64 } from '@/lib/camera';
+import { pickBestPictureSize } from '@/lib/camera';
 import CameraPermissionGate from '../components/CameraPermissionGate';
 import ScanLine from '../components/ScanLine';
 import {
@@ -41,10 +42,29 @@ export default function EkycCaptureScreen() {
   const { cccdFrontBase64, setCccdImage, setResult } = useEkycSession();
   const verify = useEkycVerify();
   const cameraRef = useRef<CameraView>(null);
+  const { width: windowWidth } = useWindowDimensions();
+
+  // Khung ngắm rộng bằng màn trừ lề chuẩn, cao cố định — cắt ảnh đúng vùng này
+  // để tấm thẻ choán trọn ảnh gửi đi, chữ nhỏ trên thẻ đủ lớn cho OCR đọc.
+  const frameAspect = (windowWidth - SCREEN_PADDING * 2) / CCCD_FRAME_HEIGHT;
 
   const [preview, setPreview] = useState<Preview | null>(null);
   const [busy, setBusy] = useState(false);
   const [captureError, setCaptureError] = useState<string | null>(null);
+  const [pictureSize, setPictureSize] = useState<string | undefined>(undefined);
+
+  // Expo Go mặc định chụp ở độ phân giải thấp — hỏi máy danh sách size khi
+  // camera sẵn sàng và ép dùng size lớn, nếu không chữ trên thẻ mờ tới mức
+  // OCR không đọc nổi. Lỗi ở bước này thì đành dùng mặc định.
+  const onCameraReady = useCallback(async () => {
+    try {
+      const sizes = (await cameraRef.current?.getAvailablePictureSizesAsync()) ?? [];
+      const chosen = pickBestPictureSize(sizes);
+      if (chosen) setPictureSize(chosen);
+    } catch {
+      setPictureSize(undefined);
+    }
+  }, []);
 
   const onCapture = useCallback(async () => {
     setBusy(true);
@@ -53,6 +73,7 @@ export default function EkycCaptureScreen() {
       const shot = await captureBase64(cameraRef.current, {
         width: CCCD_WIDTH,
         quality: CCCD_QUALITY,
+        cropAspect: frameAspect,
       });
       if (!shot) {
         setCaptureError('Không chụp được ảnh, vui lòng thử lại.');
@@ -62,7 +83,7 @@ export default function EkycCaptureScreen() {
     } finally {
       setBusy(false);
     }
-  }, []);
+  }, [frameAspect]);
 
   const onConfirm = useCallback(async () => {
     if (!preview) return;
@@ -122,7 +143,16 @@ export default function EkycCaptureScreen() {
             />
           ) : (
             <>
-              <CameraView ref={cameraRef} style={styles.fill} facing="back" />
+              {/* expo-camera mặc định TẮT autofocus — chụp cận cảnh thẻ sẽ mờ
+                  tới mức OCR không đọc nổi chữ nhỏ, nên phải bật tường minh. */}
+              <CameraView
+                ref={cameraRef}
+                style={styles.fill}
+                facing="back"
+                autofocus="on"
+                pictureSize={pictureSize}
+                onCameraReady={() => void onCameraReady()}
+              />
               <ScanLine height={CCCD_FRAME_HEIGHT} />
             </>
           )}

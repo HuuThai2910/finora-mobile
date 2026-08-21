@@ -48,7 +48,9 @@ function toInitial(fullName: string | null, email: string): string {
 export function toUserProfile(dto: UserProfileDto): UserProfile {
   return {
     id: String(dto.id),
-    fullName: dto.fullName ?? dto.email,
+    // Không giả tên bằng email: chưa quét eKYC thì hồ sơ đúng nghĩa là chưa có
+    // tên — nơi hiển thị tự quyết định để trống hay dùng nhãn thay thế.
+    fullName: dto.fullName,
     phone: dto.phone,
     email: dto.email,
     initial: toInitial(dto.fullName, dto.email),
