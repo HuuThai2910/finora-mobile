@@ -1,12 +1,19 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { LoginScreen, OtpScreen, RegisterScreen } from '@/features/auth';
-import { EkycCaptureScreen, EkycResultScreen, LivenessScreen } from '@/features/ekyc';
+import {
+  ForgotPasswordScreen,
+  LoginScreen,
+  RegisterOtpScreen,
+  RegisterScreen,
+  ResetOtpScreen,
+  ResetPasswordScreen,
+} from '@/features/auth';
 import type { AuthStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 /**
- * Luồng vào ứng dụng: đăng nhập hoặc đăng ký → OTP → eKYC.
+ * Luồng dành cho người chưa có phiên: đăng nhập, đăng ký kèm xác thực email,
+ * và nhánh phụ quên mật khẩu. eKYC nằm ở stack riêng vì cần phiên đăng nhập.
  * Mỗi màn tự vẽ tiêu đề bằng `PHeader` nên tắt header mặc định của stack.
  */
 export default function AuthNavigator() {
@@ -14,10 +21,10 @@ export default function AuthNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
-      <Stack.Screen name="Otp" component={OtpScreen} />
-      <Stack.Screen name="EkycCapture" component={EkycCaptureScreen} />
-      <Stack.Screen name="Liveness" component={LivenessScreen} />
-      <Stack.Screen name="EkycResult" component={EkycResultScreen} />
+      <Stack.Screen name="RegisterOtp" component={RegisterOtpScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="ResetOtp" component={ResetOtpScreen} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
     </Stack.Navigator>
   );
 }

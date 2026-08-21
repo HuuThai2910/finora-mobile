@@ -6,12 +6,12 @@ import { Radius, Spacing, Text_ } from '@/theme';
 import { Screen, PItem } from '@/components/phone';
 import { Button, Icon, Tag } from '@/components/ui';
 import { ErrorState, LoadingScreen } from '@/components/feedback';
-import type { AuthStackParamList } from '@/navigation/types';
+import type { EkycStackParamList } from '@/navigation/types';
 import type { LivenessStepStatus } from '@/types/ekyc';
 import { LIVENESS_HINT } from '../constant';
 import { useLiveness } from '../hook/useEkyc';
 
-type Nav = NativeStackNavigationProp<AuthStackParamList, 'Liveness'>;
+type Nav = NativeStackNavigationProp<EkycStackParamList, 'Liveness'>;
 
 const STATUS: Record<LivenessStepStatus, { tone: 'green' | 'blue' | 'gray'; label: string }> = {
   passed: { tone: 'green', label: '✓' },

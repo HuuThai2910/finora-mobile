@@ -1,4 +1,18 @@
+import { getAccessToken, refreshAccessToken } from './authSession';
+
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8081/api/v1';
+
+/**
+ * Xác thực và hồ sơ người dùng do `finora-user` phục vụ, đứng sau Gateway ở cổng
+ * khác với Loan Service, nên có base URL riêng.
+ */
+const AUTH_BASE_URL = process.env.EXPO_PUBLIC_AUTH_API_URL ?? 'http://localhost:8080/api/v1';
+
+/**
+ * `finora-user` đọc header này để biết trả token trong body thay vì đặt cookie
+ * (xem `HttpRequestUtils.isMobileClient`). Thiếu header là mobile không nhận được token.
+ */
+const MOBILE_CLIENT_HEADERS = { 'X-Client-Type': 'mobile' } as const;
 
 /**
  * Lỗi từ API, giữ đủ ngữ cảnh để màn hình chọn được thông điệp phù hợp
@@ -39,8 +53,14 @@ export class ApiError extends Error {
     if (this.status === 401 || this.status === 403) return 'Phiên đăng nhập đã hết hạn.';
     if (this.status === 404) return 'Không tìm thấy dữ liệu.';
     if (this.status === 422) return 'Dữ liệu gửi lên chưa hợp lệ.';
+    if (this.status === 429) return 'Bạn thao tác quá nhiều lần, vui lòng thử lại sau.';
     if (this.status >= 500) return 'Hệ thống đang bận, vui lòng thử lại sau.';
     return 'Không thực hiện được yêu cầu.';
+  }
+
+  /** Lỗi do người dùng nhập sai hoặc nghiệp vụ chặn — thử lại y nguyên cũng vô ích. */
+  get isBusinessError(): boolean {
+    return this.status >= 400 && this.status < 500;
   }
 }
 
@@ -60,17 +80,40 @@ export function toUserMessage(error: unknown): string {
   return 'Đã xảy ra lỗi không xác định.';
 }
 
-async function request<T>(baseUrl: string, path: string, init?: RequestInit): Promise<T> {
-  const { headers, ...rest } = init ?? {};
+type RequestOptions = RequestInit & {
+  /** Gắn `Authorization: Bearer` và tự làm mới token một lần khi gặp 401. */
+  authenticated?: boolean;
+};
 
-  let res: Response;
+async function send(baseUrl: string, path: string, init: RequestOptions): Promise<Response> {
+  const { headers, authenticated, ...rest } = init;
+  const token = authenticated ? getAccessToken() : null;
+
   try {
-    res = await fetch(`${baseUrl}${path}`, {
+    return await fetch(`${baseUrl}${path}`, {
       ...rest,
-      headers: { 'Content-Type': 'application/json', ...(headers as Record<string, string>) },
+      headers: {
+        'Content-Type': 'application/json',
+        ...MOBILE_CLIENT_HEADERS,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(headers as Record<string, string>),
+      },
     });
   } catch (e) {
     throw new NetworkError(e);
+  }
+}
+
+async function request<T>(baseUrl: string, path: string, init: RequestOptions = {}): Promise<T> {
+  let res = await send(baseUrl, path, init);
+
+  // Access token của Keycloak sống ngắn. Gặp 401 thì thử làm mới đúng một lần;
+  // lần thứ hai vẫn 401 nghĩa là phiên hỏng thật và người dùng phải đăng nhập lại.
+  if (res.status === 401 && init.authenticated) {
+    const renewed = await refreshAccessToken();
+    if (renewed) {
+      res = await send(baseUrl, path, init);
+    }
   }
 
   if (!res.ok) {
@@ -79,12 +122,33 @@ async function request<T>(baseUrl: string, path: string, init?: RequestInit): Pr
     throw new ApiError(res.status, body, code, message, traceId);
   }
 
-  return res.json();
+  return parseBody<T>(res);
 }
 
-/** Gọi các service Java qua gateway. */
+/**
+ * Vài endpoint (`forgot-password`, `logout`) trả 200 với thân rỗng nên không
+ * gọi `res.json()` được. Trả `undefined` cho những trường hợp đó.
+ */
+async function parseBody<T>(res: Response): Promise<T> {
+  if (res.status === 204) return undefined as T;
+
+  const text = await res.text();
+  if (!text) return undefined as T;
+
+  return JSON.parse(text) as T;
+}
+
+/** Gọi Loan Service qua gateway, có gắn token của phiên đăng nhập. */
 export const apiFetch = <T>(path: string, init?: RequestInit): Promise<T> =>
-  request<T>(BASE_URL, path, init);
+  request<T>(BASE_URL, path, { ...init, authenticated: true });
+
+/** Gọi endpoint công khai của `finora-user` — đăng nhập, đăng ký, quên mật khẩu. */
+export const authFetch = <T>(path: string, init?: RequestInit): Promise<T> =>
+  request<T>(AUTH_BASE_URL, path, init ?? {});
+
+/** Gọi endpoint của `finora-user` cần đăng nhập, ví dụ `GET /users/me`. */
+export const authFetchWithToken = <T>(path: string, init?: RequestInit): Promise<T> =>
+  request<T>(AUTH_BASE_URL, path, { ...init, authenticated: true });
 
 type ParsedError = { code: string; message: string | null; traceId: string | null };
 

@@ -6,10 +6,10 @@ import { Colors } from '@/constants/colors';
 import { Radius, Spacing, Text_ } from '@/theme';
 import { Screen, PItem } from '@/components/phone';
 import { Button, Tag } from '@/components/ui';
-import type { AuthStackParamList } from '@/navigation/types';
+import type { EkycStackParamList } from '@/navigation/types';
 import { CAPTURE_HINT, CAPTURE_STEPS, FRAME_HINT } from '../constant';
 
-type Nav = NativeStackNavigationProp<AuthStackParamList, 'EkycCapture'>;
+type Nav = NativeStackNavigationProp<EkycStackParamList, 'EkycCapture'>;
 
 /**
  * Màn 3 — eKYC chụp CCCD (luồng A1.2).

@@ -41,6 +41,12 @@ export const PROFILE: UserProfile = {
   email: 'hung.tran@gmail.com',
   initial: 'H',
   kycStatus: 'KYC_VERIFIED',
+  role: 'BORROWER',
+  dateOfBirth: '1994-06-12',
+  gender: 'MALE',
+  placeOfOrigin: 'Nam Định',
+  address: '25 Nguyễn Trãi, Thanh Xuân, Hà Nội',
+  idNumber: '036094001234',
   creditGrade: 'B',
   creditScore: 78,
   linkedBank: {
