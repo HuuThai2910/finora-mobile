@@ -1,49 +1,61 @@
 import { useCallback, useRef, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { CameraView } from 'expo-camera';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '@/constants/colors';
 import { Radius, Spacing, Text_ } from '@/theme';
 import { Screen } from '@/components/phone';
 import { Button } from '@/components/ui';
-import type { AuthStackParamList } from '@/navigation/types';
+import type { EkycStackParamList } from '@/navigation/types';
+import { captureBase64 } from '@/lib/camera';
 import CameraPermissionGate from '../components/CameraPermissionGate';
 import ScanLine from '../components/ScanLine';
-import { CAPTURE_HINT, CCCD_FRAME_HEIGHT, CCCD_QUALITY, CCCD_WIDTH } from '../constants';
+import {
+  CAPTURE_HINT,
+  CAPTURE_SUB,
+  CAPTURE_TITLE,
+  CCCD_FRAME_HEIGHT,
+  CCCD_QUALITY,
+  CCCD_WIDTH,
+} from '../constants';
 import { useEkycSession } from '../hooks/useEkycSession';
-import { captureBase64 } from '@/lib/camera';
+import { useEkycVerify } from '../hooks/useEkycVerify';
 
-type Nav = NativeStackNavigationProp<AuthStackParamList, 'EkycCapture'>;
+type Nav = NativeStackNavigationProp<EkycStackParamList, 'EkycCapture'>;
 
 type Preview = { uri: string; base64: string };
 
 /**
- * Màn 3 — chụp mặt trước CCCD.
+ * Chụp một mặt CCCD — màn dùng chung cho cả hai mặt, phân biệt qua param `side`.
  *
- * Chỉ chụp **một** ảnh: backend dùng đúng ảnh này cho cả OCR lẫn so khớp khuôn
- * mặt, không dùng tới mặt sau. Ảnh giữ ở độ phân giải cao hơn frame liveness vì
- * OCR phải đọc được dãy số nhỏ trên thẻ.
+ * Mặt trước xác nhận xong thì push chính màn này với `side: 'back'`; mặt sau
+ * xác nhận xong thì gửi luôn hai ảnh đi xác minh (không còn bước liveness).
+ * Backend chỉ OCR mặt trước; mặt sau là bằng chứng cầm thẻ đầy đủ.
  */
 export default function EkycCaptureScreen() {
   const nav = useNavigation<Nav>();
-  const { setCccdImage } = useEkycSession();
+  const route = useRoute<RouteProp<EkycStackParamList, 'EkycCapture'>>();
+  const side = route.params?.side ?? 'front';
+
+  const { cccdFrontBase64, setCccdImage, setResult } = useEkycSession();
+  const verify = useEkycVerify();
   const cameraRef = useRef<CameraView>(null);
 
   const [preview, setPreview] = useState<Preview | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [captureError, setCaptureError] = useState<string | null>(null);
 
   const onCapture = useCallback(async () => {
     setBusy(true);
-    setError(null);
+    setCaptureError(null);
     try {
       const shot = await captureBase64(cameraRef.current, {
         width: CCCD_WIDTH,
         quality: CCCD_QUALITY,
       });
       if (!shot) {
-        setError('Không chụp được ảnh, vui lòng thử lại.');
+        setCaptureError('Không chụp được ảnh, vui lòng thử lại.');
         return;
       }
       setPreview(shot);
@@ -52,60 +64,103 @@ export default function EkycCaptureScreen() {
     }
   }, []);
 
-  const onConfirm = useCallback(() => {
+  const onConfirm = useCallback(async () => {
     if (!preview) return;
-    setCccdImage(preview.base64);
-    nav.navigate('Liveness');
-  }, [nav, preview, setCccdImage]);
+    setCccdImage(side, preview.base64);
+
+    if (side === 'front') {
+      nav.push('EkycCapture', { side: 'back' });
+      return;
+    }
+
+    // Mặt sau: đủ hai ảnh — gửi xác minh ngay tại đây. OCR có thể mất vài chục
+    // giây nên nút chuyển sang trạng thái loading trong lúc chờ.
+    if (!cccdFrontBase64) return;
+    const result = await verify.submit(cccdFrontBase64, preview.base64);
+    if (!result) return;
+
+    setResult(result);
+    nav.navigate('EkycResult');
+  }, [cccdFrontBase64, nav, preview, setCccdImage, setResult, side, verify]);
+
+  // Vào thẳng màn mặt sau mà chưa có ảnh mặt trước (back rồi tiến lại) —
+  // đưa người dùng về đúng bước còn thiếu thay vì gửi thiếu ảnh.
+  if (side === 'back' && !cccdFrontBase64) {
+    return (
+      <Screen light>
+        <View style={styles.missingHead}>
+          <Text style={styles.title} accessibilityRole="header">
+            Thiếu ảnh mặt trước
+          </Text>
+          <Text style={styles.sub}>Hãy chụp mặt trước CCCD trước khi chụp mặt sau.</Text>
+        </View>
+        <Button
+          label="Chụp mặt trước"
+          icon="scan"
+          onPress={() => nav.navigate('EkycCapture', { side: 'front' })}
+          style={styles.action}
+        />
+      </Screen>
+    );
+  }
 
   return (
     <Screen light>
       <CameraPermissionGate>
-      <Text style={styles.title} accessibilityRole="header">
-        Chụp ảnh CCCD
-      </Text>
-      <Text style={styles.sub}>Mặt trước, thẻ nằm gọn trong khung</Text>
+        <Text style={styles.title} accessibilityRole="header">
+          {CAPTURE_TITLE[side]}
+        </Text>
+        <Text style={styles.sub}>{CAPTURE_SUB[side]}</Text>
 
-      <View style={styles.frame}>
-        {preview ? (
-          <Image
-            source={{ uri: preview.uri }}
-            style={styles.fill}
-            resizeMode="cover"
-            accessibilityLabel="Ảnh CCCD vừa chụp"
-          />
-        ) : (
-          <>
-            <CameraView ref={cameraRef} style={styles.fill} facing="back" />
-            <ScanLine height={CCCD_FRAME_HEIGHT} />
-          </>
-        )}
-      </View>
-
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-
-      {preview ? (
-        <View style={styles.actions}>
-          <Button
-            label="Chụp lại"
-            variant="outline"
-            onPress={() => setPreview(null)}
-            style={styles.grow}
-          />
-          <Button label="Tiếp tục" icon="check" onPress={onConfirm} style={styles.grow} />
+        <View style={styles.frame}>
+          {preview ? (
+            <Image
+              source={{ uri: preview.uri }}
+              style={styles.fill}
+              resizeMode="cover"
+              accessibilityLabel={`Ảnh ${side === 'front' ? 'mặt trước' : 'mặt sau'} CCCD vừa chụp`}
+            />
+          ) : (
+            <>
+              <CameraView ref={cameraRef} style={styles.fill} facing="back" />
+              <ScanLine height={CCCD_FRAME_HEIGHT} />
+            </>
+          )}
         </View>
-      ) : (
-        <Button
-          label="Chụp"
-          icon="scan"
-          loading={busy}
-          disabled={busy}
-          onPress={() => void onCapture()}
-          style={styles.action}
-        />
-      )}
 
-      <Text style={styles.hint}>{CAPTURE_HINT}</Text>
+        {captureError ? <Text style={styles.error}>{captureError}</Text> : null}
+        {verify.error ? <Text style={styles.error}>{verify.error}</Text> : null}
+
+        {preview ? (
+          <View style={styles.actions}>
+            <Button
+              label="Chụp lại"
+              variant="outline"
+              onPress={() => setPreview(null)}
+              disabled={verify.submitting}
+              style={styles.grow}
+            />
+            <Button
+              label={side === 'front' ? 'Tiếp tục' : 'Gửi xác minh'}
+              icon="check"
+              loading={verify.submitting}
+              disabled={verify.submitting}
+              onPress={() => void onConfirm()}
+              style={styles.grow}
+            />
+          </View>
+        ) : (
+          <Button
+            label="Chụp"
+            icon="scan"
+            loading={busy}
+            disabled={busy}
+            onPress={() => void onCapture()}
+            style={styles.action}
+          />
+        )}
+
+        <Text style={styles.hint}>{CAPTURE_HINT}</Text>
       </CameraPermissionGate>
     </Screen>
   );
@@ -114,6 +169,7 @@ export default function EkycCaptureScreen() {
 const styles = StyleSheet.create({
   title: { ...Text_.heading, color: Colors.ink, textAlign: 'center', marginTop: Spacing.xl },
   sub: { ...Text_.micro, color: Colors.ink3, textAlign: 'center', marginTop: Spacing.xs },
+  missingHead: { alignItems: 'center', gap: Spacing.xs, paddingTop: Spacing.section },
   frame: {
     height: CCCD_FRAME_HEIGHT,
     marginVertical: Spacing.xxl,

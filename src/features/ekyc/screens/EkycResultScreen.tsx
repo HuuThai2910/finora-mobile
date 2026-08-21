@@ -6,25 +6,21 @@ import { Radius, Spacing, Text_ } from '@/theme';
 import { Screen, PItem } from '@/components/phone';
 import { Button, Icon, InfoNote, Tag } from '@/components/ui';
 import { useAuth } from '@/providers/AuthProvider';
-import type { AuthStackParamList } from '@/navigation/types';
+import type { EkycStackParamList } from '@/navigation/types';
 import type { EkycResultCode } from '@/types/ekyc';
 import { RESULT_FALLBACK_MESSAGE, WARNING_LABELS } from '../constants';
 import { useEkycSession } from '../hooks/useEkycSession';
 
-type Nav = NativeStackNavigationProp<AuthStackParamList, 'EkycResult'>;
+type Nav = NativeStackNavigationProp<EkycStackParamList, 'EkycResult'>;
 
 /**
- * Trượt ở bước nào thì đưa người dùng về đúng bước đó.
- * Lỗi liên quan tới ảnh giấy tờ phải chụp lại CCCD; còn lại chỉ cần quay lại
- * màn xác minh khuôn mặt vì phiên challenge đã bị tiêu thụ.
+ * Với lỗi tạm thời (gọi quá nhanh, AI bận) ảnh trong phiên vẫn dùng được —
+ * chỉ cần lùi về màn mặt sau bấm gửi lại. Lỗi thuộc về ảnh/số CCCD thì phải
+ * chụp lại từ mặt trước.
  */
-const RETRY_TARGET: Partial<Record<EkycResultCode, 'EkycCapture' | 'Liveness'>> = {
-  PROFILE_NO_CCCD: 'EkycCapture',
-  OCR_FAILED: 'EkycCapture',
-  ID_MISMATCH: 'EkycCapture',
-};
+const RESUBMIT_CODES: ReadonlySet<EkycResultCode> = new Set(['RATE_LIMITED', 'AI_UNAVAILABLE']);
 
-/** Màn 6 — kết quả định danh. */
+/** Màn kết quả định danh bằng giấy tờ hai mặt. */
 export default function EkycResultScreen() {
   const nav = useNavigation<Nav>();
   const { completeKyc } = useAuth();
@@ -43,7 +39,7 @@ export default function EkycResultScreen() {
         <Button
           label="Bắt đầu định danh"
           icon="scan"
-          onPress={() => nav.navigate('EkycCapture')}
+          onPress={() => nav.navigate('EkycCapture', { side: 'front' })}
           style={styles.action}
         />
       </Screen>
@@ -52,7 +48,7 @@ export default function EkycResultScreen() {
 
   const passed = result.resultCode === 'VERIFIED';
   const message = result.message || RESULT_FALLBACK_MESSAGE[result.resultCode];
-  const retryTarget = RETRY_TARGET[result.resultCode] ?? 'Liveness';
+  const canResubmit = RESUBMIT_CODES.has(result.resultCode);
 
   return (
     <Screen light>
@@ -72,15 +68,10 @@ export default function EkycResultScreen() {
       </View>
 
       <PItem
-        label="Điểm khớp khuôn mặt"
-        value={`${(result.faceMatchScore * 100).toFixed(1).replace('.', ',')}%`}
-        valueTone={result.faceMatch ? 'up' : 'down'}
-      />
-      <PItem
-        label="Liveness"
+        label="Giấy tờ (CCCD hai mặt)"
         value={
-          <Tag tone={result.livenessVerified ? 'green' : 'red'} small>
-            {result.livenessVerified ? 'ĐẠT' : 'CHƯA ĐẠT'}
+          <Tag tone={passed ? 'green' : 'red'} small>
+            {passed ? 'ĐÃ XÁC MINH' : 'CHƯA ĐẠT'}
           </Tag>
         }
       />
@@ -111,11 +102,13 @@ export default function EkycResultScreen() {
           }}
           style={styles.action}
         />
+      ) : canResubmit ? (
+        <Button label="Gửi lại" icon="check" onPress={() => nav.goBack()} style={styles.action} />
       ) : (
         <Button
-          label="Thử lại"
+          label="Chụp lại từ đầu"
           icon="scan"
-          onPress={() => nav.navigate(retryTarget)}
+          onPress={() => nav.popToTop()}
           style={styles.action}
         />
       )}

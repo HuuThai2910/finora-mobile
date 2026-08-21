@@ -8,7 +8,7 @@
  * Mọi số tiền là số nguyên đồng.
  */
 import type { UserProfile } from '@/types/auth';
-import type { EkycVerifyResult, LivenessChallenge } from '@/types/ekyc';
+import type { EkycVerifyResult } from '@/types/ekyc';
 import type {
   DueInstallment,
   TopUpInstruction,
@@ -41,6 +41,12 @@ export const PROFILE: UserProfile = {
   email: 'hung.tran@gmail.com',
   initial: 'H',
   kycStatus: 'KYC_VERIFIED',
+  role: 'BORROWER',
+  dateOfBirth: '1994-06-12',
+  gender: 'MALE',
+  placeOfOrigin: 'Nam Định',
+  address: '25 Nguyễn Trãi, Thanh Xuân, Hà Nội',
+  idNumber: '036094001234',
   creditGrade: 'B',
   creditScore: 78,
   linkedBank: {
@@ -63,18 +69,9 @@ export const PROFILE_MENU = [
 
 /* ---------------- eKYC ---------------- */
 
-export const LIVENESS_CHALLENGE: LivenessChallenge = {
-  sessionId: 'mock-session-01',
-  actions: ['turn_left', 'blink'],
-  expiresInSeconds: 60,
-};
-
 export const EKYC_VERIFY_RESULT: EkycVerifyResult = {
   status: 'VERIFIED',
   resultCode: 'VERIFIED',
-  faceMatch: true,
-  faceMatchScore: 0.916,
-  livenessVerified: true,
   ocrWarnings: [],
   message: 'Xác minh eKYC thành công',
 };

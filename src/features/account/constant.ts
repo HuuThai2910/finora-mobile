@@ -1,4 +1,4 @@
-import type { KycStatus } from '@/types/auth';
+import type { Gender, KycStatus, UserRole } from '@/types/auth';
 import type { TagTone } from '@/components/ui';
 
 export const KYC_TONE: Record<KycStatus, TagTone> = {
@@ -13,6 +13,18 @@ export const KYC_LABEL: Record<KycStatus, string> = {
   PENDING_REVIEW: 'CHỜ DUYỆT TAY',
   KYC_VERIFIED: 'KYC_VERIFIED',
   REJECTED: 'BỊ TỪ CHỐI',
+};
+
+export const GENDER_LABEL: Record<Gender, string> = {
+  MALE: 'Nam',
+  FEMALE: 'Nữ',
+  OTHER: 'Khác',
+};
+
+export const ROLE_LABEL: Record<UserRole, string> = {
+  BORROWER: 'Người vay',
+  INVESTOR: 'Nhà đầu tư',
+  ADMIN: 'Quản trị viên',
 };
 
 export const LOGOUT_CONFIRM_TITLE = 'Đăng xuất?';

@@ -19,12 +19,14 @@
     },
     "android": {
       "package": "com.finora.mobile",
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#1d4ed8"
       }
     },
     "plugins": [
       "expo-font",
+      "expo-secure-store",
       [
         "expo-camera",
         {

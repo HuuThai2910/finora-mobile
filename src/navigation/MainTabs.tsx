@@ -26,7 +26,7 @@ import {
   WithdrawScreen,
 } from '@/features/wallet';
 import { AutoInvestScreen, InvestContractScreen, PortfolioScreen } from '@/features/investment';
-import { AccountScreen } from '@/features/account';
+import { AccountInfoScreen, AccountScreen } from '@/features/account';
 import type {
   HomeStackParamList,
   MarketStackParamList,
@@ -83,6 +83,7 @@ function ProfileTab() {
   return (
     <ProfileStack.Navigator screenOptions={stackOptions}>
       <ProfileStack.Screen name="Profile" component={AccountScreen} />
+      <ProfileStack.Screen name="AccountInfo" component={AccountInfoScreen} />
       <ProfileStack.Screen name="MyApplications" component={MyApplicationsScreen} />
       <ProfileStack.Screen name="ApplicationDetail" component={ApplicationDetailScreen} />
       <ProfileStack.Screen name="MyContracts" component={MyContractsScreen} />

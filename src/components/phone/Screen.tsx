@@ -1,4 +1,6 @@
 import {
+  KeyboardAvoidingView,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -47,15 +49,15 @@ export default function Screen({
 
   if (!scroll) {
     return (
-      <View style={[styles.root, { backgroundColor: bg }]}>
+      <KeyboardAvoid bg={bg}>
         <View style={[styles.content, padding, style]}>{children}</View>
         {footer ? <Footer insets={insets.bottom}>{footer}</Footer> : null}
-      </View>
+      </KeyboardAvoid>
     );
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: bg }]}>
+    <KeyboardAvoid bg={bg}>
       <ScrollView
         style={styles.root}
         contentContainerStyle={[styles.content, padding, style]}
@@ -70,7 +72,23 @@ export default function Screen({
         {children}
       </ScrollView>
       {footer ? <Footer insets={insets.bottom}>{footer}</Footer> : null}
-    </View>
+    </KeyboardAvoid>
+  );
+}
+
+/**
+ * Đẩy nội dung lên khi bàn phím mở để ô đang nhập (form đăng ký, ô OTP) không
+ * bị che. iOS cần `padding`; Android đã thu nhỏ cửa sổ sẵn nhờ `adjustResize`
+ * nên không đặt behavior để tránh cộng dồn hai lần.
+ */
+function KeyboardAvoid({ bg, children }: { bg: string; children: React.ReactNode }) {
+  return (
+    <KeyboardAvoidingView
+      style={[styles.root, { backgroundColor: bg }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      {children}
+    </KeyboardAvoidingView>
   );
 }
 

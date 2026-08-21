@@ -8,9 +8,33 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
-  Otp: { mode: 'login' | 'register' };
-  EkycCapture: undefined;
-  Liveness: undefined;
+  /**
+   * Xác thực email sau khi khai thông tin đăng ký. Chỉ truyền định danh phiên
+   * đăng ký: `email` để gọi API, `maskedEmail` để hiển thị.
+   */
+  RegisterOtp: { email: string; maskedEmail: string; expiresInSeconds: number };
+  ForgotPassword: undefined;
+  /** Nhập mã OTP đặt lại mật khẩu. Chỉ truyền `email` đã yêu cầu mã. */
+  ResetOtp: { email: string };
+  /**
+   * Đặt mật khẩu mới. Nhận `otp` từ màn nhập mã vì backend không có endpoint
+   * verify riêng — mã chỉ được xác thực thật khi gửi kèm mật khẩu mới.
+   */
+  ResetPassword: { email: string; otp: string };
+};
+
+/**
+ * eKYC tách khỏi stack đăng nhập vì chỉ chạy khi đã có phiên: người dùng đã
+ * đăng nhập nhưng hồ sơ chưa hoàn tất. `RootNavigator` chọn stack theo hai
+ * điều kiện đó chứ không để màn hình tự nhảy sang.
+ */
+export type EkycStackParamList = {
+  /**
+   * Chụp một mặt CCCD; mặc định mặt trước. Màn tự push chính nó với
+   * `side: 'back'` sau khi xác nhận mặt trước — ảnh đi qua EkycSession chứ
+   * không qua params.
+   */
+  EkycCapture: { side?: 'front' | 'back' } | undefined;
   EkycResult: undefined;
 };
 
@@ -42,6 +66,8 @@ export type WalletStackParamList = {
 
 export type ProfileStackParamList = {
   Profile: undefined;
+  /** Toàn bộ thông tin `GET /users/me` của tài khoản đang đăng nhập, chỉ đọc. */
+  AccountInfo: undefined;
   MyApplications: undefined;
   ApplicationDetail: { applicationNumber: string };
   MyContracts: undefined;
