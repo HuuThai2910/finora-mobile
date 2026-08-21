@@ -24,10 +24,15 @@ export const FontSize = {
   hero: 36, // 1.50–1.60rem — tổng thanh toán
 } as const;
 
-/** `body{line-height:1.55}` và `h1,h2,h3{line-height:1.26}` của mockup. */
+/**
+ * `body{line-height:1.55}` của mockup. Riêng heading mockup dùng 1.26 nhưng
+ * RN Android cắt phần chữ tràn khỏi khung dòng — dấu chồng tiếng Việt trên
+ * chữ hoa ("Ễ", "Ầ", "Ả"...) bị mất ngọn, nên nâng lên 1.45 (web không cắt
+ * nên mockup không lộ lỗi này).
+ */
 export const LineHeight = {
   body: 1.55,
-  heading: 1.26,
+  heading: 1.45,
 } as const;
 
 /** Tính lineHeight tuyệt đối cho một cỡ chữ. */

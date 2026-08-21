@@ -59,21 +59,29 @@ export const PROFILE: UserProfile = {
 
 /** Các mục cài đặt trong màn Hồ sơ cá nhân. */
 export const PROFILE_MENU = [
-  { icon: 'bank', label: 'Tài khoản ngân hàng liên kết', value: 'VCB •••• 8842' },
+  { icon: 'bank', label: 'Ngân hàng liên kết', value: 'VCB •••• 8842' },
   { icon: 'scan', label: 'Sinh trắc học (Face ID)', value: 'Đang bật' },
   { icon: 'shield', label: 'Thiết bị đăng nhập', value: '2 thiết bị' },
   { icon: 'pen', label: 'Chữ ký số', value: 'VNPT SmartCA ✓' },
   { icon: 'bell', label: 'Cài đặt thông báo', value: 'Push + Email' },
-  { icon: 'file', label: 'Điều khoản sử dụng', value: 'Cập nhật 07/2026' },
+  { icon: 'file', label: 'Điều khoản', value: 'Cập nhật 07/2026' },
 ] as const;
 
 /* ---------------- eKYC ---------------- */
 
-export const EKYC_VERIFY_RESULT: EkycVerifyResult = {
-  status: 'VERIFIED',
-  resultCode: 'VERIFIED',
+export const EKYC_DRAFT_RESULT: EkycVerifyResult = {
+  status: 'PENDING',
+  resultCode: 'DRAFT_READY',
   ocrWarnings: [],
-  message: 'Xác minh eKYC thành công',
+  message: 'Kiểm tra thông tin đọc được từ CCCD rồi xác nhận',
+  draft: {
+    idNumber: '036094001234',
+    fullName: 'TRẦN VĂN HÙNG',
+    dateOfBirth: '12/06/1994',
+    gender: 'Nam',
+    placeOfOrigin: 'Nam Định',
+    address: '25 Nguyễn Trãi, Thanh Xuân, Hà Nội',
+  },
 };
 
 /* ---------------- Ví ---------------- */

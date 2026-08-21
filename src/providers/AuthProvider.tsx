@@ -8,12 +8,10 @@ type AuthContextValue = {
   session: Session | null;
   /** Đang thử khôi phục phiên cũ lúc mở app — chưa biết người dùng đã đăng nhập hay chưa. */
   restoring: boolean;
-  /** eKYC đã xong hay chưa — quyết định có vào được app chính không. */
-  kycCompleted: boolean;
   /** Nhận cặp token vừa lấy được, tải hồ sơ rồi mở phiên. */
   signIn: (tokens: AuthTokens) => Promise<void>;
-  completeKyc: () => void;
   signOut: () => void;
+  /** Cập nhật hồ sơ trong phiên — ví dụ sau khi xác nhận eKYC xong. */
   updateProfile: (profile: UserProfile) => void;
 };
 
@@ -21,7 +19,6 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [kycCompleted, setKycCompleted] = useState(false);
   const [restoring, setRestoring] = useState(true);
 
   /**
@@ -40,7 +37,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAccessToken(null);
     refreshTokenRef.current = null;
     setSession(null);
-    setKycCompleted(false);
     await clearRefreshToken();
   }, []);
 
@@ -48,10 +44,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (tokens: AuthTokens) => {
       await applyTokens(tokens);
 
-      // Hồ sơ nằm ở endpoint khác với đăng nhập; phải có nó mới biết eKYC xong chưa.
+      // Hồ sơ nằm ở endpoint khác với đăng nhập — tải luôn để app có tên/trạng thái.
       const profile = await getMyProfile();
       setSession({ tokens, profile });
-      setKycCompleted(profile.kycStatus === 'KYC_VERIFIED');
     },
     [applyTokens],
   );
@@ -68,11 +63,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void clearSession();
   }, [clearSession]);
 
-  const completeKyc = useCallback(() => setKycCompleted(true), []);
-
   const updateProfile = useCallback((profile: UserProfile) => {
     setSession(prev => (prev ? { ...prev, profile } : prev));
-    setKycCompleted(profile.kycStatus === 'KYC_VERIFIED');
   }, []);
 
   /**
@@ -134,8 +126,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ session, restoring, kycCompleted, signIn, signOut, completeKyc, updateProfile }),
-    [session, restoring, kycCompleted, signIn, signOut, completeKyc, updateProfile],
+    () => ({ session, restoring, signIn, signOut, updateProfile }),
+    [session, restoring, signIn, signOut, updateProfile],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

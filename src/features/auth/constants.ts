@@ -22,5 +22,10 @@ export const PASSWORD_MIN_LENGTH = 8;
  */
 export const OTP_RESEND_SECONDS = 60;
 
-export const TERMS_LABEL = 'Điều khoản sử dụng';
-export const PRIVACY_LABEL = 'Chính sách bảo vệ dữ liệu cá nhân';
+/**
+ * Nhãn rút gọn để dòng đồng ý nằm gọn một hàng trên màn đăng ký.
+ * Tên đầy đủ của tài liệu: "Điều khoản sử dụng" và "Chính sách bảo vệ dữ liệu
+ * cá nhân" — hiển thị đủ ở trang tài liệu khi mở.
+ */
+export const TERMS_LABEL = 'Điều khoản';
+export const PRIVACY_LABEL = 'Chính sách bảo mật';

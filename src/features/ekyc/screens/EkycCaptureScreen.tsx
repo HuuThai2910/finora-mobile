@@ -7,7 +7,7 @@ import { Colors } from '@/constants/colors';
 import { Radius, SCREEN_PADDING, Spacing, Text_ } from '@/theme';
 import { Screen } from '@/components/phone';
 import { Button } from '@/components/ui';
-import type { EkycStackParamList } from '@/navigation/types';
+import type { ProfileStackParamList } from '@/navigation/types';
 import { captureBase64 } from '@/lib/camera';
 import { pickBestPictureSize } from '@/lib/camera';
 import CameraPermissionGate from '../components/CameraPermissionGate';
@@ -23,7 +23,7 @@ import {
 import { useEkycSession } from '../hooks/useEkycSession';
 import { useEkycVerify } from '../hooks/useEkycVerify';
 
-type Nav = NativeStackNavigationProp<EkycStackParamList, 'EkycCapture'>;
+type Nav = NativeStackNavigationProp<ProfileStackParamList, 'EkycCapture'>;
 
 type Preview = { uri: string; base64: string };
 
@@ -36,7 +36,7 @@ type Preview = { uri: string; base64: string };
  */
 export default function EkycCaptureScreen() {
   const nav = useNavigation<Nav>();
-  const route = useRoute<RouteProp<EkycStackParamList, 'EkycCapture'>>();
+  const route = useRoute<RouteProp<ProfileStackParamList, 'EkycCapture'>>();
   const side = route.params?.side ?? 'front';
 
   const { cccdFrontBase64, setCccdImage, setResult } = useEkycSession();

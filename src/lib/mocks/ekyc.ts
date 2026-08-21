@@ -1,5 +1,5 @@
 import { mockResponse } from './delay';
-import { EKYC_VERIFY_RESULT } from './fixtures';
+import { EKYC_DRAFT_RESULT } from './fixtures';
 import type { EkycVerifyRequest, EkycVerifyResult } from '@/types/ekyc';
 
 /**
@@ -11,12 +11,22 @@ import type { EkycVerifyRequest, EkycVerifyResult } from '@/types/ekyc';
 export const verifyEkyc = (request: EkycVerifyRequest): Promise<EkycVerifyResult> => {
   if (!request.cccdFrontBase64 || !request.cccdBackBase64) {
     return mockResponse('ekyc', {
-      ...EKYC_VERIFY_RESULT,
+      ...EKYC_DRAFT_RESULT,
       status: 'PENDING',
       resultCode: 'OCR_FAILED',
+      draft: null,
       message: 'Không đọc được thông tin trên ảnh mặt trước CCCD, vui lòng chụp lại rõ hơn',
     } satisfies EkycVerifyResult);
   }
 
-  return mockResponse('ekyc', EKYC_VERIFY_RESULT);
+  return mockResponse('ekyc', EKYC_DRAFT_RESULT);
 };
+
+export const confirmEkyc = (): Promise<EkycVerifyResult> =>
+  mockResponse('ekyc', {
+    status: 'VERIFIED',
+    resultCode: 'VERIFIED',
+    ocrWarnings: [],
+    message: 'Xác minh eKYC thành công',
+    draft: null,
+  } satisfies EkycVerifyResult);

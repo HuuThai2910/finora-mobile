@@ -10,8 +10,10 @@
 /** Trạng thái eKYC bền vững của hồ sơ. */
 export type EkycStatus = 'PENDING' | 'VERIFIED' | 'FAILED' | 'MANUAL_REVIEW';
 
-/** Lần gọi xác minh vừa rồi dừng ở bước nào. */
+/** Lần gọi eKYC vừa rồi dừng ở bước nào. */
 export type EkycResultCode =
+  | 'DRAFT_READY'
+  | 'DRAFT_EXPIRED'
   | 'VERIFIED'
   | 'OCR_FAILED'
   | 'ID_MISMATCH'
@@ -26,10 +28,23 @@ export interface EkycVerifyRequest {
   cccdBackBase64: string;
 }
 
+/** Bản nháp thông tin OCR đọc được — hiển thị nguyên văn cho người dùng soát. */
+export interface EkycDraft {
+  idNumber: string;
+  fullName: string | null;
+  /** Giữ dạng chuỗi như in trên thẻ (dd/mm/yyyy). */
+  dateOfBirth: string | null;
+  gender: string | null;
+  placeOfOrigin: string | null;
+  address: string | null;
+}
+
 export interface EkycVerifyResult {
   status: EkycStatus;
   resultCode: EkycResultCode;
   /** Trường mềm lệch so với hồ sơ (họ tên, ngày sinh) — không chặn xác minh. */
   ocrWarnings: string[];
   message: string;
+  /** Chỉ có khi `resultCode === 'DRAFT_READY'` — hồ sơ chưa lưu gì ở bước này. */
+  draft: EkycDraft | null;
 }

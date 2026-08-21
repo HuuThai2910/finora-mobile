@@ -133,7 +133,7 @@ export default function RegisterScreen() {
         label="Đồng ý điều khoản sử dụng"
       >
         <Text style={styles.terms}>
-          Tôi đồng ý <Text style={styles.link}>{TERMS_LABEL}</Text> và{' '}
+          Đồng ý <Text style={styles.link}>{TERMS_LABEL}</Text> &{' '}
           <Text style={styles.link}>{PRIVACY_LABEL}</Text>
         </Text>
       </Checkbox>

@@ -12,12 +12,14 @@ ui_reference_sha256: 790FCE4FDEC49AF672FA56F6EB9FD7E314E2A1A3B850BC71A833B0E19FE
 # MOBILE-EKYC-001 — Nối luồng định danh điện tử với backend thật
 
 > **CẬP NHẬT THIẾT KẾ 2026-08-22 (theo yêu cầu của Thái):** đã bỏ hẳn active
-> liveness và face match. Luồng hiện tại: chụp CCCD **mặt trước → mặt sau** →
-> `POST /users/profile/ekyc-verify` (2 ảnh) → backend OCR mặt trước (Gemini
-> 2.5 Flash, bắt buộc GEMINI_API_KEY) → đối chiếu/điền số CCCD và các trường mềm
-> (họ tên, ngày sinh, giới tính, quê quán, nơi thường trú) vào hồ sơ. Đăng ký
-> không thu họ tên nữa — tên chỉ có sau khi quét. Nội dung phía dưới là thiết
-> kế cũ, giữ lại làm hồ sơ.
+> liveness và face match. eKYC là chức năng **tuỳ chọn mở từ tab Hồ sơ** (không
+> ép sau đăng nhập) và chạy **hai bước**: chụp CCCD mặt trước → mặt sau →
+> `ekyc-verify` trả **bản nháp** thông tin OCR (Gemini 2.5 Flash, bắt buộc
+> GEMINI_API_KEY; bản nháp giữ ở Redis phía server, TTL 10 phút, hồ sơ chưa
+> lưu) → người dùng soát: sai thì quét lại, đúng thì `ekyc-confirm` mới ghi
+> vào hồ sơ (số CCCD + họ tên, ngày sinh, giới tính, quê quán, nơi thường trú)
+> và chuyển VERIFIED. Đăng ký không thu họ tên — tên chỉ có sau khi xác nhận
+> eKYC. Nội dung phía dưới là thiết kế cũ, giữ lại làm hồ sơ.
 
 ## Bản đọc nhanh theo nghiệp vụ
 

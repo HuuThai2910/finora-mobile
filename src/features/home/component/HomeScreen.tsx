@@ -28,9 +28,12 @@ export default function HomeScreen() {
   const applications = useMyApplications();
   const unread = useUnreadCount();
 
-  // Chào bằng tên gọi (chữ cuối của họ tên trên CCCD); chưa quét eKYC thì
-  // chưa có tên — chào trống chứ không thay bằng email.
-  const givenName = session?.profile.fullName?.trim().split(/\s+/).slice(-1)[0] ?? '';
+  // Chào bằng tên gọi (chữ cuối của họ tên trên CCCD, đổi "HẢI" → "Hải");
+  // chưa quét eKYC thì chưa có tên — chào trống chứ không thay bằng email.
+  const rawGivenName = session?.profile.fullName?.trim().split(/\s+/).slice(-1)[0] ?? '';
+  const givenName = rawGivenName
+    ? rawGivenName.charAt(0).toUpperCase() + rawGivenName.slice(1).toLowerCase()
+    : '';
   const latestApplication = applications.data?.[0];
 
   const loading = balance.loading || summary.loading || applications.loading;

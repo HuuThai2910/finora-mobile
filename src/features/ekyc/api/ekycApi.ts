@@ -15,10 +15,8 @@ import type { EkycVerifyRequest, EkycVerifyResult } from '@/types/ekyc';
 type BaseResponse<T> = { code: number; message: string; data: T };
 
 /**
- * Gửi ảnh hai mặt CCCD để xác minh.
- *
- * Backend OCR mặt trước rồi đối chiếu (hoặc điền) số CCCD của hồ sơ; một lần
- * gọi có thể mất vài chục giây.
+ * Bước quét: gửi ảnh hai mặt CCCD, nhận về BẢN NHÁP thông tin OCR để soát.
+ * Hồ sơ chưa được lưu gì ở bước này. Một lần gọi có thể mất vài giây.
  */
 export const verifyEkyc = async (request: EkycVerifyRequest): Promise<EkycVerifyResult> => {
   if (isMocked('ekyc')) return ekycMock.verifyEkyc(request);
@@ -26,6 +24,20 @@ export const verifyEkyc = async (request: EkycVerifyRequest): Promise<EkycVerify
   const response = await authFetchWithToken<BaseResponse<EkycVerifyResult>>(
     '/users/profile/ekyc-verify',
     { method: 'POST', body: JSON.stringify(request) },
+  );
+  return response.data;
+};
+
+/**
+ * Bước xác nhận: người dùng đồng ý với bản nháp thì hồ sơ mới được lưu.
+ * Không gửi dữ liệu — bản nháp nằm phía server để không sửa được thông tin OCR.
+ */
+export const confirmEkyc = async (): Promise<EkycVerifyResult> => {
+  if (isMocked('ekyc')) return ekycMock.confirmEkyc();
+
+  const response = await authFetchWithToken<BaseResponse<EkycVerifyResult>>(
+    '/users/profile/ekyc-confirm',
+    { method: 'POST', body: JSON.stringify({}) },
   );
   return response.data;
 };

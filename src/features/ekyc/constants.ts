@@ -25,6 +25,8 @@ export const CAPTURE_SUB: Record<CccdSide, string> = {
 
 /** Nhãn dự phòng khi server không kèm `message`. */
 export const RESULT_FALLBACK_MESSAGE: Record<EkycResultCode, string> = {
+  DRAFT_READY: 'Kiểm tra thông tin đọc được từ CCCD rồi xác nhận',
+  DRAFT_EXPIRED: 'Phiên xác minh đã hết hạn, vui lòng quét lại CCCD',
   VERIFIED: 'Xác minh thành công',
   OCR_FAILED: 'Không đọc được thông tin trên ảnh mặt trước CCCD',
   ID_MISMATCH: 'Số CCCD trên ảnh không khớp hồ sơ',
