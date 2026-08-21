@@ -38,6 +38,9 @@ export const CCCD_WIDTH = 1280;
 export const FRAME_QUALITY = 0.6;
 export const CCCD_QUALITY = 0.8;
 
+/** Chiều cao khung ngắm CCCD — tia quét phải chạy đúng trong khoảng này. */
+export const CCCD_FRAME_HEIGHT = 260;
+
 export const CAPTURE_HINT = 'Đặt CCCD trong khung, đủ sáng, không loá và không che góc';
 export const LIVENESS_HINT = 'Server yêu cầu ngẫu nhiên mỗi phiên — video quay sẵn không qua được';
 

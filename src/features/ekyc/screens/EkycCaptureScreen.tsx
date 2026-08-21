@@ -9,7 +9,8 @@ import { Screen } from '@/components/phone';
 import { Button } from '@/components/ui';
 import type { AuthStackParamList } from '@/navigation/types';
 import CameraPermissionGate from '../components/CameraPermissionGate';
-import { CAPTURE_HINT, CCCD_QUALITY, CCCD_WIDTH } from '../constants';
+import ScanLine from '../components/ScanLine';
+import { CAPTURE_HINT, CCCD_FRAME_HEIGHT, CCCD_QUALITY, CCCD_WIDTH } from '../constants';
 import { useEkycSession } from '../hooks/useEkycSession';
 import { captureBase64 } from '@/lib/camera';
 
@@ -74,7 +75,10 @@ export default function EkycCaptureScreen() {
             accessibilityLabel="Ảnh CCCD vừa chụp"
           />
         ) : (
-          <CameraView ref={cameraRef} style={styles.fill} facing="back" />
+          <>
+            <CameraView ref={cameraRef} style={styles.fill} facing="back" />
+            <ScanLine height={CCCD_FRAME_HEIGHT} />
+          </>
         )}
       </View>
 
@@ -111,7 +115,7 @@ const styles = StyleSheet.create({
   title: { ...Text_.heading, color: Colors.ink, textAlign: 'center', marginTop: Spacing.xl },
   sub: { ...Text_.micro, color: Colors.ink3, textAlign: 'center', marginTop: Spacing.xs },
   frame: {
-    height: 260,
+    height: CCCD_FRAME_HEIGHT,
     marginVertical: Spacing.xxl,
     borderWidth: 3,
     borderStyle: 'dashed',
