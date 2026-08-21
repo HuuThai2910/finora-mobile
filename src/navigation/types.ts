@@ -23,17 +23,6 @@ export type AuthStackParamList = {
   ResetPassword: { email: string; otp: string };
 };
 
-/**
- * eKYC tách khỏi stack đăng nhập vì chỉ chạy khi đã có phiên: người dùng đã
- * đăng nhập nhưng hồ sơ chưa hoàn tất. `RootNavigator` chọn stack theo hai
- * điều kiện đó chứ không để màn hình tự nhảy sang.
- */
-export type EkycStackParamList = {
-  EkycCapture: undefined;
-  Liveness: undefined;
-  EkycResult: undefined;
-};
-
 export type HomeStackParamList = {
   Home: undefined;
   Notifications: undefined;
@@ -64,6 +53,14 @@ export type ProfileStackParamList = {
   Profile: undefined;
   /** Toàn bộ thông tin `GET /users/me` của tài khoản đang đăng nhập, chỉ đọc. */
   AccountInfo: undefined;
+  /**
+   * eKYC là chức năng tuỳ chọn mở từ tab Hồ sơ, không ép sau đăng nhập.
+   * Chụp một mặt CCCD; mặc định mặt trước — màn tự push chính nó với
+   * `side: 'back'`, ảnh đi qua EkycSession chứ không qua params.
+   */
+  EkycCapture: { side?: 'front' | 'back' } | undefined;
+  /** Bản nháp thông tin OCR chờ người dùng soát — xác nhận mới lưu vào hồ sơ. */
+  EkycResult: undefined;
   MyApplications: undefined;
   ApplicationDetail: { applicationNumber: string };
   MyContracts: undefined;

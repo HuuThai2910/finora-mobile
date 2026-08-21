@@ -8,7 +8,7 @@
  * Mọi số tiền là số nguyên đồng.
  */
 import type { UserProfile } from '@/types/auth';
-import type { EkycResult, LivenessProgress } from '@/types/ekyc';
+import type { EkycVerifyResult } from '@/types/ekyc';
 import type {
   DueInstallment,
   TopUpInstruction,
@@ -59,34 +59,29 @@ export const PROFILE: UserProfile = {
 
 /** Các mục cài đặt trong màn Hồ sơ cá nhân. */
 export const PROFILE_MENU = [
-  { icon: 'bank', label: 'Tài khoản ngân hàng liên kết', value: 'VCB •••• 8842' },
+  { icon: 'bank', label: 'Ngân hàng liên kết', value: 'VCB •••• 8842' },
   { icon: 'scan', label: 'Sinh trắc học (Face ID)', value: 'Đang bật' },
   { icon: 'shield', label: 'Thiết bị đăng nhập', value: '2 thiết bị' },
   { icon: 'pen', label: 'Chữ ký số', value: 'VNPT SmartCA ✓' },
   { icon: 'bell', label: 'Cài đặt thông báo', value: 'Push + Email' },
-  { icon: 'file', label: 'Điều khoản sử dụng', value: 'Cập nhật 07/2026' },
+  { icon: 'file', label: 'Điều khoản', value: 'Cập nhật 07/2026' },
 ] as const;
 
 /* ---------------- eKYC ---------------- */
 
-export const LIVENESS: LivenessProgress = {
-  steps: [
-    { label: 'Nhìn thẳng', status: 'passed' },
-    { label: 'Quay trái · quay phải', status: 'passed' },
-    { label: 'Nháy mắt', status: 'processing' },
-  ],
-  completed: 3,
-  total: 4,
-};
-
-export const EKYC_RESULT: EkycResult = {
-  faceMatchScore: 91.6,
-  livenessPassed: true,
-  ocrFullName: 'TRẦN VĂN HÙNG',
-  maskedIdNumber: '0790XXXXX4521',
-  status: 'KYC_VERIFIED',
-  chainTxId: '0x02cf…6b3a',
-  chainBlock: 48174,
+export const EKYC_DRAFT_RESULT: EkycVerifyResult = {
+  status: 'PENDING',
+  resultCode: 'DRAFT_READY',
+  ocrWarnings: [],
+  message: 'Kiểm tra thông tin đọc được từ CCCD rồi xác nhận',
+  draft: {
+    idNumber: '036094001234',
+    fullName: 'TRẦN VĂN HÙNG',
+    dateOfBirth: '12/06/1994',
+    gender: 'Nam',
+    placeOfOrigin: 'Nam Định',
+    address: '25 Nguyễn Trãi, Thanh Xuân, Hà Nội',
+  },
 };
 
 /* ---------------- Ví ---------------- */

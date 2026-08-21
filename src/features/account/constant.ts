@@ -10,8 +10,8 @@ export const KYC_TONE: Record<KycStatus, TagTone> = {
 
 export const KYC_LABEL: Record<KycStatus, string> = {
   NOT_STARTED: 'CHƯA ĐỊNH DANH',
-  PENDING_REVIEW: 'CHỜ DUYỆT TAY',
-  KYC_VERIFIED: 'KYC_VERIFIED',
+  PENDING_REVIEW: 'CHỜ DUYỆT',
+  KYC_VERIFIED: 'ĐÃ ĐỊNH DANH',
   REJECTED: 'BỊ TỪ CHỐI',
 };
 

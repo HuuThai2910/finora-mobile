@@ -4,7 +4,6 @@ import { Screen } from '@/components/phone';
 import { LoadingScreen } from '@/components/feedback';
 import { useAuth } from '@/providers/AuthProvider';
 import AuthNavigator from './AuthNavigator';
-import EkycNavigator from './EkycNavigator';
 import MainTabs from './MainTabs';
 
 /** Chủ đề điều hướng khớp bảng màu của mockup. */
@@ -21,15 +20,15 @@ const navTheme: Theme = {
 };
 
 /**
- * Chọn luồng theo trạng thái phiên, thay vì để từng màn hình tự điều hướng:
- * chưa đăng nhập thì vào luồng xác thực, đã đăng nhập nhưng chưa xong eKYC thì
- * vào luồng định danh, xong cả hai mới vào app chính.
+ * Chọn luồng theo trạng thái phiên: chưa đăng nhập thì vào luồng xác thực,
+ * có phiên là vào thẳng app chính. eKYC không còn bị ép sau đăng nhập —
+ * nó là chức năng tuỳ chọn trong tab Hồ sơ.
  *
  * Lúc mở app phải chờ khôi phục phiên cũ xong mới quyết định, nếu không người
  * dùng đã đăng nhập vẫn thấy màn đăng nhập nhấp nháy một nhịp.
  */
 export default function RootNavigator() {
-  const { session, kycCompleted, restoring } = useAuth();
+  const { session, restoring } = useAuth();
 
   if (restoring) {
     return (
@@ -41,7 +40,7 @@ export default function RootNavigator() {
 
   return (
     <NavigationContainer theme={navTheme}>
-      {!session ? <AuthNavigator /> : !kycCompleted ? <EkycNavigator /> : <MainTabs />}
+      {session ? <MainTabs /> : <AuthNavigator />}
     </NavigationContainer>
   );
 }

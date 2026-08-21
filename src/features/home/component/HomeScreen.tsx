@@ -28,7 +28,12 @@ export default function HomeScreen() {
   const applications = useMyApplications();
   const unread = useUnreadCount();
 
-  const firstName = session?.profile.fullName.split(' ').slice(-1)[0] ?? 'bạn';
+  // Chào bằng tên gọi (chữ cuối của họ tên trên CCCD, đổi "HẢI" → "Hải");
+  // chưa quét eKYC thì chưa có tên — chào trống chứ không thay bằng email.
+  const rawGivenName = session?.profile.fullName?.trim().split(/\s+/).slice(-1)[0] ?? '';
+  const givenName = rawGivenName
+    ? rawGivenName.charAt(0).toUpperCase() + rawGivenName.slice(1).toLowerCase()
+    : '';
   const latestApplication = applications.data?.[0];
 
   const loading = balance.loading || summary.loading || applications.loading;
@@ -43,7 +48,7 @@ export default function HomeScreen() {
   return (
     <Screen onRefresh={reload} refreshing={loading && !!summary.data}>
       <PHeader
-        title={`Xin chào, ${firstName} 👋`}
+        title={givenName ? `Xin chào, ${givenName} 👋` : 'Xin chào 👋'}
         right={
           <Pressable
             onPress={() => nav.navigate('Notifications')}

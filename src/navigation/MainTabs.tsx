@@ -27,6 +27,7 @@ import {
 } from '@/features/wallet';
 import { AutoInvestScreen, InvestContractScreen, PortfolioScreen } from '@/features/investment';
 import { AccountInfoScreen, AccountScreen } from '@/features/account';
+import { EkycCaptureScreen, EkycResultScreen, EkycSessionProvider } from '@/features/ekyc';
 import type {
   HomeStackParamList,
   MarketStackParamList,
@@ -81,16 +82,22 @@ function WalletTab() {
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 function ProfileTab() {
   return (
-    <ProfileStack.Navigator screenOptions={stackOptions}>
+    // eKYC là chức năng tuỳ chọn trong tab Hồ sơ. Ảnh CCCD đi giữa các màn qua
+    // EkycSessionProvider (không qua params) nên provider bọc cả stack này.
+    <EkycSessionProvider>
+      <ProfileStack.Navigator screenOptions={stackOptions}>
       <ProfileStack.Screen name="Profile" component={AccountScreen} />
       <ProfileStack.Screen name="AccountInfo" component={AccountInfoScreen} />
+      <ProfileStack.Screen name="EkycCapture" component={EkycCaptureScreen} />
+      <ProfileStack.Screen name="EkycResult" component={EkycResultScreen} />
       <ProfileStack.Screen name="MyApplications" component={MyApplicationsScreen} />
       <ProfileStack.Screen name="ApplicationDetail" component={ApplicationDetailScreen} />
       <ProfileStack.Screen name="MyContracts" component={MyContractsScreen} />
       <ProfileStack.Screen name="ContractDetail" component={ContractDetailScreen} />
       <ProfileStack.Screen name="ContractConsent" component={ContractConsentScreen} />
       <ProfileStack.Screen name="RepaymentSchedule" component={RepaymentScheduleScreen} />
-    </ProfileStack.Navigator>
+      </ProfileStack.Navigator>
+    </EkycSessionProvider>
   );
 }
 

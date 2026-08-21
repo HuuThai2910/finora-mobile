@@ -21,7 +21,8 @@ export type Gender = 'MALE' | 'FEMALE' | 'OTHER';
 
 export interface UserProfile {
   id: string;
-  fullName: string;
+  /** Chưa quét eKYC thì chưa có tên — tên thật lấy từ OCR CCCD. */
+  fullName: string | null;
   /** Backend chỉ trả số điện thoại khi hồ sơ đã khai; chưa có thì rỗng. */
   phone: string | null;
   email: string;
@@ -70,8 +71,8 @@ export interface LoginRequest {
   password: string;
 }
 
+/** Đăng ký không thu họ tên — tên được điền từ OCR CCCD khi quét eKYC. */
 export interface RegisterRequest {
-  fullName: string;
   email: string;
   phone: string;
   password: string;

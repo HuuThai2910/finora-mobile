@@ -7,11 +7,10 @@ export const APP_TAGLINE = 'Cho vay ngang hàng minh bạch';
 export const OTP_LENGTH = 6;
 
 /**
- * Khớp `MAX_OTP_ATTEMPTS` và `OTP_TTL_MINUTES` trong `RateLimitServiceImpl`.
+ * Khớp `MAX_OTP_ATTEMPTS` trong `RateLimitServiceImpl`.
  * Chỉ dùng để viết nhãn cảnh báo; backend mới là bên thực thi giới hạn.
  */
 export const OTP_MAX_ATTEMPTS = 5;
-export const OTP_TTL_SECONDS = 5 * 60;
 
 /** Khớp `@Size(min = 8)` của `RegisterRequest`/`ResetPasswordRequest`. */
 export const PASSWORD_MIN_LENGTH = 8;
@@ -23,5 +22,10 @@ export const PASSWORD_MIN_LENGTH = 8;
  */
 export const OTP_RESEND_SECONDS = 60;
 
-export const TERMS_LABEL = 'Điều khoản sử dụng';
-export const PRIVACY_LABEL = 'Chính sách bảo vệ dữ liệu cá nhân';
+/**
+ * Nhãn rút gọn để dòng đồng ý nằm gọn một hàng trên màn đăng ký.
+ * Tên đầy đủ của tài liệu: "Điều khoản sử dụng" và "Chính sách bảo vệ dữ liệu
+ * cá nhân" — hiển thị đủ ở trang tài liệu khi mở.
+ */
+export const TERMS_LABEL = 'Điều khoản';
+export const PRIVACY_LABEL = 'Chính sách bảo mật';

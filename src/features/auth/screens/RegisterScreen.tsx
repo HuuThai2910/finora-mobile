@@ -18,13 +18,15 @@ type Nav = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
 /**
  * Tạo tài khoản — bước khai thông tin.
  *
+ * Không hỏi họ tên: tên thật được lấy từ OCR CCCD khi quét eKYC sau đăng nhập,
+ * tránh cảnh người dùng gõ tên lệch với giấy tờ.
+ *
  * Tài khoản chưa tồn tại sau màn này: backend chỉ gửi mã OTP về email và giữ
  * thông tin khoảng 5 phút. Việc tạo tài khoản diễn ra ở màn nhập mã.
  */
 export default function RegisterScreen() {
   const nav = useNavigation<Nav>();
 
-  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -33,13 +35,13 @@ export default function RegisterScreen() {
   const { errors, validateField, clearField, validateSubmit } = useFieldErrors(validateRegister);
   const { submit, submitting, error } = useRegistration();
 
-  const values = { fullName, email, phone, password, confirmPassword, acceptedTerms };
+  const values = { email, phone, password, confirmPassword, acceptedTerms };
 
   const onSubmit = async () => {
     if (!validateSubmit(values)) return;
 
     // `confirmPassword` chỉ để người dùng tự soát; backend chỉ nhận một mật khẩu.
-    const challenge = await submit({ fullName, email, phone, password });
+    const challenge = await submit({ email, phone, password });
     if (!challenge) return;
 
     nav.navigate('RegisterOtp', {
@@ -58,20 +60,6 @@ export default function RegisterScreen() {
         <Text style={styles.sub}>Miễn phí · chỉ mất 3 phút</Text>
       </View>
 
-      <Field
-        label="Họ và tên (theo CCCD)"
-        value={fullName}
-        onChangeText={v => {
-          setFullName(v);
-          clearField('fullName');
-        }}
-        onBlur={() => validateField(values, 'fullName')}
-        placeholder="Nguyễn Văn A"
-        required
-        error={errors.fullName}
-        autoComplete="name"
-        editable={!submitting}
-      />
       <Field
         label="Email"
         value={email}
@@ -145,7 +133,7 @@ export default function RegisterScreen() {
         label="Đồng ý điều khoản sử dụng"
       >
         <Text style={styles.terms}>
-          Tôi đồng ý <Text style={styles.link}>{TERMS_LABEL}</Text> và{' '}
+          Đồng ý <Text style={styles.link}>{TERMS_LABEL}</Text> &{' '}
           <Text style={styles.link}>{PRIVACY_LABEL}</Text>
         </Text>
       </Checkbox>
