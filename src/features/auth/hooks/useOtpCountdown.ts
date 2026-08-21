@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { OTP_RESEND_SECONDS } from '../constant';
+import { OTP_RESEND_SECONDS } from '../constants';
 
 /** Đếm ngược thời gian được phép gửi lại mã, hiển thị dạng mm:ss như mockup. */
 export function useOtpCountdown(seconds: number = OTP_RESEND_SECONDS) {

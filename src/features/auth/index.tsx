@@ -1,6 +1,9 @@
 /** Cửa ra công khai của feature `auth`. Feature khác chỉ được import qua đây. */
-export { default as LoginScreen } from './component/LoginScreen';
-export { default as OtpScreen } from './component/OtpScreen';
-export { default as RegisterScreen } from './component/RegisterScreen';
-export { getProfile } from './api';
-export { APP_NAME, APP_TAGLINE } from './constant';
+export { default as LoginScreen } from './screens/LoginScreen';
+export { default as RegisterScreen } from './screens/RegisterScreen';
+export { default as RegisterOtpScreen } from './screens/RegisterOtpScreen';
+export { default as ForgotPasswordScreen } from './screens/ForgotPasswordScreen';
+export { default as ResetOtpScreen } from './screens/ResetOtpScreen';
+export { default as ResetPasswordScreen } from './screens/ResetPasswordScreen';
+export { getMyProfile } from './api';
+export { APP_NAME, APP_TAGLINE } from './constants';

@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '@/constants/colors';
 import { Radius, Spacing, Text_ } from '@/theme';
 import { Icon } from '@/components/ui';
-import { APP_NAME, APP_TAGLINE } from '../constant';
+import { APP_NAME, APP_TAGLINE } from '../constants';
 
 /** Khối logo đầu màn đăng nhập — ô gradient `navy → brand` với icon chuỗi khối. */
 export default function BrandMark() {

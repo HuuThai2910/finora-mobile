@@ -61,11 +61,20 @@ export default function AccountScreen() {
             <Tag tone={KYC_TONE[p.kycStatus]} small>
               {KYC_LABEL[p.kycStatus]}
             </Tag>
-            <Tag tone="blue" small>{`Điểm ${p.creditGrade}+ · ${p.creditScore}`}</Tag>
+            {/* Điểm tín dụng chưa có trong `GET /users/me`; ẩn hẳn thay vì hiển thị số rỗng */}
+            {p.creditGrade && p.creditScore !== null ? (
+              <Tag tone="blue" small>{`Điểm ${p.creditGrade}+ · ${p.creditScore}`}</Tag>
+            ) : null}
           </View>
         </View>
       </View>
 
+      <PItem
+        label="Thông tin tài khoản"
+        sub="Toàn bộ thông tin định danh của tài khoản này"
+        icon="id"
+        onPress={() => nav.navigate('AccountInfo')}
+      />
       <PItem
         label="Hồ sơ vay của tôi"
         icon="coins"
