@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import {
+  InputAccessoryView,
+  Keyboard,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -38,6 +41,17 @@ type Props = {
 };
 
 /**
+ * Bàn phím số của iOS không có phím Return, nên không có cách nào đóng nó bằng
+ * bàn phím. Những kiểu dưới đây phải kèm thanh phụ có nút "Xong".
+ */
+const BAN_PHIM_SO: ReadonlySet<KeyboardTypeOptions> = new Set<KeyboardTypeOptions>([
+  'number-pad',
+  'numeric',
+  'decimal-pad',
+  'phone-pad',
+]);
+
+/**
  * `.field` của mockup: nhãn nhìn thấy được + ô nhập, viền sáng lên khi focus.
  * Nhãn luôn hiện chứ không dùng placeholder thay nhãn.
  * Ô mật khẩu có nút ẩn/hiện để người dùng tự soát lỗi gõ trên bàn phím điện thoại.
@@ -62,6 +76,14 @@ export default function Field({
   const [focused, setFocused] = useState(false);
   const [revealed, setRevealed] = useState(false);
 
+  // `InputAccessoryView` chỉ có trên iOS và cần id riêng cho từng ô, nếu không
+  // các ô cùng màn sẽ dùng chung một thanh và nút "Xong" đóng nhầm ô khác.
+  // `useId` của React 19 trả chuỗi có dấu «» và :, lọc bỏ để `nativeID` chỉ còn
+  // ký tự an toàn khi truyền sang native.
+  const accessoryId = `field-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  const canThanhPhu =
+    Platform.OS === 'ios' && !multiline && !!keyboardType && BAN_PHIM_SO.has(keyboardType);
+
   return (
     <View style={[styles.wrap, style]}>
       <Text style={styles.label}>
@@ -82,6 +104,10 @@ export default function Field({
           autoComplete={autoComplete}
           autoCapitalize={secure ? 'none' : autoCapitalize}
           autoCorrect={false}
+          inputAccessoryViewID={canThanhPhu ? accessoryId : undefined}
+          // Ô một dòng: phím Return đóng bàn phím thay vì chèn xuống dòng.
+          returnKeyType={multiline ? undefined : 'done'}
+          onSubmitEditing={multiline ? undefined : Keyboard.dismiss}
           onFocus={() => setFocused(true)}
           onBlur={() => {
             setFocused(false);
@@ -124,6 +150,22 @@ export default function Field({
       ) : helper ? (
         <Text style={styles.helper}>{helper}</Text>
       ) : null}
+
+      {canThanhPhu ? (
+        <InputAccessoryView nativeID={accessoryId}>
+          <View style={styles.accessory}>
+            <Pressable
+              onPress={Keyboard.dismiss}
+              hitSlop={Spacing.md}
+              accessibilityRole="button"
+              accessibilityLabel="Đóng bàn phím"
+              style={({ pressed }) => [styles.accessoryBtn, pressed && styles.accessoryPressed]}
+            >
+              <Text style={styles.accessoryText}>Xong</Text>
+            </Pressable>
+          </View>
+        </InputAccessoryView>
+      ) : null}
     </View>
   );
 }
@@ -163,4 +205,23 @@ const styles = StyleSheet.create({
   },
   helper: { fontFamily: FontFamily.regular, fontSize: FontSize.micro, color: Colors.ink3 },
   error: { fontFamily: FontFamily.semibold, fontSize: FontSize.micro, color: Colors.red },
+  accessory: {
+    alignItems: 'flex-end',
+    backgroundColor: Colors.bg,
+    borderTopWidth: 1,
+    borderTopColor: Colors.line,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+  },
+  accessoryBtn: {
+    minHeight: MIN_TOUCH,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.lg,
+  },
+  accessoryPressed: { opacity: 0.6 },
+  accessoryText: {
+    fontFamily: FontFamily.semibold,
+    fontSize: FontSize.body,
+    color: Colors.brand,
+  },
 });

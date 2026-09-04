@@ -101,7 +101,9 @@ export default function RegisterOtpScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { justifyContent: 'center' },
+  // Không dùng `center`: ô OTP tự bật bàn phím khi vào màn, vùng cuộn thu lại
+  // và `center` sẽ cắt cụt phần trên lẫn phần dưới mà không cuộn tới được.
+  screen: { justifyContent: 'flex-start' },
   title: { ...Text_.display, color: Colors.ink, textAlign: 'center', marginTop: Spacing.page },
   sub: { ...Text_.micro, color: Colors.ink3, textAlign: 'center', marginTop: Spacing.md },
   hint: { ...Text_.micro, color: Colors.ink3, textAlign: 'center', marginTop: Spacing.xl },

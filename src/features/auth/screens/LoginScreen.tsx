@@ -94,7 +94,10 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { justifyContent: 'center' },
+  // `center` chỉ được phép khi nội dung còn thấp hơn vùng cuộn. Bàn phím mở làm
+  // vùng cuộn thấp đi, lúc đó `center` cắt cụt cả hai đầu và phần bị cắt không
+  // cuộn tới được. `flex-start` giữ nội dung neo trên, vẫn cuộn bình thường.
+  screen: { justifyContent: 'flex-start' },
   head: { paddingTop: Spacing.page, marginBottom: Spacing.section },
   forgot: {
     ...Text_.micro,

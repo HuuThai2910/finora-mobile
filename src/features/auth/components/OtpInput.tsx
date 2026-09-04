@@ -1,7 +1,16 @@
-import { useRef } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useId, useRef } from 'react';
+import {
+  InputAccessoryView,
+  Keyboard,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { Colors } from '@/constants/colors';
-import { FontFamily, FontSize, Radius, Spacing } from '@/theme';
+import { FontFamily, FontSize, MIN_TOUCH, Radius, Spacing } from '@/theme';
 import { OTP_LENGTH } from '../constants';
 
 type Props = {
@@ -20,6 +29,10 @@ type Props = {
  */
 export default function OtpInput({ value, onChange, length = OTP_LENGTH, autoFocus = true }: Props) {
   const input = useRef<TextInput>(null);
+  // Bàn phím số iOS không có phím Return; nhập thiếu số thì không tự đóng được.
+  // Lọc id của `useId` vì React 19 chèn dấu «» và : vào đó.
+  const accessoryId = `otp-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  const canThanhPhu = Platform.OS === 'ios';
 
   return (
     <View>
@@ -54,7 +67,24 @@ export default function OtpInput({ value, onChange, length = OTP_LENGTH, autoFoc
         autoFocus={autoFocus}
         style={styles.hiddenInput}
         accessibilityLabel={`Mã xác thực gồm ${length} chữ số`}
+        inputAccessoryViewID={canThanhPhu ? accessoryId : undefined}
       />
+
+      {canThanhPhu ? (
+        <InputAccessoryView nativeID={accessoryId}>
+          <View style={styles.accessory}>
+            <Pressable
+              onPress={Keyboard.dismiss}
+              hitSlop={Spacing.md}
+              accessibilityRole="button"
+              accessibilityLabel="Đóng bàn phím"
+              style={({ pressed }) => [styles.accessoryBtn, pressed && styles.accessoryPressed]}
+            >
+              <Text style={styles.accessoryText}>Xong</Text>
+            </Pressable>
+          </View>
+        </InputAccessoryView>
+      ) : null}
     </View>
   );
 }
@@ -82,4 +112,23 @@ const styles = StyleSheet.create({
   boxActive: { borderColor: Colors.brand, backgroundColor: Colors.brand50 },
   digit: { fontFamily: FontFamily.bold, fontSize: FontSize.heading, color: Colors.ink },
   hiddenInput: { position: 'absolute', opacity: 0, height: 1, width: 1 },
+  accessory: {
+    alignItems: 'flex-end',
+    backgroundColor: Colors.bg,
+    borderTopWidth: 1,
+    borderTopColor: Colors.line,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+  },
+  accessoryBtn: {
+    minHeight: MIN_TOUCH,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.lg,
+  },
+  accessoryPressed: { opacity: 0.6 },
+  accessoryText: {
+    fontFamily: FontFamily.semibold,
+    fontSize: FontSize.body,
+    color: Colors.brand,
+  },
 });

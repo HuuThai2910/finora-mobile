@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -5,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  type LayoutChangeEvent,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -42,16 +44,26 @@ export default function Screen({
   const insets = useSafeAreaInsets();
   const bg = light ? Colors.card : Colors.bg;
 
+  // Footer ghim đáy nằm NGOÀI vùng cuộn, nên nó phủ lên nội dung. Phải chừa
+  // đúng chiều cao thật của nó, đo bằng `onLayout`: đặt một hằng số ước lượng
+  // thì nút một dòng bị thừa chỗ, còn nút kèm chú thích lại vẫn bị che.
+  const [footerHeight, setFooterHeight] = useState(0);
+  const doFooter = (e: LayoutChangeEvent) => setFooterHeight(e.nativeEvent.layout.height);
+
   const padding = {
     paddingTop: insets.top + Spacing.lg,
-    paddingBottom: footer ? Spacing.xl : insets.bottom + Spacing.section,
+    paddingBottom: footer ? footerHeight + Spacing.xl : insets.bottom + Spacing.section,
   };
 
   if (!scroll) {
     return (
       <KeyboardAvoid bg={bg}>
         <View style={[styles.content, padding, style]}>{children}</View>
-        {footer ? <Footer insets={insets.bottom}>{footer}</Footer> : null}
+        {footer ? (
+          <Footer insets={insets.bottom} onLayout={doFooter}>
+            {footer}
+          </Footer>
+        ) : null}
       </KeyboardAvoid>
     );
   }
@@ -71,7 +83,11 @@ export default function Screen({
       >
         {children}
       </ScrollView>
-      {footer ? <Footer insets={insets.bottom}>{footer}</Footer> : null}
+      {footer ? (
+        <Footer insets={insets.bottom} onLayout={doFooter}>
+          {footer}
+        </Footer>
+      ) : null}
     </KeyboardAvoid>
   );
 }
@@ -92,9 +108,19 @@ function KeyboardAvoid({ bg, children }: { bg: string; children: React.ReactNode
   );
 }
 
-function Footer({ children, insets }: { children: React.ReactNode; insets: number }) {
+function Footer({
+  children,
+  insets,
+  onLayout,
+}: {
+  children: React.ReactNode;
+  insets: number;
+  onLayout: (e: LayoutChangeEvent) => void;
+}) {
   return (
-    <View style={[styles.footer, { paddingBottom: insets + Spacing.xl }]}>{children}</View>
+    <View style={[styles.footer, { paddingBottom: insets + Spacing.xl }]} onLayout={onLayout}>
+      {children}
+    </View>
   );
 }
 
