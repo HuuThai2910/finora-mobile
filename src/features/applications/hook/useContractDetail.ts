@@ -1,20 +1,20 @@
 import type { Step } from '@/components/phone';
 import type { LoanContractDetail } from '@/types/contract';
-import { formatAnnualRate, formatDong } from '@/utils/format';
-import { useGetContractHistoryQuery, useGetContractQuery } from '../api/applicationApi';
+import type { LoanApplication } from '@/types/loan';
+import { useGetApplicationQuery, useGetContractHistoryQuery, useGetContractQuery } from '../api/applicationApi';
 import type { StatusMeta } from '../constant';
 import { toLoadError } from '../mappers/apiError';
 import { contractStatusMeta } from '../mappers/statusMeta';
 import { buildContractTimeline } from '../mappers/timeline';
-import type { KeyTerm } from '../components/KeyTermsStrip';
 import { useCountdown, type Countdown } from './useCountdown';
 
 const HISTORY_PAGE_SIZE = 20;
 
 export type ContractDetailView = {
   contract: LoanContractDetail;
+  /** Hồ sơ gốc dùng giải thích vì sao lãi suất trong hợp đồng khác mức cơ sở ban đầu. */
+  pricingApplication: LoanApplication | null;
   status: StatusMeta;
-  keyTerms: KeyTerm[];
   timeline: Step[];
   timelineFailed: boolean;
   countdown: Countdown;
@@ -22,7 +22,6 @@ export type ContractDetailView = {
   canRespond: boolean;
   /** Đang chờ ký nhưng đã quá hạn — backend sẽ tự chuyển `EXPIRED`. */
   expiredWhileWaiting: boolean;
-  periodCount: number;
 };
 
 export type ContractDetailState = {
@@ -47,11 +46,15 @@ export function useContractDetail(contractNumber: string): ContractDetailState {
     size: HISTORY_PAGE_SIZE,
   });
   const contract = contractQuery.data ?? null;
+  const applicationQuery = useGetApplicationQuery(contract?.applicationNumber ?? '', {
+    skip: !contract?.applicationNumber,
+  });
   const countdown = useCountdown(contract?.expiresAt ?? null);
 
   const reload = () => {
     contractQuery.refetch();
     historyQuery.refetch();
+    if (contract?.applicationNumber) applicationQuery.refetch();
   };
 
   const waitingSignature = contract?.status === 'PENDING_SIGNATURE';
@@ -59,18 +62,13 @@ export function useContractDetail(contractNumber: string): ContractDetailState {
   const view: ContractDetailView | null = contract
     ? {
         contract,
+        pricingApplication: applicationQuery.data ?? null,
         status: contractStatusMeta(contract.status),
-        keyTerms: [
-          { label: 'Số tiền vay', value: formatDong(contract.principalAmount) },
-          { label: 'Kỳ hạn', value: `${contract.termMonths} tháng` },
-          { label: 'Lãi suất', value: formatAnnualRate(contract.annualInterestRate) },
-        ],
         timeline: buildContractTimeline(historyQuery.data?.data ?? [], contract.status),
         timelineFailed: Boolean(historyQuery.error),
         countdown,
         canRespond: waitingSignature && !countdown.expired,
         expiredWhileWaiting: waitingSignature && countdown.expired,
-        periodCount: contract.schedulePeriods?.length ?? 0,
       }
     : null;
 
@@ -80,7 +78,7 @@ export function useContractDetail(contractNumber: string): ContractDetailState {
       contractQuery.error || (!contractQuery.isLoading && !contract)
         ? toLoadError(contractQuery.error, 'Không tải được hợp đồng vay.')
         : null,
-    refreshing: contractQuery.isFetching || historyQuery.isFetching,
+    refreshing: contractQuery.isFetching || historyQuery.isFetching || applicationQuery.isFetching,
     reload,
     view,
   };

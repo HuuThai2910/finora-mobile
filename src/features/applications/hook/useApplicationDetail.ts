@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Step } from '@/components/phone';
 import type { LoanApplication } from '@/types/loan';
+import type { LoanContractSummary } from '@/types/contract';
 import { formatAnnualRate, formatDong } from '@/utils/format';
 import {
   useGetApplicationHistoryQuery,
@@ -10,15 +11,17 @@ import {
 } from '../api/applicationApi';
 import { WITHDRAWABLE_STATUSES, type StatusMeta } from '../constant';
 import { toActionError, toLoadError, type ActionError } from '../mappers/apiError';
-import { applicationStatusMeta } from '../mappers/statusMeta';
+import { applicationJourneyStatus } from '../mappers/statusMeta';
 import { buildApplicationTimeline } from '../mappers/timeline';
 import type { KeyTerm } from '../components/KeyTermsStrip';
 
 const HISTORY_PAGE_SIZE = 20;
-const CONTRACT_LOOKUP_SIZE = 20;
+const CONTRACT_LOOKUP_SIZE = 100;
 
 export type ApplicationDetailView = {
   application: LoanApplication;
+  /** Lịch phù hợp với trạng thái người vay đang xem: ban đầu hoặc đã chốt sau duyệt. */
+  displayedSchedule: LoanApplication['calculationSnapshot'];
   status: StatusMeta;
   keyTerms: KeyTerm[];
   timeline: Step[];
@@ -30,7 +33,7 @@ export type ApplicationDetailView = {
    * `contractNumber` vào Application nên phải dò ngược từ danh sách hợp đồng
    * của chính người dùng; không tìm thấy thì UI lui về danh sách hợp đồng.
    */
-  contractNumber: string | null;
+  contract: LoanContractSummary | null;
 };
 
 export type ApplicationDetailState = {
@@ -80,28 +83,42 @@ export function useApplicationDetail(applicationNumber: string): ApplicationDeta
   };
 
   const application = applicationQuery.data ?? null;
+  const showFinalTerms = application?.status === 'APPROVED'
+    && application.finalAnnualInterestRate != null
+    && application.finalCalculationSnapshot != null;
+  const displayedSchedule = showFinalTerms
+    ? application.finalCalculationSnapshot
+    : application?.calculationSnapshot ?? null;
 
   const relatedContracts = (contractsQuery.data?.data ?? []).filter(
     item => item.applicationNumber === applicationNumber,
   );
-  const contractNumber =
+  const contract =
     (relatedContracts.find(item => item.status === 'PENDING_SIGNATURE') ?? relatedContracts[0])
-      ?.contractNumber ?? null;
+      ?? null;
 
-  const view: ApplicationDetailView | null = application
+  const view: ApplicationDetailView | null = application && displayedSchedule
     ? {
         application,
-        status: applicationStatusMeta(application.status),
+        displayedSchedule,
+        status: applicationJourneyStatus(application.status, contract?.status),
         keyTerms: [
           { label: 'Số tiền vay', value: formatDong(application.requestedAmount) },
           { label: 'Kỳ hạn', value: `${application.requestedTermMonths} tháng` },
-          { label: 'Lãi suất', value: formatAnnualRate(application.productSnapshot.annualInterestRate) },
+          {
+            label: 'Lãi suất',
+            value: formatAnnualRate(
+              showFinalTerms && application.finalAnnualInterestRate != null
+                ? application.finalAnnualInterestRate
+                : application.productSnapshot.annualInterestRate,
+            ),
+          },
         ],
         timeline: buildApplicationTimeline(historyQuery.data?.data ?? [], application.status),
         timelineFailed: Boolean(historyQuery.error),
         canWithdraw: WITHDRAWABLE_STATUSES.includes(application.status),
-        periodCount: application.calculationSnapshot.periods?.length ?? 0,
-        contractNumber,
+        periodCount: displayedSchedule.periods?.length ?? 0,
+        contract,
       }
     : null;
 
@@ -126,7 +143,9 @@ export function useApplicationDetail(applicationNumber: string): ApplicationDeta
   };
 
   return {
-    loading: applicationQuery.isLoading,
+    // Chờ Contract khi hồ sơ đã APPROVED để không hiển thị thoáng qua trạng thái hồ sơ
+    // cũ trước khi biết hợp đồng thực tế đã ký, từ chối hay hết hạn.
+    loading: applicationQuery.isLoading || (approved && contractsQuery.isLoading),
     loadError:
       applicationQuery.error || (!applicationQuery.isLoading && !application)
         ? toLoadError(applicationQuery.error, 'Không tải được chi tiết hồ sơ vay.')

@@ -75,7 +75,8 @@ export default function ProductDetailScreen() {
           </View>
           <Text style={styles.secure}>● Khoản vay minh bạch</Text>
         </View>
-        <PItem label="Lãi suất" value={`${data.annualInterestRate.toFixed(2).replace('.', ',')}%/năm`} valueTone="up" />
+        <PItem label="Lãi suất cơ sở" value={`${data.annualInterestRate.toFixed(2).replace('.', ',')}%/năm`} valueTone="up" />
+        <PItem label="Khung có thể áp dụng" value={`${data.minAnnualInterestRate}% – ${data.maxAnnualInterestRate}%/năm`} />
         <PItem label="Kỳ hạn tối đa" value={`${data.maxTermMonths} tháng`} />
         <PItem label="Hạn mức tối đa" value={formatVND(data.maxAmount)} />
         <PItem label="Cách trả" value={REPAYMENT_METHOD_LABEL[data.repaymentMethod] ?? data.repaymentMethod} last />

@@ -14,6 +14,7 @@ import { useContractDetail, type ContractDetailView } from '../hook/useContractD
 import ContractCommitmentSummary from '../components/ContractCommitmentSummary';
 import DeclineForm from '../components/DeclineForm';
 import DisclosureSection from '../components/DisclosureSection';
+import PricingChangeNotice from '../components/PricingChangeNotice';
 
 type Nav = NativeStackNavigationProp<ProfileStackParamList, 'ContractConsent'>;
 type Route = RouteProp<ProfileStackParamList, 'ContractConsent'>;
@@ -90,7 +91,7 @@ type BodyProps = {
  * chắn có contract hợp lệ, tránh gọi hook sau các nhánh return ở trên.
  */
 function ConsentBody({ view, onDone, onStale }: BodyProps) {
-  const { contract, countdown } = view;
+  const { contract, countdown, pricingApplication } = view;
   const consent = useContractConsent(contract);
   const [mode, setMode] = useState<'sign' | 'decline'>('sign');
   const [accepted, setAccepted] = useState(false);
@@ -171,6 +172,7 @@ function ConsentBody({ view, onDone, onStale }: BodyProps) {
 
       {mode === 'sign' ? (
         <>
+          {pricingApplication ? <PricingChangeNotice application={pricingApplication} /> : null}
           <ContractCommitmentSummary contract={contract} />
 
           <InfoNote tone={countdown.urgent ? 'warn' : 'info'} style={styles.deadline}>

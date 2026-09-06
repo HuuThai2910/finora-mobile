@@ -6,7 +6,7 @@ import { formatVND } from '@/utils/format';
 import type { LoanProductCatalog } from '@/types/loan';
 import { REPAYMENT_METHOD_LABEL } from '../constant';
 
-/** Thẻ sản phẩm vay — tên, mã, ô lãi suất nổi bật, ba dòng thông số. */
+/** Thẻ sản phẩm vay phân biệt lãi suất cơ sở với khung có thể áp dụng sau thẩm định. */
 export default function ProductCard({
   product,
   onPress,
@@ -18,7 +18,7 @@ export default function ProductCard({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${product.name}, lãi suất ${product.annualInterestRate}% một năm`}
+      accessibilityLabel={`${product.name}, lãi suất cơ sở ${product.annualInterestRate}% một năm`}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
       <View style={styles.head}>
@@ -31,10 +31,14 @@ export default function ProductCard({
           <Text style={styles.rateValue}>
             {product.annualInterestRate.toString().replace('.', ',')}%
           </Text>
-          <Text style={styles.rateUnit}>/năm</Text>
+          <Text style={styles.rateUnit}>cơ sở / năm</Text>
         </View>
       </View>
 
+      <PItem
+        label="Khung lãi suất"
+        value={`${product.minAnnualInterestRate}% – ${product.maxAnnualInterestRate}%/năm`}
+      />
       <PItem
         label="Khoản vay"
         value={`${formatVND(product.minAmount)} – ${formatVND(product.maxAmount)}`}

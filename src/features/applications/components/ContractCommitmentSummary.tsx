@@ -25,7 +25,7 @@ export default function ContractCommitmentSummary({
       </Text>
       <Line label="Vay" value={formatDong(contract.principalAmount)} />
       <Line label="Trong" value={`${contract.termMonths} tháng`} />
-      <Line label="Lãi suất cố định" value={formatAnnualRate(contract.annualInterestRate)} />
+      <Line label="Lãi suất áp dụng" value={formatAnnualRate(contract.annualInterestRate)} />
       <Line
         label="Mỗi kỳ trả"
         value={`${formatDong(contract.firstInstallment)} · ${repaymentLabel.toLowerCase()}`}

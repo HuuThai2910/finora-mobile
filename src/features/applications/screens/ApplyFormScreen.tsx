@@ -242,7 +242,8 @@ export default function ApplyFormScreen() {
       </Checkbox>
       {errors.accepted ? <Text style={styles.checkboxError}>{errors.accepted}</Text> : null}
       <InfoNote tone="info" style={styles.info}>
-        Sau khi nộp, hệ thống sẽ tính lại và lưu lịch trả, kiểm tra điều kiện rồi đánh giá hồ sơ để chuyên viên thẩm định.
+        Sau khi nộp, hệ thống đánh giá hồ sơ, xác định lãi suất áp dụng và tính lại lịch trả bằng
+        hệ thống lõi. Nếu được duyệt, bạn sẽ xem đầy đủ điều khoản mới trước khi chọn ký hoặc từ chối.
       </InfoNote>
       {submitError ? <Text style={styles.submitError}>{submitError}</Text> : null}
     </Screen>

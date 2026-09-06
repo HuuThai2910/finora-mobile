@@ -7,6 +7,7 @@
  * trường — không phải sửa dòng code nào trong màn hình.
  */
 export type MockDomain =
+  | 'auth'
   | 'ekyc'
   | 'wallet'
   | 'invest'

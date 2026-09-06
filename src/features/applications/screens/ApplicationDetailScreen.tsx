@@ -9,9 +9,11 @@ import type { ProfileStackParamList } from '@/navigation/types';
 import { Spacing, Text_ } from '@/theme';
 import { REPAYMENT_LABELS } from '../constant';
 import { useApplicationDetail } from '../hook/useApplicationDetail';
+import { contractActionLabel } from '../mappers/statusMeta';
 import DeclaredInfoSection from '../components/DeclaredInfoSection';
 import KeyTermsStrip from '../components/KeyTermsStrip';
 import ProcessTimeline from '../components/ProcessTimeline';
+import PricingChangeNotice from '../components/PricingChangeNotice';
 import RepaymentSummary from '../components/RepaymentSummary';
 import StatusBanner from '../components/StatusBanner';
 import WithdrawSection from '../components/WithdrawSection';
@@ -52,9 +54,9 @@ export default function ApplicationDetailScreen() {
     );
   }
 
-  const { application, status, keyTerms, timeline, timelineFailed, canWithdraw, periodCount, contractNumber } =
+  const { application, displayedSchedule, status, keyTerms, timeline, timelineFailed, canWithdraw, periodCount, contract } =
     state.view;
-  const snapshot = application.calculationSnapshot;
+  const snapshot = displayedSchedule;
   const repaymentLabel =
     REPAYMENT_LABELS[application.productSnapshot.repaymentMethod] ??
     application.productSnapshot.repaymentMethod;
@@ -68,16 +70,18 @@ export default function ApplicationDetailScreen() {
         action={
           application.status === 'APPROVED' ? (
             <Button
-              label="Xem hợp đồng chờ ký"
+              label={contract ? contractActionLabel(contract.status) : 'Xem hợp đồng'}
               onPress={() =>
-                contractNumber
-                  ? navigation.navigate('ContractDetail', { contractNumber })
+                contract
+                  ? navigation.navigate('ContractDetail', { contractNumber: contract.contractNumber })
                   : navigation.navigate('MyContracts')
               }
             />
           ) : null
         }
       />
+
+      <PricingChangeNotice application={application} />
 
       <KeyTermsStrip terms={keyTerms} />
 
@@ -92,7 +96,7 @@ export default function ApplicationDetailScreen() {
         totalRepayment={snapshot.totalRepayment}
         expectedDisbursementDate={snapshot.expectedDisbursementDate}
         periodCount={periodCount}
-        estimate
+        estimate={application.status !== 'APPROVED'}
         onOpenSchedule={() =>
           navigation.navigate('RepaymentSchedule', {
             source: 'application',
@@ -102,8 +106,9 @@ export default function ApplicationDetailScreen() {
       />
 
       <InfoNote tone="info" style={styles.note}>
-        Đây là số dự kiến tính lúc bạn nộp hồ sơ. Lịch trả chính thức chỉ hình thành sau khi hợp đồng
-        có hiệu lực và khoản vay được giải ngân.
+        {application.status === 'APPROVED'
+          ? 'Đây là lịch theo điều khoản sau thẩm định và là cơ sở lập hợp đồng. Ngày trả thực tế có thể dịch theo ngày giải ngân.'
+          : 'Đây là số dự kiến tính lúc bạn nộp hồ sơ. Lịch trả chính thức chỉ hình thành sau khi hợp đồng có hiệu lực và khoản vay được giải ngân.'}
       </InfoNote>
 
       <ProcessTimeline title="TIẾN TRÌNH XỬ LÝ" steps={timeline} failed={timelineFailed} />

@@ -1,4 +1,6 @@
 import { ApiError, authFetch, authFetchWithToken } from '@/lib/api';
+import { isMocked } from '@/lib/mockFlag';
+import * as authMock from '@/lib/mocks/auth';
 import type {
   AuthTokens,
   LoginRequest,
@@ -54,57 +56,71 @@ function requireTokens(dto: AuthResponseDto): AuthTokens {
   return { accessToken: dto.accessToken, refreshToken: dto.refreshToken };
 }
 
-export const login = async (req: LoginRequest): Promise<AuthTokens> =>
-  requireTokens(await authFetch<AuthResponseDto>('/auth/login', json(req)));
+export const login = async (req: LoginRequest): Promise<AuthTokens> => {
+  if (isMocked('auth')) return authMock.login(req);
+  return requireTokens(await authFetch<AuthResponseDto>('/auth/login', json(req)));
+};
 
 /**
  * Bước 1 của đăng ký — backend gửi OTP qua email, chưa tạo tài khoản.
  * Không gửi họ tên: hồ sơ để trống, tên được điền từ OCR CCCD khi quét eKYC.
  */
-export const register = (req: RegisterRequest): Promise<RegistrationChallenge> =>
-  authFetch<RegistrationChallengeDto>(
+export const register = (req: RegisterRequest): Promise<RegistrationChallenge> => {
+  if (isMocked('auth')) return authMock.register(req);
+  return authFetch<RegistrationChallengeDto>(
     '/auth/register',
-    json({
-      email: req.email,
-      password: req.password,
-      phone: req.phone,
-    }),
+    json({ email: req.email, password: req.password, phone: req.phone }),
   );
+};
 
-export const resendRegistrationOtp = (email: string): Promise<RegistrationChallenge> =>
-  authFetch<RegistrationChallengeDto>('/auth/register/resend-otp', json({ email }));
+export const resendRegistrationOtp = (email: string): Promise<RegistrationChallenge> => {
+  if (isMocked('auth')) return authMock.resendRegistrationOtp(email);
+  return authFetch<RegistrationChallengeDto>('/auth/register/resend-otp', json({ email }));
+};
 
 /** Bước 2 của đăng ký — mã đúng thì tài khoản được tạo và đăng nhập luôn. */
 export const verifyRegistration = async (
   req: VerifyRegistrationRequest,
-): Promise<AuthTokens> =>
-  requireTokens(await authFetch<AuthResponseDto>('/auth/verify-registration', json(req)));
+): Promise<AuthTokens> => {
+  if (isMocked('auth')) return authMock.verifyRegistration(req);
+  return requireTokens(await authFetch<AuthResponseDto>('/auth/verify-registration', json(req)));
+};
 
 /**
  * Đổi refresh token lấy cặp token mới. Keycloak xoay vòng refresh token nên
  * giá trị cũ hết hiệu lực ngay sau lời gọi này.
  */
-export const refreshTokens = async (refreshToken: string): Promise<AuthTokens> =>
-  requireTokens(await authFetch<AuthResponseDto>('/auth/refresh', json({ refreshToken })));
+export const refreshTokens = async (refreshToken: string): Promise<AuthTokens> => {
+  if (isMocked('auth')) return authMock.refreshTokens(refreshToken);
+  return requireTokens(await authFetch<AuthResponseDto>('/auth/refresh', json({ refreshToken })));
+};
 
 /** Thu hồi refresh token phía Keycloak. Cần access token nên gọi qua kênh đã xác thực. */
-export const logout = (refreshToken: string): Promise<void> =>
-  authFetchWithToken<void>('/auth/logout', json({ refreshToken }));
+export const logout = (refreshToken: string): Promise<void> => {
+  if (isMocked('auth')) return authMock.logout(refreshToken);
+  return authFetchWithToken<void>('/auth/logout', json({ refreshToken }));
+};
 
 /**
  * Backend cố tình trả 200 kể cả khi email không tồn tại để không lộ tài khoản nào
  * có thật. UI vì vậy luôn hiển thị "đã gửi mã nếu email tồn tại".
  */
-export const forgotPassword = (email: string): Promise<void> =>
-  authFetch<void>('/auth/forgot-password', json({ email }));
+export const forgotPassword = (email: string): Promise<void> => {
+  if (isMocked('auth')) return authMock.forgotPassword(email);
+  return authFetch<void>('/auth/forgot-password', json({ email }));
+};
 
 /**
  * Kiểm tra OTP trước khi cho nhập mật khẩu mới. Backend không tiêu huỷ mã ở bước
  * này — `resetPassword` vẫn gửi lại chính mã đó và là bước xác thực cuối cùng.
  * Mã sai/hết hạn trả 400 với thông báo dùng chung "Mã không hợp lệ hoặc đã hết hạn".
  */
-export const verifyResetOtp = (email: string, otp: string): Promise<void> =>
-  authFetch<void>('/auth/verify-reset-otp', json({ email, otp }));
+export const verifyResetOtp = (email: string, otp: string): Promise<void> => {
+  if (isMocked('auth')) return authMock.verifyResetOtp(email, otp);
+  return authFetch<void>('/auth/verify-reset-otp', json({ email, otp }));
+};
 
-export const resetPassword = (req: ResetPasswordRequest): Promise<void> =>
-  authFetch<void>('/auth/reset-password', json(req));
+export const resetPassword = (req: ResetPasswordRequest): Promise<void> => {
+  if (isMocked('auth')) return authMock.resetPassword(req);
+  return authFetch<void>('/auth/reset-password', json(req));
+};

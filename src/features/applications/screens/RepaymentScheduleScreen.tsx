@@ -101,7 +101,7 @@ function ScheduleSummary({ view }: { view: ScheduleView }) {
       <InfoNote tone={estimate ? 'warn' : 'info'}>
         {estimate
           ? 'Lịch dự kiến tính lúc nộp hồ sơ. Số tiền và ngày có thể đổi khi khoản vay được duyệt và giải ngân thực tế.'
-          : 'Lịch theo điều khoản đã chốt trong hợp đồng. Ngày cụ thể có thể dịch theo ngày giải ngân thực tế.'}
+          : 'Lịch theo điều khoản sau thẩm định dùng để lập hợp đồng. Ngày cụ thể có thể dịch theo ngày giải ngân thực tế.'}
       </InfoNote>
 
       {view.periods.length > 0 ? (

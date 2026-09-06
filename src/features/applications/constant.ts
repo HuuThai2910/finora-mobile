@@ -192,4 +192,4 @@ export const PRICING_DISCLOSURE_VERSION =
   process.env.EXPO_PUBLIC_PRICING_DISCLOSURE_VERSION ?? 'RATE_DISCLOSURE_V1';
 
 export const PRICING_DISCLOSURE_TEXT =
-  'Tôi đã xem lãi suất, phí và lịch trả nợ dự kiến của sản phẩm này.';
+  'Tôi đã xem lãi suất cơ sở, khung lãi suất có thể áp dụng, phí và lịch trả nợ ban đầu. Tôi hiểu lãi suất cuối có thể tăng hoặc giảm sau đánh giá và sẽ được xem lại trước khi ký hợp đồng.';

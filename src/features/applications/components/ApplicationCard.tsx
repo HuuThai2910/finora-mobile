@@ -3,17 +3,22 @@ import { Card, Tag } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import { Radius, Spacing, Text_, tabularNums } from '@/theme';
 import type { LoanApplication } from '@/types/loan';
+import type { LoanContractSummary } from '@/types/contract';
 import { formatDate, formatDong } from '@/utils/format';
-import { APPLICATION_STATUS } from '../constant';
+import { applicationJourneyStatus } from '../mappers/statusMeta';
 
 type Props = {
   application: LoanApplication;
+  contract?: LoanContractSummary;
   onPress: () => void;
 };
 
 /** Thẻ hồ sơ chỉ trình bày dữ liệu Loan Service trả về, không ghép fixture gọi vốn/servicing. */
-export default function ApplicationCard({ application, onPress }: Props) {
-  const status = APPLICATION_STATUS[application.status];
+export default function ApplicationCard({ application, contract, onPress }: Props) {
+  const status = applicationJourneyStatus(application.status, contract?.status);
+  const displayedRate = application.status === 'APPROVED'
+    ? application.finalAnnualInterestRate ?? application.productSnapshot.annualInterestRate
+    : application.productSnapshot.annualInterestRate;
   return (
     <Pressable
       onPress={onPress}
@@ -30,7 +35,7 @@ export default function ApplicationCard({ application, onPress }: Props) {
         <View style={styles.metaRow}>
           <Text style={styles.meta}>{application.requestedTermMonths} tháng</Text>
           <Text style={styles.dot}>•</Text>
-          <Text style={styles.meta}>{application.productSnapshot.annualInterestRate}%/năm</Text>
+          <Text style={styles.meta}>{displayedRate}%/năm</Text>
         </View>
         <View style={styles.footer}>
           <Text style={styles.submitted}>Nộp ngày {formatDate(application.submittedAt)}</Text>

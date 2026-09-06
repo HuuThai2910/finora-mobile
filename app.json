@@ -6,10 +6,6 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "scheme": "finora",
-    "splash": {
-      "resizeMode": "contain",
-      "backgroundColor": "#1d4ed8"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -32,7 +28,16 @@
         {
           "cameraPermission": "FINORA dùng camera để chụp CCCD và xác minh khuôn mặt khi định danh."
         }
-      ]
+      ],
+      "expo-status-bar",
+      [
+        "expo-splash-screen",
+        {
+          "resizeMode": "contain",
+          "backgroundColor": "#1d4ed8"
+        }
+      ],
+      "expo-sharing"
     ]
   }
 }

@@ -10,7 +10,7 @@ import { ErrorState, LoadingScreen } from '@/components/feedback';
 import { formatDong, formatSigned } from '@/utils/format';
 import { useAuth } from '@/providers/AuthProvider';
 import { useBalance } from '@/features/wallet';
-import { APPLICATION_STATUS, useMyApplications } from '@/features/applications';
+import { applicationJourneyStatus, useMyApplications } from '@/features/applications';
 import type { HomeStackParamList, TabParamList } from '@/navigation/types';
 import { useHomeSummary, useUnreadCount } from '../hook/useHome';
 
@@ -35,6 +35,12 @@ export default function HomeScreen() {
     ? rawGivenName.charAt(0).toUpperCase() + rawGivenName.slice(1).toLowerCase()
     : '';
   const latestApplication = applications.data?.[0];
+  const latestStatus = latestApplication
+    ? applicationJourneyStatus(
+        latestApplication.status,
+        applications.contractsByApplication.get(latestApplication.applicationNumber)?.status,
+      )
+    : null;
 
   const loading = balance.loading || summary.loading || applications.loading;
   const error = balance.error ?? summary.error ?? applications.error;
@@ -98,8 +104,8 @@ export default function HomeScreen() {
                 label={latestApplication.applicationNumber}
                 sub={formatDong(latestApplication.requestedAmount)}
                 value={(
-                  <Tag tone={APPLICATION_STATUS[latestApplication.status].tone} small>
-                    {APPLICATION_STATUS[latestApplication.status].label}
+                  <Tag tone={latestStatus?.tone ?? 'gray'} small>
+                    {latestStatus?.label ?? 'Đang cập nhật'}
                   </Tag>
                 )}
                 onPress={() => nav.navigate('Hồ sơ', {

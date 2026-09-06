@@ -23,7 +23,7 @@ export default function LoanSelectionSummary({
       <PItem label="Sản phẩm" value={productName} />
       <PItem label="Số tiền vay" value={formatDong(amount)} valueTone="brand" />
       <PItem label="Kỳ hạn" value={`${termMonths} tháng`} />
-      <PItem label="Lãi suất sản phẩm" value={`${annualInterestRate}%/năm`} />
+      <PItem label="Lãi suất cơ sở ban đầu" value={`${annualInterestRate}%/năm`} />
       <PItem label="Ngày giải ngân dự kiến" value={formatDate(expectedDisbursementDate)} last />
     </Card>
   );

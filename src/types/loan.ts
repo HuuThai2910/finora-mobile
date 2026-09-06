@@ -14,7 +14,9 @@ export interface LoanProductCatalog {
   maxAmount: number;
   minTermMonths: number;
   maxTermMonths: number;
+  minAnnualInterestRate: number;
   annualInterestRate: number;
+  maxAnnualInterestRate: number;
   interestRateUnit: string;
   repaymentMethod: 'ANNUITY' | 'EQUAL_PRINCIPAL';
   rateNotice: string;
@@ -78,8 +80,8 @@ export type LoanApplicationStatus =
 export interface ApplicantFinancial {
   declaredMonthlyIncome: number;
   annualIncomeSnapshot: number;
-  employmentLengthMonths: number;
-  educationLevel: string;
+  employmentLengthMonths: number | null;
+  educationLevel: string | null;
   homeOwnership: string;
   monthlyDebtObligations: number;
   dtiSnapshot: number;
@@ -95,7 +97,9 @@ export interface ProductSnapshot {
   maxAmount: number;
   minTermMonths: number;
   maxTermMonths: number;
+  minAnnualInterestRate: number;
   annualInterestRate: number;
+  maxAnnualInterestRate: number;
   repaymentMethod: string;
   fineractProductId: number;
   coreMappingId: number;
@@ -129,6 +133,12 @@ export interface LoanApplication {
   financialInformation: ApplicantFinancial;
   productSnapshot: ProductSnapshot;
   calculationSnapshot: CalculationSnapshot;
+  finalCalculationSnapshot: CalculationSnapshot | null;
+  finalAnnualInterestRate: number | null;
+  pricingCreditGrade: string | null;
+  pricingAdjustmentPercentagePoints: number | null;
+  pricingPolicyVersion: string | null;
+  decisionSource: 'AI_POLICY' | 'ADMIN' | null;
   expectedDisbursementDate: string;
   pricingDisclosureVersion: string;
   pricingDisclosureAcceptedAt: string;
@@ -146,7 +156,7 @@ export interface LoanApplication {
 
 export interface LoanApplicationHistory {
   id: number;
-  fromStatus: LoanApplicationStatus;
+  fromStatus: LoanApplicationStatus | null;
   toStatus: LoanApplicationStatus;
   reasonCode: string | null;
   reasonDetail: string | null;

@@ -72,7 +72,7 @@ export default function ScheduleScreen() {
         <Text style={styles.summaryLabel}>TỔNG SỐ TIỀN VAY</Text>
         <Text style={styles.summaryAmount}>{formatDong(amount)}</Text>
         <Text style={styles.summaryMeta}>
-          {termMonths} tháng · {data.annualInterestRate}%/năm · kỳ đầu {formatDong(data.firstInstallment)}
+          {termMonths} tháng · lãi suất cơ sở {data.annualInterestRate}%/năm · kỳ đầu {formatDong(data.firstInstallment)}
         </Text>
       </View>
 

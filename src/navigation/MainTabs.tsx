@@ -15,6 +15,7 @@ import {
   ApplyFormScreen,
   ContractConsentScreen,
   ContractDetailScreen,
+  ContractDocumentScreen,
   MyApplicationsScreen,
   MyContractsScreen,
   RepaymentScheduleScreen,
@@ -94,6 +95,7 @@ function ProfileTab() {
       <ProfileStack.Screen name="ApplicationDetail" component={ApplicationDetailScreen} />
       <ProfileStack.Screen name="MyContracts" component={MyContractsScreen} />
       <ProfileStack.Screen name="ContractDetail" component={ContractDetailScreen} />
+      <ProfileStack.Screen name="ContractDocument" component={ContractDocumentScreen} />
       <ProfileStack.Screen name="ContractConsent" component={ContractConsentScreen} />
       <ProfileStack.Screen name="RepaymentSchedule" component={RepaymentScheduleScreen} />
       </ProfileStack.Navigator>

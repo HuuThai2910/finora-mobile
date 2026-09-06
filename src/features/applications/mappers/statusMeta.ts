@@ -23,3 +23,35 @@ export function applicationStatusMeta(status: LoanApplicationStatus): StatusMeta
 export function contractStatusMeta(status: LoanContractStatus): StatusMeta {
   return CONTRACT_STATUS[status] ?? fallback(status);
 }
+
+/**
+ * Hồ sơ dừng ở `APPROVED`, còn các bước ký/hiệu lực thuộc LoanContract.
+ * UI phải ghép hai aggregate để không tiếp tục báo “chờ ký” sau khi Contract
+ * đã được ký, từ chối hoặc hết hạn.
+ */
+export function applicationJourneyStatus(
+  applicationStatus: LoanApplicationStatus,
+  contractStatus?: LoanContractStatus,
+): StatusMeta {
+  if (applicationStatus === 'APPROVED' && contractStatus) {
+    return contractStatusMeta(contractStatus);
+  }
+  return applicationStatusMeta(applicationStatus);
+}
+
+export function contractActionLabel(status: LoanContractStatus): string {
+  switch (status) {
+    case 'PENDING_SIGNATURE':
+      return 'Đọc và ký hợp đồng';
+    case 'SIGNED':
+      return 'Xem hợp đồng đã ký';
+    case 'EFFECTIVE':
+      return 'Xem hợp đồng đang hiệu lực';
+    case 'COMPLETED':
+      return 'Xem hợp đồng đã hoàn tất';
+    case 'DECLINED':
+      return 'Xem hợp đồng đã từ chối';
+    case 'EXPIRED':
+      return 'Xem hợp đồng đã hết hạn';
+  }
+}

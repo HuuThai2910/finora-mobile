@@ -1,166 +1,203 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { Card, SectionLabel } from '@/components/ui';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Card } from '@/components/ui';
+import Icon from '@/components/ui/Icon';
 import { Colors } from '@/constants/colors';
-import { Radius, Spacing, Text_ } from '@/theme';
+import { IconSize, MIN_TOUCH, Radius, Spacing, Text_, tabularNums } from '@/theme';
 import type { LoanContractDetail } from '@/types/contract';
-import { formatDong } from '@/utils/format';
-import DisclosureSection from './DisclosureSection';
+import { formatAnnualRate, formatDate, formatDateTime, formatDong } from '@/utils/format';
+import { REPAYMENT_LABELS } from '../constant';
+import ContractDocumentEvidence from './ContractDocumentEvidence';
 
 type Props = {
   contract: LoanContractDetail;
-};
-
-const REPAYMENT_LABELS: Record<LoanContractDetail['repaymentMethod'], string> = {
-  ANNUITY: 'trả góp đều hằng kỳ',
-  EQUAL_PRINCIPAL: 'trả gốc đều, lãi giảm dần',
+  onOpenSchedule: () => void;
 };
 
 /**
- * Trình bày điều khoản borrower thực sự xác nhận và tách thông tin băm kỹ thuật
- * khỏi nội dung chính.
+ * Trình bày Contract theo cách người vay có thể quét nhanh như một hồ sơ ngân hàng.
  *
- * Văn bản hiển thị nguyên vẹn, không cắt bớt: đây là nội dung người vay có
- * nghĩa vụ đọc trước khi ký, và cắt ngang một điều khoản pháp lý còn tệ hơn là
- * để màn dài. Nút sang bước ký đã ghim ở đáy màn nên độ dài này không che mất
- * hành động chính. Hợp đồng V1 vẫn giữ nguyên văn bản gốc trong vùng đối chiếu
- * để không làm sai nội dung đã được băm.
+ * Các con số đều lấy trực tiếp từ snapshot Contract; component không tự tính lại. Toàn văn
+ * `documentContent` và hash vẫn được giữ trong vùng đối chiếu để bản trình bày không làm mất
+ * bằng chứng mà borrower đã ký.
  */
-export default function ContractDocumentSection({ contract }: Props) {
-  const isReadableDocument =
-    contract.documentVersion === 'CLICK_WRAP_TEXT_V2' &&
-    contract.documentContent.startsWith('HỢP ĐỒNG VAY FINORA');
+export default function ContractDocumentSection({ contract, onOpenSchedule }: Props) {
+  const repaymentLabel = REPAYMENT_LABELS[contract.repaymentMethod] ?? contract.repaymentMethod;
 
   return (
-    <View>
-      <SectionLabel style={styles.section}>NỘI DUNG HỢP ĐỒNG</SectionLabel>
-      <Card style={styles.documentCard}>
-        {isReadableDocument ? (
-          <ReadableContractDocument content={contract.documentContent} />
-        ) : (
-          <LegacyContractSummary contract={contract} />
-        )}
-      </Card>
+    <View style={styles.root}>
+      <DocumentSection index="01" title="Thông tin hợp đồng">
+        <InformationRow label="Mã hồ sơ vay" value={contract.applicationNumber} selectable />
+        <InformationRow label="Ngày giải ngân dự kiến" value={formatDate(contract.expectedDisbursementDate)} />
+        <InformationRow label="Hạn xác nhận" value={formatDateTime(contract.expiresAt)} last />
+      </DocumentSection>
 
-      <DisclosureSection
-        title="Thông tin xác thực hợp đồng"
-        hint="Dành cho việc đối chiếu phiên bản và tính toàn vẹn"
-      >
-        <VerificationValue label="Phiên bản điều khoản" value={contract.termsVersion} />
-        <VerificationValue label="Phiên bản tài liệu" value={contract.documentVersion} />
-        <VerificationValue label="Mã kiểm tra SHA-256" value={contract.documentHash} monospace />
-        <VerificationValue label="Mã kiểm tra lịch trả" value={contract.scheduleResponseHash} monospace />
-        {!isReadableDocument ? (
-          <View style={styles.originalDocument}>
-            <Text style={styles.originalTitle}>Văn bản gốc của hợp đồng phiên bản cũ</Text>
-            <Text style={styles.originalHint}>
-              Nội dung này được giữ nguyên để mã kiểm tra không thay đổi. Phần tóm tắt phía trên diễn
-              giải lại cùng các điều khoản bằng tiếng Việt dễ đọc.
-            </Text>
-            <Text style={styles.originalText}>{contract.documentContent}</Text>
+      <DocumentSection index="02" title="Điều khoản khoản vay">
+        <InformationRow label="Số tiền vay" value={formatDong(contract.principalAmount)} />
+        <InformationRow label="Lãi suất áp dụng" value={formatAnnualRate(contract.annualInterestRate)} />
+        <InformationRow label="Phương thức trả" value={repaymentLabel} />
+        <InformationRow label="Tổng tiền lãi" value={formatDong(contract.totalInterest)} />
+        <InformationRow label="Tổng phí" value={formatDong(contract.totalFees)} />
+        <InformationRow label="Tổng tiền phạt dự kiến" value={formatDong(contract.totalPenalties)} />
+        <InformationRow label="Tổng nghĩa vụ thanh toán" value={formatDong(contract.totalRepayment)} strong last />
+      </DocumentSection>
+
+      <DocumentSection index="03" title="Lịch trả nợ">
+        <Text style={styles.paragraph}>
+          Lịch được lập theo ngày giải ngân dự kiến. Ngày đến hạn thực tế có thể được cập nhật theo
+          ngày giải ngân chính thức.
+        </Text>
+        <View style={styles.scheduleSummary}>
+          <View>
+            <Text style={styles.scheduleCaption}>Số kỳ thanh toán</Text>
+            <Text style={styles.scheduleValue}>{contract.schedulePeriods.length} kỳ</Text>
           </View>
-        ) : null}
-      </DisclosureSection>
-    </View>
-  );
-}
+          <View style={styles.scheduleDivider} />
+          <View style={styles.scheduleRight}>
+            <Text style={styles.scheduleCaption}>Kỳ cao nhất</Text>
+            <Text style={styles.scheduleValue}>{formatDong(contract.maximumInstallment)}</Text>
+          </View>
+        </View>
+        <Pressable
+          onPress={onOpenSchedule}
+          accessibilityRole="button"
+          accessibilityLabel={`Xem đầy đủ lịch trả nợ ${contract.schedulePeriods.length} kỳ`}
+          style={({ pressed }) => [styles.scheduleAction, pressed && styles.pressed]}
+        >
+          <View style={styles.scheduleActionIcon}>
+            <Icon name="clock" size={IconSize.xs} color={Colors.brand} />
+          </View>
+          <View style={styles.scheduleActionCopy}>
+            <Text style={styles.scheduleActionTitle}>Xem lịch trả nợ từng kỳ</Text>
+            <Text style={styles.scheduleActionHint}>Chi tiết tiền gốc, lãi, phí và dư nợ còn lại</Text>
+          </View>
+          <Icon name="chevronRight" size={IconSize.xs} color={Colors.brand} />
+        </Pressable>
+      </DocumentSection>
 
-function LegacyContractSummary({ contract }: Props) {
-  return (
-    <View style={styles.summary}>
-      <Text style={styles.summaryTitle}>Thỏa thuận khoản vay</Text>
-      <Text style={styles.paragraph}>
-        1. Người vay xác nhận khoản vay {formatDong(contract.principalAmount)} trong{' '}
-        {contract.termMonths} tháng, với lãi suất cố định {contract.annualInterestRate}%/năm và
-        phương thức {REPAYMENT_LABELS[contract.repaymentMethod]}.
-      </Text>
-      <Text style={styles.paragraph}>
-        2. Tổng tiền lãi dự kiến là {formatDong(contract.totalInterest)}; tổng phí là{' '}
-        {formatDong(contract.totalFees)}; tổng tiền phạt dự kiến là{' '}
-        {formatDong(contract.totalPenalties)} và tổng nghĩa vụ thanh toán dự kiến là{' '}
-        {formatDong(contract.totalRepayment)}.
-      </Text>
-      <Text style={styles.paragraph}>
-        3. Lịch trả từng kỳ là một phần của điều khoản. Lịch chính thức có thể được cập nhật theo
-        ngày giải ngân thực tế.
-      </Text>
-      <Text style={styles.paragraph}>
-        4. Khi chọn “Ký xác nhận”, FINORA ghi nhận sự đồng ý bằng hình thức click-wrap trong hệ
-        thống; đây chưa phải chữ ký số SmartCA.
-      </Text>
-    </View>
-  );
-}
-
-function ReadableContractDocument({ content }: { content: string }) {
-  return (
-    <View style={styles.readableDocument}>
-      {content.split('\n').map((line, index) => {
-        if (!line) return <View key={`space-${index}`} style={styles.documentSpacing} />;
-        if (line === 'HỢP ĐỒNG VAY FINORA') {
-          return (
-            <Text key={`title-${index}`} style={styles.documentTitle}>
-              {line}
-            </Text>
-          );
-        }
-        if (/^\d+\.\s/.test(line)) {
-          return (
-            <Text key={`heading-${index}`} style={styles.documentHeading}>
-              {line}
-            </Text>
-          );
-        }
-        return (
-          <Text key={`line-${index}`} style={styles.document}>
-            {line}
+      <DocumentSection index="04" title="Xác nhận của người vay">
+        <Text style={styles.paragraph}>
+          Người vay xác nhận đã kiểm tra số tiền vay, lãi suất, thời hạn, tổng nghĩa vụ thanh toán
+          và lịch trả nợ trước khi quyết định ký.
+        </Text>
+        <View style={styles.consentNotice}>
+          <Icon name="shield" size={IconSize.sm} color={Colors.brand} />
+          <Text style={styles.consentText}>
+            Việc ký được ghi nhận bằng hình thức click-wrap trong FINORA; không phải hình ảnh chữ ký
+            tay hoặc chữ ký số SmartCA.
           </Text>
-        );
-      })}
+        </View>
+      </DocumentSection>
+
+      <ContractDocumentEvidence contract={contract} />
     </View>
   );
 }
 
-function VerificationValue({
+function DocumentSection({ index, title, children }: { index: string; title: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.sectionWrap}>
+      <View style={styles.sectionHeading}>
+        <View style={styles.sectionIndex}><Text style={styles.sectionIndexText}>{index}</Text></View>
+        <Text style={styles.sectionTitle} accessibilityRole="header">{title}</Text>
+      </View>
+      <Card style={styles.sectionCard}>{children}</Card>
+    </View>
+  );
+}
+
+function InformationRow({
   label,
   value,
-  monospace = false,
+  strong = false,
+  selectable = false,
+  last = false,
 }: {
   label: string;
   value: string;
-  monospace?: boolean;
+  strong?: boolean;
+  selectable?: boolean;
+  last?: boolean;
 }) {
   return (
-    <View style={styles.verificationRow}>
-      <Text style={styles.verificationLabel}>{label}</Text>
-      <Text selectable style={[styles.verificationValue, monospace && styles.monospace]}>
-        {value}
-      </Text>
+    <View style={[styles.infoRow, last && styles.infoRowLast]}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text selectable={selectable} style={[styles.infoValue, strong && styles.infoValueStrong]}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  section: { marginTop: Spacing.section },
-  documentCard: { borderRadius: Radius.lg },
-  readableDocument: { gap: Spacing.sm },
-  documentTitle: { ...Text_.heading, color: Colors.ink, textAlign: 'center', marginBottom: Spacing.sm },
-  documentHeading: { ...Text_.bodyBold, color: Colors.brand700, marginTop: Spacing.md },
-  document: { ...Text_.micro, color: Colors.ink2, lineHeight: 22 },
-  documentSpacing: { height: Spacing.xs },
-  summary: { gap: Spacing.lg },
-  summaryTitle: { ...Text_.heading, color: Colors.ink },
-  paragraph: { ...Text_.body, color: Colors.ink2, lineHeight: 23 },
-  verificationRow: { gap: Spacing.xxs, paddingVertical: Spacing.lg },
-  verificationLabel: { ...Text_.caption, color: Colors.ink3 },
-  verificationValue: { ...Text_.micro, color: Colors.ink, flexShrink: 1 },
-  monospace: { fontFamily: 'monospace' },
-  originalDocument: {
-    gap: Spacing.md,
+  root: { gap: Spacing.xxl },
+  sectionWrap: { gap: Spacing.md },
+  sectionHeading: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  sectionIndex: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.brand50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionIndexText: { ...Text_.captionBold, color: Colors.brand, ...tabularNums },
+  sectionTitle: { ...Text_.title, color: Colors.ink, flex: 1 },
+  sectionCard: { paddingVertical: Spacing.sm },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: Spacing.xl,
+    paddingVertical: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.line,
+  },
+  infoRowLast: { borderBottomWidth: 0 },
+  infoLabel: { ...Text_.micro, color: Colors.ink3, flex: 1 },
+  infoValue: { ...Text_.microBold, color: Colors.ink, flex: 1.15, textAlign: 'right', ...tabularNums },
+  infoValueStrong: { ...Text_.bodyBold, color: Colors.brand, ...tabularNums },
+  paragraph: { ...Text_.micro, color: Colors.ink2, lineHeight: 22 },
+  scheduleSummary: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    marginTop: Spacing.xl,
     paddingVertical: Spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: Colors.line,
+    borderBottomWidth: 1,
+    borderColor: Colors.line,
   },
-  originalTitle: { ...Text_.microBold, color: Colors.ink },
-  originalHint: { ...Text_.caption, color: Colors.ink3, lineHeight: 18 },
-  originalText: { ...Text_.caption, color: Colors.ink2, lineHeight: 19, fontFamily: 'monospace' },
+  scheduleDivider: { width: 1, backgroundColor: Colors.line, marginHorizontal: Spacing.xl },
+  scheduleRight: { flex: 1, alignItems: 'flex-end' },
+  scheduleCaption: { ...Text_.caption, color: Colors.ink3 },
+  scheduleValue: { ...Text_.microBold, color: Colors.ink, marginTop: Spacing.xs, ...tabularNums },
+  scheduleAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    minHeight: MIN_TOUCH,
+    marginTop: Spacing.lg,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.brand50,
+  },
+  scheduleActionIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scheduleActionCopy: { flex: 1, gap: Spacing.xxs },
+  scheduleActionTitle: { ...Text_.microBold, color: Colors.brand },
+  scheduleActionHint: { ...Text_.caption, color: Colors.ink3 },
+  pressed: { opacity: 0.7 },
+  consentNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.md,
+    marginTop: Spacing.xl,
+    padding: Spacing.lg,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.brand50,
+  },
+  consentText: { ...Text_.caption, color: Colors.ink2, lineHeight: 19, flex: 1 },
 });

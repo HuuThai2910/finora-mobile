@@ -65,6 +65,8 @@ export type ProfileStackParamList = {
   ApplicationDetail: { applicationNumber: string };
   MyContracts: undefined;
   ContractDetail: { contractNumber: string };
+  /** Phòng đọc nguyên văn hợp đồng và tạo bản PDF để lưu/chia sẻ. */
+  ContractDocument: { contractNumber: string };
   /**
    * Lịch trả nợ đầy đủ tách khỏi màn chi tiết vì có thể tới 60 kỳ.
    * Chỉ truyền định danh; màn tự đọc lại từ cache RTK Query thay vì

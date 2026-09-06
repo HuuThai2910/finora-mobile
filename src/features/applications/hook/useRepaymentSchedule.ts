@@ -47,9 +47,14 @@ export function useRepaymentSchedule(
 
   if (isApplication && applicationQuery.data) {
     const application = applicationQuery.data;
-    const snapshot = application.calculationSnapshot;
+    // Chỉ công bố lịch sau thẩm định khi hồ sơ đã APPROVED; trước đó borrower vẫn xem bản lúc nộp.
+    const snapshot = application.status === 'APPROVED' && application.finalCalculationSnapshot
+      ? application.finalCalculationSnapshot
+      : application.calculationSnapshot;
     view = {
-      origin: 'estimate',
+      origin: application.status === 'APPROVED' && application.finalCalculationSnapshot
+        ? 'contract'
+        : 'estimate',
       number: application.applicationNumber,
       periods: snapshot.periods ?? [],
       totalPrincipal: snapshot.totalPrincipal,
