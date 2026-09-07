@@ -84,6 +84,7 @@ const applicationApi = loanApi.injectEndpoints({
       contractNumber: string;
       version: number;
       documentHash: string;
+      pdfDocumentHash?: string;
       idempotencyKey: string;
     }>({
       query: ({ contractNumber, idempotencyKey, ...body }) => ({
@@ -130,4 +131,3 @@ export const {
   useSignContractMutation,
   useDeclineContractMutation,
 } = applicationApi;
-

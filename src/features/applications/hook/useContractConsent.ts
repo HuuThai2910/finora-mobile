@@ -21,8 +21,8 @@ export type ContractConsentState = {
  * Mỗi hành động giữ một idempotency key riêng. Key chỉ được đổi sau khi backend
  * xác nhận thành công; khi lỗi hoặc timeout thì cố tình dùng lại key cũ để lần
  * bấm sau là *cùng một ý định*, không tạo ra hai lần ký.
- * `version` và `documentHash` lấy nguyên từ contract đang hiển thị — đúng bản
- * mà người dùng vừa đọc và chấp thuận.
+ * `version`, hash văn bản legacy và hash PDF đều lấy nguyên từ Contract đang
+ * hiển thị để consent gắn đúng artifact server mà người dùng vừa đọc.
  */
 export function useContractConsent(contract: LoanContractDetail): ContractConsentState {
   const [signContract, signState] = useSignContractMutation();
@@ -41,6 +41,7 @@ export function useContractConsent(contract: LoanContractDetail): ContractConsen
         contractNumber: contract.contractNumber,
         version: contract.version,
         documentHash: contract.documentHash,
+        pdfDocumentHash: contract.pdfDocument?.contentHash,
         idempotencyKey: signKey.current,
       }).unwrap();
       signKey.current = generateIdempotencyKey();
