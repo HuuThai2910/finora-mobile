@@ -6,8 +6,11 @@
  * Khi backend của một miền hoàn thành, chỉ cần xoá tên miền đó khỏi biến môi
  * trường — không phải sửa dòng code nào trong màn hình.
  */
+/**
+ * `auth` cố ý không có trong danh sách: Loan Service đọc claim `user_id` của access
+ * token thật để biết hồ sơ vay thuộc về ai, nên một phiên giả sẽ bị từ chối.
+ */
 export type MockDomain =
-  | 'auth'
   | 'ekyc'
   | 'wallet'
   | 'invest'
