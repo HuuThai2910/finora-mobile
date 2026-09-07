@@ -18,6 +18,15 @@ export interface LoanContract {
 
 export type LoanContractStatus = 'PENDING_SIGNATURE' | 'SIGNED' | 'DECLINED' | 'EXPIRED' | 'EFFECTIVE' | 'COMPLETED';
 
+export interface LoanContractPdfDocument {
+  artifactType: 'SIGNABLE' | 'SIGNED_RECEIPT';
+  documentVersion: string;
+  contentType: 'application/pdf';
+  contentHash: string;
+  contentLength: number;
+  downloadPath: string;
+}
+
 export interface LoanContractSummary {
   contractNumber: string;
   applicationNumber: string;
@@ -46,6 +55,7 @@ export interface LoanContractDetail extends LoanContractSummary {
   documentContent: string;
   documentContentType: string;
   documentHash: string;
+  pdfDocument: LoanContractPdfDocument | null;
   signedBy: string | null;
   signedAt: string | null;
   signatureMethod: 'CLICK_WRAP_MVP' | null;

@@ -1,52 +1,74 @@
 import { useCallback, useState } from 'react';
-import * as Print from 'expo-print';
+import { Linking } from 'react-native';
+import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import { loanApiUrl } from '@/lib/api/loanApi';
 import type { LoanContractDetail } from '@/types/contract';
-import { buildContractPdfHtml } from '../mappers/contractDocumentPdf';
 
 export type ContractPdfState = {
-  exportPdf: () => Promise<void>;
-  exporting: boolean;
+  openPdf: () => Promise<boolean>;
+  sharePdf: () => Promise<void>;
+  opening: boolean;
+  sharing: boolean;
   error: string | null;
   clearError: () => void;
 };
 
 /**
- * Tạo PDF cục bộ từ nội dung hợp đồng bất biến rồi mở bảng lưu/chia sẻ của hệ
- * điều hành. File chỉ là bản trình bày để người vay giữ lại; hành động ký vẫn
- * gửi version/hash của LoanContract về backend qua useContractConsent.
+ * Mở hoặc tải đúng PDF bất biến do Loan Service phát hành. Mobile không dựng
+ * lại tài liệu nên bản người dùng đọc, hash khi ký và bản tải về là một nguồn.
  */
 export function useContractPdf(contract: LoanContractDetail): ContractPdfState {
-  const [exporting, setExporting] = useState(false);
+  const [opening, setOpening] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const exportPdf = useCallback(async () => {
-    if (exporting) return;
-    setExporting(true);
+  const requireUrl = useCallback((): string => {
+    if (!contract.pdfDocument) {
+      throw new Error('Hợp đồng cũ chưa có bản PDF từ máy chủ.');
+    }
+    return loanApiUrl(contract.pdfDocument.downloadPath);
+  }, [contract.pdfDocument]);
+
+  const openPdf = useCallback(async (): Promise<boolean> => {
+    if (opening) return false;
+    setOpening(true);
     setError(null);
 
     try {
-      const result = await Print.printToFileAsync({
-        html: buildContractPdfHtml(contract),
-        width: 595,
-        height: 842,
-        margins: { top: 0, right: 0, bottom: 0, left: 0 },
-      });
+      await Linking.openURL(requireUrl());
+      return true;
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Không thể mở bản PDF hợp đồng.');
+      return false;
+    } finally {
+      setOpening(false);
+    }
+  }, [opening, requireUrl]);
+
+  const sharePdf = useCallback(async () => {
+    if (sharing) return;
+    setSharing(true);
+    setError(null);
+
+    try {
+      const target = new File(Paths.cache, `${contract.contractNumber}.pdf`);
+      const file = await File.downloadFileAsync(requireUrl(), target, { idempotent: true });
       const sharingAvailable = await Sharing.isAvailableAsync();
       if (!sharingAvailable) {
         throw new Error('Thiết bị không hỗ trợ lưu hoặc chia sẻ file.');
       }
-      await Sharing.shareAsync(result.uri, {
+      await Sharing.shareAsync(file.uri, {
         mimeType: 'application/pdf',
         UTI: 'com.adobe.pdf',
         dialogTitle: `Lưu hợp đồng ${contract.contractNumber}`,
       });
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Không thể tạo bản PDF hợp đồng.');
+      setError(cause instanceof Error ? cause.message : 'Không thể tải bản PDF hợp đồng.');
     } finally {
-      setExporting(false);
+      setSharing(false);
     }
-  }, [contract, exporting]);
+  }, [contract.contractNumber, requireUrl, sharing]);
 
-  return { exportPdf, exporting, error, clearError: () => setError(null) };
+  return { openPdf, sharePdf, opening, sharing, error, clearError: () => setError(null) };
 }

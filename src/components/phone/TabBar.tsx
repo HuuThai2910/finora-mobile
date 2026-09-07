@@ -1,6 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
 import { FontFamily, FontSize, IconSize, Spacing } from '@/theme';
@@ -21,12 +20,6 @@ export const TAB_ICONS: Record<string, IconName> = {
  */
 export default function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const focusedTab = state.routes[state.index];
-  const focusedNestedRoute = getFocusedRouteNameFromRoute(focusedTab);
-
-  // Phòng đọc hợp đồng cần toàn bộ chiều cao màn hình và không phải nơi đổi tác vụ.
-  // Ẩn tab bar tại đây để tài liệu không bị cắt hoặc trông như một màn hình hồ sơ thông thường.
-  if (focusedNestedRoute === 'ContractDocument') return null;
 
   return (
     <View style={[styles.bar, { paddingBottom: insets.bottom + Spacing.sm }]}>

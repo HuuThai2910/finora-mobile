@@ -3,7 +3,7 @@ import { Card, Tag } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import { Radius, Spacing, Text_, tabularNums } from '@/theme';
 import type { LoanApplication } from '@/types/loan';
-import { formatAnnualRate, formatDong } from '@/utils/format';
+import { formatAnnualRate } from '@/utils/format';
 
 type RateDirection = 'lower' | 'same' | 'higher';
 
@@ -37,9 +37,6 @@ const COPY: Record<RateDirection, { title: string; description: string; tone: 'g
  */
 export default function PricingChangeNotice({ application }: { application: LoanApplication }) {
   const finalRate = application.finalAnnualInterestRate;
-  const finalSchedule = application.finalCalculationSnapshot;
-  const initialSchedule = application.calculationSnapshot;
-
   if (application.status !== 'APPROVED' || finalRate == null) return null;
 
   const baseRate = application.productSnapshot.annualInterestRate;
@@ -64,28 +61,8 @@ export default function PricingChangeNotice({ application }: { application: Loan
         <RateCell label="Áp dụng trong hợp đồng" value={formatAnnualRate(finalRate)} emphasized />
       </View>
 
-      {finalSchedule ? (
-        <View style={styles.scheduleComparison}>
-          <ComparisonRow
-            label="Kỳ trả đầu"
-            before={formatDong(initialSchedule.firstInstallment)}
-            after={formatDong(finalSchedule.firstInstallment)}
-          />
-          <ComparisonRow
-            label="Tổng tiền lãi"
-            before={formatDong(initialSchedule.totalInterest)}
-            after={formatDong(finalSchedule.totalInterest)}
-          />
-          <ComparisonRow
-            label="Tổng phải trả"
-            before={formatDong(initialSchedule.totalRepayment)}
-            after={formatDong(finalSchedule.totalRepayment)}
-          />
-        </View>
-      ) : null}
-
       <Text style={styles.choice}>
-        Hãy đọc lịch trả và toàn bộ hợp đồng bên dưới. Bạn chỉ ký khi đồng ý với mức áp dụng mới;
+        Hãy mở bản PDF để đọc lịch trả và toàn bộ điều khoản. Bạn chỉ ký khi đồng ý với mức áp dụng mới;
         nếu không phù hợp, bạn có quyền từ chối hợp đồng.
       </Text>
     </Card>
@@ -97,19 +74,6 @@ function RateCell({ label, value, emphasized = false }: { label: string; value: 
     <View style={[styles.rateCell, emphasized && styles.rateCellEmphasized]}>
       <Text style={styles.rateLabel}>{label}</Text>
       <Text style={[styles.rateValue, emphasized && styles.rateValueEmphasized]}>{value}</Text>
-    </View>
-  );
-}
-
-function ComparisonRow({ label, before, after }: { label: string; before: string; after: string }) {
-  return (
-    <View style={styles.comparisonRow}>
-      <Text style={styles.comparisonLabel}>{label}</Text>
-      <View style={styles.comparisonValues}>
-        <Text style={styles.beforeValue}>{before}</Text>
-        <Text style={styles.smallArrow}>→</Text>
-        <Text style={styles.afterValue}>{after}</Text>
-      </View>
     </View>
   );
 }
@@ -131,12 +95,5 @@ const styles = StyleSheet.create({
   rateValue: { ...Text_.bodyBold, color: Colors.ink2, ...tabularNums },
   rateValueEmphasized: { color: Colors.brand },
   arrow: { ...Text_.bodyBold, color: Colors.brand, alignSelf: 'center' },
-  scheduleComparison: { gap: Spacing.md, paddingTop: Spacing.md, borderTopWidth: 1, borderTopColor: Colors.line },
-  comparisonRow: { gap: Spacing.xs },
-  comparisonLabel: { ...Text_.caption, color: Colors.ink3 },
-  comparisonValues: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  beforeValue: { ...Text_.micro, color: Colors.ink3, textDecorationLine: 'line-through', ...tabularNums },
-  smallArrow: { ...Text_.captionBold, color: Colors.ink3 },
-  afterValue: { ...Text_.microBold, color: Colors.ink, ...tabularNums },
   choice: { ...Text_.caption, color: Colors.ink2, lineHeight: 19 },
 });

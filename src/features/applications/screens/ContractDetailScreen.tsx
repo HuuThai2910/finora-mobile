@@ -1,32 +1,28 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ErrorState, LoadingScreen } from '@/components/feedback';
 import { PHeader, Screen } from '@/components/phone';
-import { Button, InfoNote } from '@/components/ui';
+import { Button, Card, InfoNote } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import type { ProfileStackParamList } from '@/navigation/types';
 import { MIN_TOUCH, Spacing, Text_ } from '@/theme';
-import { useContractDetail } from '../hook/useContractDetail';
 import ContractOverviewCard from '../components/ContractOverviewCard';
+import InlineContractConsent from '../components/InlineContractConsent';
 import ProcessTimeline from '../components/ProcessTimeline';
 import PricingChangeNotice from '../components/PricingChangeNotice';
+import { useContractDetail, type ContractDetailView } from '../hook/useContractDetail';
+import { useContractPdf } from '../hook/useContractPdf';
 
 type Nav = NativeStackNavigationProp<ProfileStackParamList, 'ContractDetail'>;
 
 /**
- * Màn đọc hợp đồng. Đây là nơi để *hiểu* hợp đồng, việc ký hoặc từ chối nằm ở
- * `ContractConsentScreen`.
- *
- * Tách như vậy vì ở bản cũ toàn văn hợp đồng nằm lẫn với tóm tắt tài chính.
- * Màn này cho biết trạng thái và nghĩa vụ chính; phòng đọc tài liệu/PDF là một
- * màn riêng và chỉ từ đó mới đi tiếp sang bước ký.
- *
- * Màn này chỉ tóm tắt nhận diện, trạng thái và hạn xác nhận. Toàn bộ nghĩa vụ tiền
- * và lịch trả nằm trong phòng đọc để một con số không xuất hiện ở hai khối cạnh nhau.
+ * Một màn duy nhất cho toàn bộ bước đọc và consent: tóm tắt điều khoản, mở
+ * thẳng PDF server rồi hiện ký/từ chối ngay bên dưới. Toàn văn không được dựng
+ * lại bằng React Native để PDF đã xem và hash gửi khi ký luôn cùng một artifact.
  */
 export default function ContractDetailScreen() {
-  const navigation = useNavigation<Nav>();
   const { contractNumber } = useRoute<RouteProp<ProfileStackParamList, 'ContractDetail'>>().params;
   const state = useContractDetail(contractNumber);
 
@@ -51,6 +47,25 @@ export default function ContractDetailScreen() {
     );
   }
 
+  return (
+    <ContractDetailBody
+      view={state.view}
+      refreshing={state.refreshing}
+      reload={state.reload}
+    />
+  );
+}
+
+function ContractDetailBody({
+  view,
+  refreshing,
+  reload,
+}: {
+  view: ContractDetailView;
+  refreshing: boolean;
+  reload: () => void;
+}) {
+  const navigation = useNavigation<Nav>();
   const {
     contract,
     pricingApplication,
@@ -59,21 +74,25 @@ export default function ContractDetailScreen() {
     countdown,
     canRespond,
     expiredWhileWaiting,
-  } = state.view;
+  } = view;
+  const pdf = useContractPdf(contract);
+  const [openedPdfHash, setOpenedPdfHash] = useState<string | null>(null);
+  const currentPdfHash = contract.pdfDocument?.contentHash ?? null;
+  const openedCurrentPdf = currentPdfHash !== null && openedPdfHash === currentPdfHash;
+  const confirmed = ['SIGNED', 'EFFECTIVE', 'COMPLETED'].includes(contract.status);
+
+  const openPdf = async () => {
+    const opened = await pdf.openPdf();
+    if (opened && currentPdfHash) setOpenedPdfHash(currentPdfHash);
+  };
+
+  const handleStale = () => {
+    setOpenedPdfHash(null);
+    reload();
+  };
 
   return (
-    <Screen
-      onRefresh={state.reload}
-      refreshing={state.refreshing}
-      footer={
-        canRespond ? (
-          <Button
-            label="Đọc nội dung và ký"
-            onPress={() => navigation.navigate('ContractDocument', { contractNumber })}
-          />
-        ) : undefined
-      }
-    >
+    <Screen onRefresh={reload} refreshing={refreshing}>
       <PHeader title="Hợp đồng vay" back />
 
       <ContractOverviewCard contract={contract} countdown={countdown} />
@@ -85,6 +104,59 @@ export default function ContractDetailScreen() {
           Hợp đồng đã quá hạn xác nhận nên không còn ký được. Hệ thống sẽ cập nhật trạng thái sang
           “Đã hết hạn”; nếu vẫn cần vay, bạn hãy nộp hồ sơ mới.
         </InfoNote>
+      ) : null}
+
+      <Card style={styles.documentCard}>
+        <View style={styles.documentCopy}>
+          <Text style={styles.documentEyebrow}>NỘI DUNG HỢP ĐỒNG</Text>
+          <Text style={styles.documentTitle}>
+            {confirmed ? 'Bản PDF xác nhận' : 'Hợp đồng và lịch trả nợ'}
+          </Text>
+          <Text style={styles.documentDescription}>
+            Mở toàn văn PDF do Loan Service phát hành. Lịch từng kỳ và tổng nghĩa vụ chỉ nằm trong
+            tài liệu này để tránh hiển thị lặp.
+          </Text>
+        </View>
+        <Button
+          label={confirmed ? 'Mở bản xác nhận PDF' : 'Mở nội dung hợp đồng PDF'}
+          icon="file"
+          onPress={openPdf}
+          loading={pdf.opening}
+          disabled={!contract.pdfDocument || pdf.sharing}
+        />
+        <Button
+          label="Lưu hoặc chia sẻ PDF"
+          icon="download"
+          variant="outline"
+          onPress={pdf.sharePdf}
+          loading={pdf.sharing}
+          disabled={!contract.pdfDocument || pdf.opening}
+        />
+      </Card>
+
+      {pdf.error ? <InfoNote tone="warn" style={styles.note}>{pdf.error}</InfoNote> : null}
+
+      {canRespond && !contract.pdfDocument ? (
+        <InfoNote tone="warn" style={styles.note}>
+          Hợp đồng cũ này chưa có PDF từ máy chủ nên chưa thể ký trên ứng dụng. Vui lòng liên hệ
+          FINORA để được phát hành đúng tài liệu.
+        </InfoNote>
+      ) : null}
+
+      {canRespond && contract.pdfDocument && !openedCurrentPdf ? (
+        <InfoNote tone="info" style={styles.note}>
+          Hãy mở và đọc bản PDF hiện hành. Khi quay lại ứng dụng, phần xác nhận sẽ xuất hiện ngay
+          bên dưới mà không cần chuyển sang màn khác.
+        </InfoNote>
+      ) : null}
+
+      {canRespond && openedCurrentPdf ? (
+        <InlineContractConsent
+          contract={contract}
+          countdown={countdown}
+          onDone={reload}
+          onStale={handleStale}
+        />
       ) : null}
 
       <Pressable
@@ -100,16 +172,6 @@ export default function ContractDetailScreen() {
         <Text style={styles.originText}>Lập từ hồ sơ {contract.applicationNumber}</Text>
       </Pressable>
 
-      {!canRespond ? (
-        <Button
-          label="Xem nội dung hợp đồng"
-          icon="file"
-          variant="outline"
-          onPress={() => navigation.navigate('ContractDocument', { contractNumber })}
-          style={styles.documentButton}
-        />
-      ) : null}
-
       <ProcessTimeline title="LỊCH SỬ HỢP ĐỒNG" steps={timeline} failed={timelineFailed} />
     </Screen>
   );
@@ -117,8 +179,12 @@ export default function ContractDetailScreen() {
 
 const styles = StyleSheet.create({
   note: { marginTop: Spacing.xl },
-  origin: { justifyContent: 'center', minHeight: MIN_TOUCH, marginTop: Spacing.sm },
+  documentCard: { gap: Spacing.lg, marginTop: Spacing.section },
+  documentCopy: { gap: Spacing.xs },
+  documentEyebrow: { ...Text_.captionBold, color: Colors.brand, letterSpacing: 0.6 },
+  documentTitle: { ...Text_.title, color: Colors.ink },
+  documentDescription: { ...Text_.micro, color: Colors.ink2 },
+  origin: { justifyContent: 'center', minHeight: MIN_TOUCH, marginTop: Spacing.section },
   pressed: { opacity: 0.6 },
   originText: { ...Text_.micro, color: Colors.brand },
-  documentButton: { marginTop: Spacing.section },
 });

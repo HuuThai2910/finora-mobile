@@ -85,8 +85,7 @@ Backend quyết định field, status và trình tự. HTML chỉ quyết địn
 | `MyApplicationsScreen` | Danh sách hồ sơ của tôi | `b-loan`, `m-myloan` | GET applications/me |
 | `ApplicationDetailScreen` | Snapshot, timeline, withdraw và trạng thái | `m-myloan` | GET detail/history/withdraw |
 | `MyContractsScreen` | Danh sách Contract | `b-sign`, `m-borrow` | GET contracts/me |
-| `ContractDetailScreen` | Đọc điều khoản và toàn bộ schedule; thông tin hash/version nằm trong vùng đối chiếu có thể mở | `b-sign` | GET contract detail/history |
-| `ContractConsentScreen` | Ký click-wrap hoặc decline | `m-borrow`, `m-vento` chỉ lấy bố cục | POST sign/decline |
+| `ContractDetailScreen` | Tóm tắt, mở/lưu PDF và xác nhận ký hoặc từ chối ngay trên một màn | `b-sign`, `m-borrow` | GET contract detail/history/document; POST sign/decline |
 
 Không hiển thị funded percent, investor count, disbursed balance hoặc repayment progress từ mock như dữ liệu thật trong MOBILE-LOAN-001.
 
@@ -161,19 +160,18 @@ truyền qua bước preview và map vào request ở bước 3. Chúng không �
 
 1. Khi Application `APPROVED`, hiển thị lời nhắc kiểm tra Contract; không tự coi approve là đã ký.
 2. List `/loan-contracts/me` và mở detail bằng `contractNumber`.
-3. Hiển thị số tiền, kỳ hạn, lãi cố định, repayment method, tổng trả, schedule và expiry theo ngôn ngữ dễ hiểu. Hash/version là bằng chứng kỹ thuật nên nằm trong mục “Thông tin xác thực hợp đồng” mặc định thu gọn, không cạnh tranh với điều khoản chính.
-4. Contract V2 hiển thị nguyên văn tài liệu tiếng Việt đã được băm. Với Contract V1 cũ dạng `key=value`, UI diễn giải bằng response có cấu trúc nhưng vẫn cho mở nguyên văn bản gốc để đối chiếu, tuyệt đối không sửa nội dung/hash đã phát hành.
-5. Chỉ cho ký khi status `PENDING_SIGNATURE` và chưa hết hạn.
-6. Trước khi ký, người dùng phải xem/scroll nội dung và tick xác nhận; gửi đúng `version`, `documentHash`, `CLICK_WRAP_MVP` và idempotency key.
-7. Không tự băm lại một phiên bản text đã render khác backend. Hash request lấy từ Contract detail đang được người dùng chấp thuận.
-8. Decline gửi version, reason code và detail khi `OTHER`; không xóa Application đã APPROVED.
-9. Sau action, invalidate Contract list/detail và Application detail liên quan.
-10. Trước nội dung hợp đồng, so sánh base/final rate, kỳ trả đầu, tổng lãi và tổng phải trả.
+3. Màn chi tiết chỉ hiển thị số tiền, kỳ hạn, lãi suất, trạng thái và hạn xác nhận; tổng nghĩa vụ/lịch từng kỳ nằm trong PDF để không lặp số liệu.
+4. Nút xem nội dung mở thẳng `pdfDocument.downloadPath` do Loan trả, không đi qua màn metadata và không render lại `documentContent` thành PDF cục bộ. Contract legacy thiếu PDF được báo rõ và không giả tạo artifact mới trên thiết bị.
+5. Sau khi mở PDF thành công, khối ký/từ chối xuất hiện ngay dưới khu vực tài liệu trên cùng màn chi tiết. Trạng thái đã xem gắn với `pdfDocument.contentHash`; artifact đổi thì phải mở lại.
+6. Chỉ cho ký khi status `PENDING_SIGNATURE`, chưa hết hạn, có PDF server và người dùng đã mở đúng PDF hiện hành.
+7. Trước khi ký, người dùng tick xác nhận; gửi đúng `version`, `documentHash`, `pdfDocumentHash`, `CLICK_WRAP_MVP` và idempotency key.
+8. Không tự băm lại một phiên bản text đã render khác backend. Hash request lấy từ Contract detail đang được người dùng chấp thuận.
+9. Decline gửi version, reason code và detail khi `OTHER`; không xóa Application đã APPROVED.
+10. Sau action, invalidate Contract list/detail và Application detail liên quan.
+11. Trên màn tóm tắt, chỉ so sánh base/final rate và giải thích quyền từ chối; kỳ trả/tổng lãi/tổng phải trả đọc trong PDF.
     Chỉ giải thích đây là kết quả đánh giá tín dụng; không công khai grade hoặc chi tiết mô hình cho borrower.
-11. Tài liệu V2 được mở trong một phòng đọc riêng, trình bày nguyên văn như văn bản hợp đồng và cho
-    lưu/chia sẻ bản PDF được tạo cục bộ từ chính `documentContent`. PDF là bản trình bày để borrower
-    giữ lại, không thay thế artifact text/hash đã ký; click-wrap vẫn là phương thức xác nhận của LN-008.
-12. Hồ sơ `APPROVED` phải ghép với Contract theo `applicationNumber` để hiển thị giai đoạn hiện tại.
+12. Phiên bản/hash chỉ nằm trong mục đối chiếu kỹ thuật thu gọn của khối xác nhận, không tạo một màn riêng và không hiển thị dung lượng như thông tin nghiệp vụ. Sau ký, detail chuyển sang `SIGNED_RECEIPT`.
+13. Hồ sơ `APPROVED` phải ghép với Contract theo `applicationNumber` để hiển thị giai đoạn hiện tại.
     Không được tiếp tục ghi “chờ ký” khi Contract đã `SIGNED`, `DECLINED`, `EXPIRED` hoặc `EFFECTIVE`.
 
 ## 8. API contract sử dụng
@@ -191,8 +189,9 @@ truyền qua bước preview và map vào request ở bước 3. Chúng không �
 | POST | `/api/v1/loan-applications/{number}/withdraw` | Rút hồ sơ | version + reason |
 | GET | `/api/v1/loan-contracts/me` | Contract list | PageResponse |
 | GET | `/api/v1/loan-contracts/{number}` | Contract detail | document/hash/schedule/version |
+| GET | `/api/v1/loan-contracts/{number}/document` | PDF hợp đồng hiện hành | Bytes bất biến + ETag SHA-256 |
 | GET | `/api/v1/loan-contracts/{number}/history` | Contract timeline | PageResponse |
-| POST | `/api/v1/loan-contracts/{number}/sign` | Click-wrap consent | Idempotency-Key + version + hash |
+| POST | `/api/v1/loan-contracts/{number}/sign` | Click-wrap consent | Idempotency-Key + version + text/PDF hash |
 | POST | `/api/v1/loan-contracts/{number}/decline` | Không chấp nhận | Idempotency-Key + version + reason |
 
 ## 9. State, cache và hiệu năng
@@ -305,7 +304,7 @@ Do actor đang cấu hình cứng, test admin và borrower có thể cần resta
 - [ ] Status có đủ `APPROVED` và UI không nhầm trạng thái chờ với lỗi.
 - [ ] Application history dùng pagination đúng contract.
 - [ ] Borrower đọc được Contract thật và ký/decline bằng version/hash mới nhất.
-- [ ] Borrower lưu/chia sẻ được PDF trình bày từ đúng Contract đang xem; PDF không bị dùng thay documentHash khi ký.
+- [ ] Borrower mở/lưu/chia sẻ đúng PDF server; request ký mang cả hash PDF đang xem.
 - [ ] Home, danh sách và chi tiết hồ sơ hiển thị đúng trạng thái Contract sau khi ký/từ chối/hết hạn.
 - [ ] Khi điều khoản đổi, borrower thấy rõ base/final rate và hai lịch trước khi ký hoặc từ chối.
 - [ ] Không hiển thị funded/disbursement/repayment/SmartCA mock như chức năng thật.
@@ -398,26 +397,28 @@ withdraw UI, polling theo AppState, component test và kiểm thử end-to-end t
 - Chưa đánh dấu kiểm thử thiết bị đạt; cần mở hồ sơ `LA-939518AC4CE245BDAB58` và Contract
   `LC-1F8F7D58ADDC43A2BECD` trên Expo để xác nhận scroll, vùng an toàn và kích thước chữ thực tế.
 
-## 19. Phòng đọc hợp đồng và trạng thái sau ký ngày 2026-09-06
+## 19. PDF hợp đồng và trạng thái sau ký (cập nhật 2026-09-07)
 
-- Tách toàn văn khỏi màn tóm tắt Contract thành `ContractDocumentScreen`; borrower xem điều khoản trong
-  bố cục tài liệu, sau khi đọc hết mới đi tiếp sang màn consent.
-- Dùng `expo-print` tạo PDF từ nguyên văn `documentContent` và `expo-sharing` mở chức năng lưu/chia sẻ
-  của thiết bị. PDF ghi rõ mã kiểm tra của text nguồn nhưng không tham gia request ký.
+- Tách toàn văn khỏi màn tóm tắt Contract thành PDF A4 phía server; nút tại `ContractDetailScreen` mở
+  thẳng tài liệu và khối consent xuất hiện ngay bên dưới sau khi borrower đã mở đúng PDF hiện hành.
+- Bỏ `expo-print` và renderer HTML cục bộ. Loan Service sinh/lưu PDF `SIGNABLE`; mobile mở endpoint và
+  dùng `expo-file-system` + `expo-sharing` để lưu/chia sẻ đúng bytes server.
+- Request ký mang thêm `pdfDocumentHash`; sau ký Loan trả metadata `SIGNED_RECEIPT`, nên trạng thái và
+  bằng chứng trên màn tài liệu đổi theo dữ liệu thật thay vì nhãn “chờ ký” cố định.
 - Contract đã ký hiển thị dấu vết xác nhận điện tử gồm actor, thời gian và phương thức click-wrap; không
   vẽ chữ ký tay hoặc gọi click-wrap là chữ ký số SmartCA.
 - Application vẫn giữ state nguồn chuẩn `APPROVED`. Mobile batch-load tối đa một page Contract rồi ghép
   theo `applicationNumber`; không gọi một request cho từng thẻ và không tạo N+1.
 - Home, danh sách hồ sơ và chi tiết hồ sơ dùng Contract status khi đã có Contract; nút hành động đổi theo
   `PENDING_SIGNATURE/SIGNED/DECLINED/EXPIRED/EFFECTIVE/COMPLETED`.
-- Phòng đọc ẩn thanh điều hướng tab để dành toàn bộ chiều cao cho tài liệu; các màn tóm tắt và xác nhận
-  vẫn giữ điều hướng bình thường.
-- Phòng đọc không còn dàn toàn bộ Contract thành một cột chữ lớn. Phần đầu ưu tiên số tiền, kỳ hạn,
-  lãi suất và tổng phải trả; các điều khoản được chia thành bốn khối, lịch trả mở ở màn danh sách tối ưu,
-  còn toàn văn gốc/hash nằm trong vùng đối chiếu mặc định thu gọn.
-- Tinh gọn lại ranh giới hai màn: `ContractDetailScreen` hiển thị thẻ hợp đồng điện tử, trạng thái/hạn
-  còn lại và so sánh điều khoản trước/sau thẩm định; `ContractDocumentScreen` chỉ chứa điều khoản,
-  nghĩa vụ thanh toán và lối mở lịch trả từng kỳ. Không lặp lại khối tổng trả/lịch trả ở màn ngoài.
-- Kiểm tra kỹ thuật ngày 2026-09-06: `npx.cmd tsc --noEmit` và
-  `npx.cmd expo export --platform android --output-dir .expo-contract-check` đều đạt; thư mục export tạm
-  đã được xóa sau khi kiểm tra. Kiểm thử thao tác lưu/chia sẻ PDF trên thiết bị thật vẫn cần thực hiện.
+- Loại bỏ hai route trung gian `ContractDocument` và `ContractConsent`; không còn màn chỉ để trình bày
+  phiên bản/dung lượng hoặc bắt borrower chuyển màn sau khi đọc PDF.
+- `ContractDetailScreen` giữ thẻ hợp đồng điện tử, trạng thái/hạn, so sánh base/final rate, hành động
+  mở/lưu PDF và consent inline; toàn văn, tổng phải trả và lịch từng kỳ chỉ nằm trong PDF A4.
+- Trạng thái đã mở được lưu cục bộ theo SHA-256 của artifact. Refetch ra hash khác sẽ khóa consent cho
+  tới khi borrower mở lại, tránh ký nhầm phiên bản dù vẫn đang ở cùng màn.
+- Kiểm tra kỹ thuật ngày 2026-09-07: `npx.cmd tsc --noEmit` và
+  `npx.cmd expo export --platform android --output-dir .expo-contract-check` đều đạt; Android bundle
+  thành công với 1.152 module và thư mục export tạm đã được xóa sau kiểm tra.
+- Kiểm thử thao tác mở/lưu/chia sẻ PDF và consent bằng hash trên emulator/thiết bị thật vẫn cần thực hiện
+  cùng Loan Service đã chạy migration V9.
