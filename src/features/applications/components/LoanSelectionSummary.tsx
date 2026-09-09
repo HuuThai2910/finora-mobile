@@ -10,7 +10,12 @@ type Props = {
   expectedDisbursementDate: string;
 };
 
-/** Bản đọc lại lựa chọn bước 1; không tạo ô nhập thứ hai cho cùng amount/term. */
+/**
+ * Bản đọc lại lựa chọn bước 1; không tạo ô nhập thứ hai cho cùng amount/term.
+ *
+ * Card có padding như mọi thẻ khác: `PItem` chỉ tự lo lề dọc, nên đặt trong thẻ
+ * `flush` thì chữ dán sát viền.
+ */
 export default function LoanSelectionSummary({
   productName,
   amount,
@@ -19,7 +24,7 @@ export default function LoanSelectionSummary({
   expectedDisbursementDate,
 }: Props) {
   return (
-    <Card flush>
+    <Card>
       <PItem label="Sản phẩm" value={productName} />
       <PItem label="Số tiền vay" value={formatDong(amount)} valueTone="brand" />
       <PItem label="Kỳ hạn" value={`${termMonths} tháng`} />
