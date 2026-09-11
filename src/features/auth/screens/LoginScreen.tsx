@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '@/constants/colors';
-import { Spacing, Text_ } from '@/theme';
+import { MIN_TOUCH, Radius, Spacing, Text_ } from '@/theme';
 import { Screen } from '@/components/phone';
 import { Button, Field } from '@/components/ui';
 import type { AuthStackParamList } from '@/navigation/types';
@@ -12,6 +12,20 @@ import FormError from '../components/FormError';
 import { useFieldErrors } from '../hooks/useFieldErrors';
 import { useLogin } from '../hooks/useLogin';
 import { validateLogin } from '../schemas/authForms';
+
+/**
+ * Tài khoản mẫu đã seed sẵn trong Keycloak (môi trường phát triển).
+ *
+ * App này dành cho người vay và nhà đầu tư, nên không đưa tài khoản ADMIN vào —
+ * đăng nhập ADMIN ở đây cũng không mở thêm được màn nào.
+ *
+ * Khu này chỉ hiển thị khi `__DEV__`, nên mật khẩu không đi vào bản phát hành.
+ */
+const DEMO_ACCOUNTS = [
+  { email: 'nguyenhuynhngochai147@gmail.com', password: 'Xen123123!', label: 'Tài khoản của tôi' },
+  { email: 'le.thu.thao@gmail.com', password: 'Finora@12345', label: 'Người vay' },
+  { email: 'investor@finora.vn', password: 'Finora@12345', label: 'Nhà đầu tư' },
+] as const;
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 
@@ -35,6 +49,14 @@ export default function LoginScreen() {
     if (!validateSubmit(values)) return;
 
     void submit({ email, password });
+  };
+
+  // Điền sẵn tài khoản mẫu — người dùng vẫn bấm "Đăng nhập" để gửi.
+  const fillDemo = (demoEmail: string, demoPassword: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    clearField('email');
+    clearField('password');
   };
 
   return (
@@ -81,6 +103,27 @@ export default function LoginScreen() {
 
       <Button label="Đăng nhập" onPress={onSubmit} loading={submitting} style={styles.primary} />
 
+      {__DEV__ && (
+      <View style={styles.demo}>
+        <Text style={styles.demoTitle}>Tài khoản thử nghiệm nhanh</Text>
+        {DEMO_ACCOUNTS.map(acc => (
+          <Pressable
+            key={acc.email}
+            onPress={() => fillDemo(acc.email, acc.password)}
+            disabled={submitting}
+            accessibilityRole="button"
+            accessibilityLabel={`Điền tài khoản ${acc.label}`}
+            style={({ pressed }) => [styles.demoChip, pressed && styles.demoChipPressed]}
+          >
+            <Text style={styles.demoEmail} numberOfLines={1}>
+              {acc.email}
+            </Text>
+            <Text style={styles.demoBadge}>{acc.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+      )}
+
       <View style={styles.footer}>
         <Text style={styles.hint}>
           Chưa có tài khoản?{' '}
@@ -107,6 +150,32 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   primary: { marginTop: Spacing.md },
+  demo: { marginTop: Spacing.xxl },
+  demoTitle: {
+    ...Text_.micro,
+    color: Colors.ink3,
+    marginBottom: Spacing.md,
+  },
+  demoChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: MIN_TOUCH,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
+    marginBottom: Spacing.md,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.line,
+    borderRadius: Radius.sm,
+  },
+  demoChipPressed: { backgroundColor: Colors.brand50, borderColor: Colors.brand100 },
+  demoEmail: { ...Text_.micro, color: Colors.ink, flexShrink: 1 },
+  demoBadge: {
+    ...Text_.microBold,
+    color: Colors.brand,
+    marginLeft: Spacing.md,
+  },
   hint: { ...Text_.micro, color: Colors.ink3, textAlign: 'center', marginTop: Spacing.xl },
   link: { color: Colors.brand, fontFamily: Text_.microBold.fontFamily },
   footer: { marginTop: 'auto', paddingTop: Spacing.xl },

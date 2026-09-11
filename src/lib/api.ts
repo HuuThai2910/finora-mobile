@@ -1,4 +1,4 @@
-import { getAccessToken, refreshAccessToken } from './authSession';
+import { getValidAccessToken, refreshAccessToken } from './authSession';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8081/api/v1';
 
@@ -87,7 +87,7 @@ type RequestOptions = RequestInit & {
 
 async function send(baseUrl: string, path: string, init: RequestOptions): Promise<Response> {
   const { headers, authenticated, ...rest } = init;
-  const token = authenticated ? getAccessToken() : null;
+  const token = authenticated ? await getValidAccessToken() : null;
 
   try {
     return await fetch(`${baseUrl}${path}`, {
