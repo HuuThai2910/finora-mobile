@@ -1,23 +1,27 @@
 import { isMocked } from '@/lib/mockFlag';
 import * as investMock from '@/lib/mocks/invest';
-import { ApiError } from '@/lib/api';
+import { ApiError, investmentFetch } from '@/lib/api';
 import type {
   AutoInvestConfig,
   AutoInvestMatch,
   InvestmentContract,
   PortfolioSummary,
 } from '@/types/invest';
+import { toPortfolioSummary, type PortfolioDto } from './mapper';
 
-/**
- * `finora-investment` chưa lộ endpoint nào qua gateway, nên miền này chạy mock.
- */
+/** Phần chưa có endpoint thật thì báo rõ thay vì trả dữ liệu giả trong luồng thật. */
 const notImplemented = (what: string): never => {
   throw new ApiError(501, `${what} chưa có endpoint thật`, 'NOT_IMPLEMENTED');
 };
 
-export const getPortfolio = (): Promise<PortfolioSummary> =>
-  isMocked('invest') ? investMock.getPortfolio() : notImplemented('Danh mục đầu tư');
+export const getPortfolio = async (): Promise<PortfolioSummary> => {
+  if (isMocked('invest')) return investMock.getPortfolio();
 
+  const portfolio = await investmentFetch<PortfolioDto>('/investments/portfolio');
+  return toPortfolioSummary(portfolio);
+};
+
+/** Auto-Invest (C2.1) là task riêng, chưa thuộc phạm vi gọi vốn. */
 export const getAutoInvest = (): Promise<AutoInvestConfig> =>
   isMocked('invest') ? investMock.getAutoInvest() : notImplemented('Cấu hình Auto-Invest');
 
@@ -26,9 +30,6 @@ export const getAutoInvestMatches = (): Promise<AutoInvestMatch[]> =>
 
 export const getInvestmentContract = (): Promise<InvestmentContract> =>
   isMocked('signature') ? investMock.getInvestmentContract() : notImplemented('Hợp đồng đầu tư');
-
-export const invest = (): Promise<{ ok: true }> =>
-  isMocked('invest') ? investMock.invest() : notImplemented('Đặt lệnh đầu tư');
 
 export const signContract = (): Promise<{ ok: true }> =>
   isMocked('signature') ? investMock.signContract() : notImplemented('Ký số hợp đồng');

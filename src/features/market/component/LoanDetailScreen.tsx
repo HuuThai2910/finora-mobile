@@ -10,7 +10,7 @@ import { formatDong, formatVND } from '@/utils/format';
 import { toUserMessage } from '@/lib/api';
 import type { MarketStackParamList } from '@/navigation/types';
 import { useMarketLoan } from '../hook/useMarket';
-import { invest } from '../api';
+import { generateIdempotencyKey, invest } from '../api';
 
 /** Màn 19 — chi tiết khoản vay trên sàn (người vay ẩn danh). */
 export default function LoanDetailScreen() {
@@ -22,6 +22,13 @@ export default function LoanDetailScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [investError, setInvestError] = useState<string | null>(null);
 
+  /**
+   * Khóa idempotency giữ nguyên trong suốt một ý định đặt lệnh, kể cả khi người dùng bấm
+   * lại sau lỗi mạng — nhờ vậy backend nhận ra đây vẫn là lệnh cũ và không giữ tiền lần hai.
+   * Chỉ sinh khóa mới sau khi lệnh đã đặt thành công.
+   */
+  const [idempotencyKey, setIdempotencyKey] = useState(generateIdempotencyKey);
+
   const parsed = Number(amount.replace(/\D/g, ''));
 
   const onInvest = async () => {
@@ -29,10 +36,13 @@ export default function LoanDetailScreen() {
       setInvestError('Nhập số tiền muốn đầu tư.');
       return;
     }
+    if (!data) return;
+
     setInvestError(null);
     setSubmitting(true);
     try {
-      await invest();
+      await invest(data.id, parsed, idempotencyKey);
+      setIdempotencyKey(generateIdempotencyKey());
       Alert.alert(
         'Đã đặt lệnh',
         'Tiền được phong tỏa trong ví và chỉ chuyển đi khi khoản vay gọi đủ 100% vốn.',
@@ -51,7 +61,15 @@ export default function LoanDetailScreen() {
 
   return (
     <Screen>
-      <PHeader title={data.id} back right={<Tag tone="blue" small>Đang gọi vốn</Tag>} />
+      <PHeader
+        title={`Khoản vay #${data.id}`}
+        back
+        right={
+          data.fundedPercent >= 100
+            ? <Tag tone="green" small>Đã đủ vốn</Tag>
+            : <Tag tone="blue" small>Đang gọi vốn</Tag>
+        }
+      />
 
       <View style={styles.hero}>
         <ScoreRing grade={data.grade} size={69} />

@@ -31,7 +31,8 @@ export interface PortfolioPosition {
 export interface PortfolioSummary {
   investedAmount: number;
   irrPercent: number;
-  nplPercent: number;
+  /** Chưa có số liệu thì để `null`; màn hình hiện dấu gạch thay vì khẳng định 0%. */
+  nplPercent: number | null;
   positionCount: number;
   positions: PortfolioPosition[];
 }

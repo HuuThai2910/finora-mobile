@@ -54,7 +54,9 @@ export default function PortfolioScreen() {
                   IRR <Text style={styles.metaStrong}>{data.irrPercent}%</Text>
                 </Text>
                 <Text style={styles.metaItem}>
-                  NPL <Text style={styles.metaStrong}>{data.nplPercent}%</Text>
+                  NPL <Text style={styles.metaStrong}>
+                    {data.nplPercent == null ? '—' : `${data.nplPercent}%`}
+                  </Text>
                 </Text>
                 <Text style={styles.metaItem}>{data.positionCount} khoản</Text>
               </View>
