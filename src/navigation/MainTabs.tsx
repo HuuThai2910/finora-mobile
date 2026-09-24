@@ -25,6 +25,11 @@ import {
   WithdrawScreen,
 } from '@/features/wallet';
 import { AutoInvestScreen, InvestContractScreen, PortfolioScreen } from '@/features/investment';
+import {
+  NoteListingDetailScreen,
+  SecondaryMarketScreen,
+  SellNoteScreen,
+} from '@/features/secondary-market';
 import { AccountInfoScreen, AccountScreen } from '@/features/account';
 import { EkycCaptureScreen, EkycResultScreen, EkycSessionProvider } from '@/features/ekyc';
 import type {
@@ -74,6 +79,9 @@ function WalletTab() {
       <WalletStack.Screen name="Portfolio" component={PortfolioScreen} />
       <WalletStack.Screen name="AutoInvest" component={AutoInvestScreen} />
       <WalletStack.Screen name="InvestContract" component={InvestContractScreen} />
+      <WalletStack.Screen name="SecondaryMarket" component={SecondaryMarketScreen} />
+      <WalletStack.Screen name="NoteListingDetail" component={NoteListingDetailScreen} />
+      <WalletStack.Screen name="SellNote" component={SellNoteScreen} />
     </WalletStack.Navigator>
   );
 }

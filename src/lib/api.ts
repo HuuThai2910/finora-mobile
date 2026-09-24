@@ -9,6 +9,15 @@ const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8081/api/v
 const AUTH_BASE_URL = process.env.EXPO_PUBLIC_AUTH_API_URL ?? 'http://localhost:8080/api/v1';
 
 /**
+ * Investment Service (sàn gọi vốn, Notes) đứng sau Gateway cùng cổng với finora-user,
+ * nhưng tách biến riêng để trỏ thẳng vào service khi chạy không có Gateway.
+ */
+// Dùng || chứ không phải ??: biến bỏ trống trong .env đến đây là chuỗi rỗng,
+// mà ?? chỉ rơi về mặc định khi null/undefined nên sẽ tạo URL sai.
+const INVESTMENT_BASE_URL =
+  process.env.EXPO_PUBLIC_INVESTMENT_API_URL || AUTH_BASE_URL;
+
+/**
  * `finora-user` đọc header này để biết trả token trong body thay vì đặt cookie
  * (xem `HttpRequestUtils.isMobileClient`). Thiếu header là mobile không nhận được token.
  */
@@ -149,6 +158,10 @@ export const authFetch = <T>(path: string, init?: RequestInit): Promise<T> =>
 /** Gọi endpoint của `finora-user` cần đăng nhập, ví dụ `GET /users/me`. */
 export const authFetchWithToken = <T>(path: string, init?: RequestInit): Promise<T> =>
   request<T>(AUTH_BASE_URL, path, { ...init, authenticated: true });
+
+/** Gọi Investment Service qua gateway; mọi endpoint đều cần phiên đăng nhập. */
+export const investmentFetch = <T>(path: string, init?: RequestInit): Promise<T> =>
+  request<T>(INVESTMENT_BASE_URL, path, { ...init, authenticated: true });
 
 type ParsedError = { code: string; message: string | null; traceId: string | null };
 
