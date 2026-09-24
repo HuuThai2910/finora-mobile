@@ -23,7 +23,13 @@ export type MockDomain =
    * Tách khỏi `products`/hồ sơ vay vì hai thứ đó đã có backend thật, còn phần
    * này thì chưa.
    */
-  | 'servicing';
+  | 'servicing'
+  /**
+   * Chợ thứ cấp Notes: treo bán, mua lại, rút tin. Tách khỏi `market` (sàn sơ cấp) và `invest`
+   * (danh mục) để bật mock riêng phần này mà vẫn gọi thật hai phần kia — backend chợ thứ cấp đã
+   * có, nên miền này mặc định **không** nằm trong danh sách mock.
+   */
+  | 'secondary';
 
 const parse = (raw: string | undefined): ReadonlySet<string> =>
   new Set(

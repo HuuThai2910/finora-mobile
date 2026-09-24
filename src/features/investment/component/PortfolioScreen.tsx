@@ -97,6 +97,13 @@ export default function PortfolioScreen() {
             label="Cấu hình Auto-Invest"
             icon="zap"
             onPress={() => nav.navigate('AutoInvest')}
+          />
+          {/* Lối vào chợ thứ cấp: bán Note đang giữ để lấy tiền trước hạn, hoặc mua lại
+              Note của nhà đầu tư khác. */}
+          <PItem
+            label="Chợ thứ cấp Notes"
+            icon="grid"
+            onPress={() => nav.navigate('SecondaryMarket')}
             last
           />
         </>

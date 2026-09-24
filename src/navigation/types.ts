@@ -47,6 +47,12 @@ export type WalletStackParamList = {
   Portfolio: undefined;
   AutoInvest: undefined;
   InvestContract: undefined;
+  /** Chợ thứ cấp: bảng tin Note đang bán, và tin của chính mình. */
+  SecondaryMarket: undefined;
+  /** Chi tiết một tin đăng bán; `reference` là mã tin, không phải mã Note. */
+  NoteListingDetail: { reference: string };
+  /** Treo bán một Note đang giữ. */
+  SellNote: { noteNumber: string; noteId: string; outstandingPrincipal: number; defaulted: boolean };
 };
 
 export type ProfileStackParamList = {
