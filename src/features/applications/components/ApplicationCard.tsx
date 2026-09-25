@@ -15,7 +15,11 @@ type Props = {
 
 /** Thẻ hồ sơ chỉ trình bày dữ liệu Loan Service trả về, không ghép fixture gọi vốn/servicing. */
 export default function ApplicationCard({ application, contract, onPress }: Props) {
-  const status = applicationJourneyStatus(application.status, contract?.status);
+  const status = applicationJourneyStatus(
+    application.status,
+    contract?.status,
+    application.termsConfirmation?.status,
+  );
   const displayedRate = application.status === 'APPROVED'
     ? application.finalAnnualInterestRate ?? application.productSnapshot.annualInterestRate
     : application.productSnapshot.annualInterestRate;

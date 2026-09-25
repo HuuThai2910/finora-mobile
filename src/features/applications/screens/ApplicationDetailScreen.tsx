@@ -17,6 +17,7 @@ import PricingChangeNotice from '../components/PricingChangeNotice';
 import RepaymentSummary from '../components/RepaymentSummary';
 import StatusBanner from '../components/StatusBanner';
 import WithdrawSection from '../components/WithdrawSection';
+import TermsConfirmationSection from '../components/TermsConfirmationSection';
 
 type Nav = NativeStackNavigationProp<ProfileStackParamList, 'ApplicationDetail'>;
 
@@ -68,7 +69,11 @@ export default function ApplicationDetailScreen() {
       <StatusBanner
         status={status}
         action={
-          application.status === 'APPROVED' ? (
+          application.status === 'APPROVED' && (
+            application.termsConfirmation?.status === 'AUTO_AUTHORIZED'
+            || application.termsConfirmation?.status === 'ACCEPTED'
+            || application.termsConfirmation == null
+          ) ? (
             <Button
               label={contract ? contractActionLabel(contract.status) : 'Xem hợp đồng'}
               onPress={() =>
@@ -82,6 +87,8 @@ export default function ApplicationDetailScreen() {
       />
 
       <PricingChangeNotice application={application} />
+
+      <TermsConfirmationSection application={application} onDone={state.reload} />
 
       <KeyTermsStrip terms={keyTerms} />
 

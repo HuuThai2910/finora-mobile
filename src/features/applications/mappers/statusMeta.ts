@@ -1,5 +1,5 @@
 import type { LoanContractStatus } from '@/types/contract';
-import type { LoanApplicationStatus } from '@/types/loan';
+import type { LoanApplicationStatus, TermsConfirmationStatus } from '@/types/loan';
 import { APPLICATION_STATUS, CONTRACT_STATUS, type StatusMeta } from '../constant';
 
 /**
@@ -32,9 +32,37 @@ export function contractStatusMeta(status: LoanContractStatus): StatusMeta {
 export function applicationJourneyStatus(
   applicationStatus: LoanApplicationStatus,
   contractStatus?: LoanContractStatus,
+  termsStatus?: TermsConfirmationStatus,
 ): StatusMeta {
   if (applicationStatus === 'APPROVED' && contractStatus) {
     return contractStatusMeta(contractStatus);
+  }
+  if (applicationStatus === 'APPROVED' && termsStatus === 'PENDING') {
+    return {
+      tone: 'amber',
+      label: 'Chờ bạn xác nhận',
+      icon: 'clock',
+      meaning: 'Điều khoản cuối bất lợi hơn lúc nộp hồ sơ nên FINORA đang chờ quyết định của bạn.',
+      next: 'Chấp nhận hoặc từ chối điều khoản cuối',
+    };
+  }
+  if (applicationStatus === 'APPROVED' && termsStatus === 'DECLINED') {
+    return {
+      tone: 'red',
+      label: 'Đã từ chối điều khoản',
+      icon: 'x',
+      meaning: 'Bạn đã không chấp nhận điều khoản cuối nên FINORA không lập hợp đồng.',
+      next: null,
+    };
+  }
+  if (applicationStatus === 'APPROVED' && termsStatus === 'EXPIRED') {
+    return {
+      tone: 'gray',
+      label: 'Hết hạn phản hồi',
+      icon: 'clock',
+      meaning: 'Bạn chưa xác nhận điều khoản trong thời hạn nên FINORA không lập hợp đồng.',
+      next: null,
+    };
   }
   return applicationStatusMeta(applicationStatus);
 }
@@ -43,6 +71,8 @@ export function contractActionLabel(status: LoanContractStatus): string {
   switch (status) {
     case 'PENDING_SIGNATURE':
       return 'Đọc và ký hợp đồng';
+    case 'SIGNING':
+      return 'Kiểm tra ký SmartCA';
     case 'SIGNED':
       return 'Xem hợp đồng đã ký';
     case 'EFFECTIVE':

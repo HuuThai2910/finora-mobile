@@ -60,7 +60,7 @@ Backend quyết định field, status và trình tự. HTML chỉ quyết địn
 - Gọi trực tiếp `finora-ai`, Fineract hoặc database.
 - Cho borrower xem assessment chi tiết, grade hoặc suggested rate vì backend không công bố borrower API cho dữ liệu này.
 - Gọi vốn, giải ngân, lịch trả nợ vận hành, ví, overdue, tất toán sớm và tái cơ cấu vì LN-009 trở đi chưa có API thật.
-- SmartCA; LN-008 chỉ là click-wrap consent.
+- SmartCA production và deep-link tự động; UAT hiện hỗ trợ Web API/polling theo LN-018, còn mock local/dev vẫn là click-wrap.
 - Auth/eKYC thật; mock provider hiện tại chỉ phục vụ tích hợp local và phải thay trước demo dùng chung/production.
 
 ## 3. Các sai lệch hiện tại phải sửa
@@ -158,20 +158,20 @@ truyền qua bước preview và map vào request ở bước 3. Chúng không �
 
 ## 7. Contract và consent
 
-1. Khi Application `APPROVED`, hiển thị lời nhắc kiểm tra Contract; không tự coi approve là đã ký.
+1. Khi Application `APPROVED`, đọc `termsConfirmation`: `PENDING` hiển thị so sánh và accept/decline ngay trên hồ sơ; chỉ `AUTO_AUTHORIZED/ACCEPTED` mới dò và mở Contract. Không tự coi approve là đã ký.
 2. List `/loan-contracts/me` và mở detail bằng `contractNumber`.
 3. Màn chi tiết chỉ hiển thị số tiền, kỳ hạn, lãi suất, trạng thái và hạn xác nhận; tổng nghĩa vụ/lịch từng kỳ nằm trong PDF để không lặp số liệu.
 4. Nút xem nội dung mở thẳng `pdfDocument.downloadPath` do Loan trả, không đi qua màn metadata và không render lại `documentContent` thành PDF cục bộ. Contract legacy thiếu PDF được báo rõ và không giả tạo artifact mới trên thiết bị.
 5. Sau khi mở PDF thành công, khối ký/từ chối xuất hiện ngay dưới khu vực tài liệu trên cùng màn chi tiết. Trạng thái đã xem gắn với `pdfDocument.contentHash`; artifact đổi thì phải mở lại.
 6. Chỉ cho ký khi status `PENDING_SIGNATURE`, chưa hết hạn, có PDF server và người dùng đã mở đúng PDF hiện hành.
-7. Trước khi ký, người dùng tick xác nhận; gửi đúng `version`, `documentHash`, `pdfDocumentHash`, `CLICK_WRAP_MVP` và idempotency key.
+7. Trước khi ký, người dùng tick xác nhận; gửi đúng `version`, `documentHash`, `pdfDocumentHash`, phương thức do Contract detail công bố và idempotency key. Với SmartCA, `SIGNING` chưa phải đã ký; người dùng xác nhận trên app SmartCA rồi bấm kiểm tra kết quả.
 8. Không tự băm lại một phiên bản text đã render khác backend. Hash request lấy từ Contract detail đang được người dùng chấp thuận.
 9. Decline gửi version, reason code và detail khi `OTHER`; không xóa Application đã APPROVED.
-10. Sau action, invalidate Contract list/detail và Application detail liên quan.
+10. Sau action điều khoản, invalidate Application và Contract list; accept thành công mới sinh Contract demo. Sau sign/decline Contract, invalidate Contract list/detail và Application detail liên quan.
 11. Trên màn tóm tắt, chỉ so sánh base/final rate và giải thích quyền từ chối; kỳ trả/tổng lãi/tổng phải trả đọc trong PDF.
     Chỉ giải thích đây là kết quả đánh giá tín dụng; không công khai grade hoặc chi tiết mô hình cho borrower.
 12. Phiên bản/hash chỉ nằm trong mục đối chiếu kỹ thuật thu gọn của khối xác nhận, không tạo một màn riêng và không hiển thị dung lượng như thông tin nghiệp vụ. Sau ký, detail chuyển sang `SIGNED_RECEIPT`.
-13. Hồ sơ `APPROVED` phải ghép với Contract theo `applicationNumber` để hiển thị giai đoạn hiện tại.
+13. Hồ sơ `APPROVED` chỉ ghép Contract theo `applicationNumber` khi terms gate cho phép tạo Contract; `PENDING/DECLINED/EXPIRED` lấy trạng thái trực tiếp từ Application.
     Không được tiếp tục ghi “chờ ký” khi Contract đã `SIGNED`, `DECLINED`, `EXPIRED` hoặc `EFFECTIVE`.
 
 ## 8. API contract sử dụng
@@ -307,7 +307,7 @@ Do actor đang cấu hình cứng, test admin và borrower có thể cần resta
 - [ ] Borrower mở/lưu/chia sẻ đúng PDF server; request ký mang cả hash PDF đang xem.
 - [ ] Home, danh sách và chi tiết hồ sơ hiển thị đúng trạng thái Contract sau khi ký/từ chối/hết hạn.
 - [ ] Khi điều khoản đổi, borrower thấy rõ base/final rate và hai lịch trước khi ký hoặc từ chối.
-- [ ] Không hiển thị funded/disbursement/repayment/SmartCA mock như chức năng thật.
+- [ ] Không hiển thị funded/disbursement/repayment hoặc click-wrap mock như chức năng SmartCA thật; UAT phải ghi rõ đang chờ xác nhận khi status là `SIGNING`.
 - [ ] Danh sách dùng FlatList; polling dừng khi background/terminal.
 - [ ] Logic khó có comment tiếng Việt; file tuân thủ ngưỡng trách nhiệm.
 - [ ] Type-check, test và checklist frontend đều đạt.

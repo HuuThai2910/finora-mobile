@@ -81,6 +81,13 @@ function statusFact(contract: LoanContractDetail, countdown: Countdown): StatusF
             icon: 'clock',
             urgent: countdown.urgent,
           };
+    case 'SIGNING':
+      return {
+        label: 'Trạng thái ký số',
+        value: 'Đang chờ xác nhận trên SmartCA',
+        icon: 'clock',
+        urgent: false,
+      };
     case 'SIGNED':
       return contract.signedAt
         ? { label: 'Đã ký lúc', value: formatDateTime(contract.signedAt), icon: 'check', urgent: false }

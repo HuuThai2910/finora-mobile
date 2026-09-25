@@ -77,6 +77,23 @@ export type LoanApplicationStatus =
   | 'REJECTED'
   | 'WITHDRAWN';
 
+export type TermsConfirmationStatus =
+  | 'AUTO_AUTHORIZED'
+  | 'PENDING'
+  | 'ACCEPTED'
+  | 'DECLINED'
+  | 'EXPIRED';
+
+export interface TermsConfirmation {
+  status: TermsConfirmationStatus;
+  termsVersion: string;
+  termsHash: string;
+  expiresAt: string;
+  respondedAt: string | null;
+  declineReasonCode: string | null;
+  declineReasonDetail: string | null;
+}
+
 export interface ApplicantFinancial {
   declaredMonthlyIncome: number;
   annualIncomeSnapshot: number;
@@ -146,12 +163,24 @@ export interface LoanApplication {
   submittedAt: string;
   withdrawnAt: string | null;
   withdrawalReason: string | null;
+  termsConfirmation: TermsConfirmation | null;
   latestCreditAssessmentId: number | null;
   version: number;
   createdBy: string;
   updatedBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ConfirmLoanTermsRequest {
+  applicationVersion: number;
+  termsVersion: string;
+  termsHash: string;
+}
+
+export interface DeclineLoanTermsRequest extends ConfirmLoanTermsRequest {
+  reasonCode: string;
+  reasonDetail?: string;
 }
 
 export interface LoanApplicationHistory {

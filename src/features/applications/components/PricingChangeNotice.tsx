@@ -58,12 +58,17 @@ export default function PricingChangeNotice({ application }: { application: Loan
       <View style={styles.rateComparison}>
         <RateCell label="Lúc nộp hồ sơ" value={formatAnnualRate(baseRate)} />
         <Text style={styles.arrow}>→</Text>
-        <RateCell label="Áp dụng trong hợp đồng" value={formatAnnualRate(finalRate)} emphasized />
+        <RateCell
+          label={application.termsConfirmation?.status === 'PENDING' ? 'Đề nghị sau thẩm định' : 'Áp dụng cuối'}
+          value={formatAnnualRate(finalRate)}
+          emphasized
+        />
       </View>
 
       <Text style={styles.choice}>
-        Hãy mở bản PDF để đọc lịch trả và toàn bộ điều khoản. Bạn chỉ ký khi đồng ý với mức áp dụng mới;
-        nếu không phù hợp, bạn có quyền từ chối hợp đồng.
+        {application.termsConfirmation?.status === 'PENDING'
+          ? 'Hãy đối chiếu lịch trả bên dưới. Hợp đồng chỉ được lập nếu bạn chủ động chấp nhận đề nghị này.'
+          : 'Điều khoản không bất lợi hơn nên hồ sơ đã tự tiếp tục theo chấp thuận lúc nộp. Bạn vẫn đọc toàn bộ PDF và quyết định ký hoặc từ chối hợp đồng.'}
       </Text>
     </Card>
   );

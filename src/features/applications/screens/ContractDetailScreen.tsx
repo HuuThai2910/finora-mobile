@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ErrorState, LoadingScreen } from '@/components/feedback';
@@ -14,6 +14,8 @@ import ProcessTimeline from '../components/ProcessTimeline';
 import PricingChangeNotice from '../components/PricingChangeNotice';
 import { useContractDetail, type ContractDetailView } from '../hook/useContractDetail';
 import { useContractPdf } from '../hook/useContractPdf';
+import { useRefreshContractSignatureMutation } from '../api/applicationApi';
+import { toActionError } from '../mappers/apiError';
 
 type Nav = NativeStackNavigationProp<ProfileStackParamList, 'ContractDetail'>;
 
@@ -76,7 +78,11 @@ function ContractDetailBody({
     expiredWhileWaiting,
   } = view;
   const pdf = useContractPdf(contract);
+  const [refreshSignature, refreshSignatureState] = useRefreshContractSignatureMutation();
+  const [signatureError, setSignatureError] = useState<string | null>(null);
   const [openedPdfHash, setOpenedPdfHash] = useState<string | null>(null);
+  const reloadRef = useRef(reload);
+  reloadRef.current = reload;
   const currentPdfHash = contract.pdfDocument?.contentHash ?? null;
   const openedCurrentPdf = currentPdfHash !== null && openedPdfHash === currentPdfHash;
   const confirmed = ['SIGNED', 'EFFECTIVE', 'COMPLETED'].includes(contract.status);
@@ -91,6 +97,55 @@ function ContractDetailBody({
     reload();
   };
 
+  const checkSmartCa = async () => {
+    setSignatureError(null);
+    try {
+      await refreshSignature(contract.contractNumber).unwrap();
+      reload();
+    } catch (caught) {
+      setSignatureError(toActionError(caught).message);
+    }
+  };
+
+  useEffect(() => {
+    if (contract.status !== 'SIGNING') return undefined;
+
+    let cancelled = false;
+    let inFlight = false;
+    let attempts = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const poll = async () => {
+      if (cancelled) return;
+      if (AppState.currentState !== 'active' || inFlight) {
+        timer = setTimeout(poll, 5_000);
+        return;
+      }
+      if (attempts >= 12) return;
+
+      attempts += 1;
+      inFlight = true;
+      try {
+        const result = await refreshSignature(contract.contractNumber).unwrap();
+        if (result.status !== 'SIGNING') {
+          reloadRef.current();
+          return;
+        }
+      } catch {
+        // Poll nền không làm gián đoạn người dùng; nút kiểm tra thủ công vẫn hiển thị lỗi chi tiết.
+      } finally {
+        inFlight = false;
+      }
+      if (!cancelled) timer = setTimeout(poll, 5_000);
+    };
+
+    timer = setTimeout(poll, 3_000);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [contract.contractNumber, contract.status, refreshSignature]);
+
   return (
     <Screen onRefresh={reload} refreshing={refreshing}>
       <PHeader title="Hợp đồng vay" back />
@@ -104,6 +159,25 @@ function ContractDetailBody({
           Hợp đồng đã quá hạn xác nhận nên không còn ký được. Hệ thống sẽ cập nhật trạng thái sang
           “Đã hết hạn”; nếu vẫn cần vay, bạn hãy nộp hồ sơ mới.
         </InfoNote>
+      ) : null}
+
+      {contract.status === 'SIGNING' ? (
+        <Card style={styles.smartCaCard}>
+          <Text style={styles.documentEyebrow}>VNPT SMARTCA</Text>
+          <Text style={styles.documentTitle}>Đang chờ bạn xác nhận ký số</Text>
+          <Text style={styles.documentDescription}>
+            Mở ứng dụng VNPT SmartCA, kiểm tra mã tài liệu và xác nhận giao dịch. Sau đó quay lại đây
+            để FINORA lấy kết quả từ VNPT.
+          </Text>
+          {signatureError ? <InfoNote tone="warn">{signatureError}</InfoNote> : null}
+          <Button
+            label="Tôi đã xác nhận — kiểm tra kết quả"
+            icon="check"
+            onPress={checkSmartCa}
+            loading={refreshSignatureState.isLoading}
+            disabled={refreshSignatureState.isLoading}
+          />
+        </Card>
       ) : null}
 
       <Card style={styles.documentCard}>
@@ -180,6 +254,7 @@ function ContractDetailBody({
 const styles = StyleSheet.create({
   note: { marginTop: Spacing.xl },
   documentCard: { gap: Spacing.lg, marginTop: Spacing.section },
+  smartCaCard: { gap: Spacing.lg, marginTop: Spacing.section },
   documentCopy: { gap: Spacing.xs },
   documentEyebrow: { ...Text_.captionBold, color: Colors.brand, letterSpacing: 0.6 },
   documentTitle: { ...Text_.title, color: Colors.ink },

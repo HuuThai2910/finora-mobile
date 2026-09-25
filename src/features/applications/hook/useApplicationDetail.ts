@@ -69,17 +69,22 @@ export function useApplicationDetail(applicationNumber: string): ApplicationDeta
   const [withdrawApplication, withdrawState] = useWithdrawApplicationMutation();
   const [withdrawError, setWithdrawError] = useState<ActionError | null>(null);
 
-  // Chỉ dò hợp đồng khi hồ sơ đã duyệt; các trạng thái khác chưa thể có hợp đồng.
+  // Điều khoản bất lợi phải được borrower chấp nhận trước nên PENDING/DECLINED/EXPIRED
+  // chắc chắn chưa có Contract; tránh gọi API và hiển thị nút hợp đồng sai thời điểm.
   const approved = applicationQuery.data?.status === 'APPROVED';
+  const termsStatus = applicationQuery.data?.termsConfirmation?.status;
+  const contractExpected = approved && (
+    termsStatus == null || termsStatus === 'AUTO_AUTHORIZED' || termsStatus === 'ACCEPTED'
+  );
   const contractsQuery = useListMyContractsQuery(
     { page: 0, size: CONTRACT_LOOKUP_SIZE },
-    { skip: !approved },
+    { skip: !contractExpected },
   );
 
   const reload = () => {
     applicationQuery.refetch();
     historyQuery.refetch();
-    if (approved) contractsQuery.refetch();
+    if (contractExpected) contractsQuery.refetch();
   };
 
   const application = applicationQuery.data ?? null;
@@ -101,7 +106,11 @@ export function useApplicationDetail(applicationNumber: string): ApplicationDeta
     ? {
         application,
         displayedSchedule,
-        status: applicationJourneyStatus(application.status, contract?.status),
+        status: applicationJourneyStatus(
+          application.status,
+          contract?.status,
+          application.termsConfirmation?.status,
+        ),
         keyTerms: [
           { label: 'Số tiền vay', value: formatDong(application.requestedAmount) },
           { label: 'Kỳ hạn', value: `${application.requestedTermMonths} tháng` },
@@ -145,7 +154,7 @@ export function useApplicationDetail(applicationNumber: string): ApplicationDeta
   return {
     // Chờ Contract khi hồ sơ đã APPROVED để không hiển thị thoáng qua trạng thái hồ sơ
     // cũ trước khi biết hợp đồng thực tế đã ký, từ chối hay hết hạn.
-    loading: applicationQuery.isLoading || (approved && contractsQuery.isLoading),
+    loading: applicationQuery.isLoading || (contractExpected && contractsQuery.isLoading),
     loadError:
       applicationQuery.error || (!applicationQuery.isLoading && !application)
         ? toLoadError(applicationQuery.error, 'Không tải được chi tiết hồ sơ vay.')

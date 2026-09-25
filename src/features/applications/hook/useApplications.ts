@@ -4,10 +4,15 @@ import { useListMyApplicationsQuery, useListMyContractsQuery } from '../api/appl
 
 export const useMyApplications = () => {
   const applications = useListMyApplicationsQuery({ page: 0, size: 20 });
-  const hasApprovedApplication = applications.data?.data.some(item => item.status === 'APPROVED') ?? false;
+  const hasContractEligibleApplication = applications.data?.data.some(item =>
+    item.status === 'APPROVED' && (
+      item.termsConfirmation == null
+      || item.termsConfirmation.status === 'AUTO_AUTHORIZED'
+      || item.termsConfirmation.status === 'ACCEPTED'
+    )) ?? false;
   const contracts = useListMyContractsQuery(
     { page: 0, size: 100 },
-    { skip: !hasApprovedApplication },
+    { skip: !hasContractEligibleApplication },
   );
 
   /**
@@ -27,14 +32,14 @@ export const useMyApplications = () => {
 
   const reload = () => {
     applications.refetch();
-    if (hasApprovedApplication) contracts.refetch();
+    if (hasContractEligibleApplication) contracts.refetch();
   };
 
   return {
     data: applications.data?.data,
     totalElements: applications.data?.totalElements ?? 0,
     contractsByApplication,
-    loading: applications.isLoading || (hasApprovedApplication && contracts.isLoading),
+    loading: applications.isLoading || (hasContractEligibleApplication && contracts.isLoading),
     refreshing: applications.isFetching || contracts.isFetching,
     error: applications.error ? 'Không thể tải danh sách hồ sơ vay.' : null,
     contractStatusUnavailable: Boolean(contracts.error),

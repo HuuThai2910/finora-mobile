@@ -43,6 +43,7 @@ export function useContractConsent(contract: LoanContractDetail): ContractConsen
         documentHash: contract.documentHash,
         pdfDocumentHash: contract.pdfDocument?.contentHash,
         idempotencyKey: signKey.current,
+        signatureMethod: contract.availableSignatureMethod,
       }).unwrap();
       signKey.current = generateIdempotencyKey();
       return true;

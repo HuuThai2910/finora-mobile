@@ -4,6 +4,8 @@ import type {
   LoanApplication,
   LoanApplicationHistory,
   PageResponse,
+  ConfirmLoanTermsRequest,
+  DeclineLoanTermsRequest,
 } from '@/types/loan';
 import type {
   LoanContractActionResponse,
@@ -62,6 +64,39 @@ const applicationApi = loanApi.injectEndpoints({
         { type: 'LoanApplicationList', id: 'ME' },
       ],
     }),
+    acceptApplicationTerms: builder.mutation<LoanApplication, {
+      applicationNumber: string;
+      idempotencyKey: string;
+      body: ConfirmLoanTermsRequest;
+    }>({
+      query: ({ applicationNumber, idempotencyKey, body }) => ({
+        url: `/loan-applications/${applicationNumber}/terms/accept`,
+        method: 'POST',
+        headers: { 'Idempotency-Key': idempotencyKey },
+        body,
+      }),
+      invalidatesTags: (_result, _error, { applicationNumber }) => [
+        { type: 'LoanApplication', id: applicationNumber },
+        { type: 'LoanApplicationList', id: 'ME' },
+        { type: 'LoanContractList', id: 'ME' },
+      ],
+    }),
+    declineApplicationTerms: builder.mutation<LoanApplication, {
+      applicationNumber: string;
+      idempotencyKey: string;
+      body: DeclineLoanTermsRequest;
+    }>({
+      query: ({ applicationNumber, idempotencyKey, body }) => ({
+        url: `/loan-applications/${applicationNumber}/terms/decline`,
+        method: 'POST',
+        headers: { 'Idempotency-Key': idempotencyKey },
+        body,
+      }),
+      invalidatesTags: (_result, _error, { applicationNumber }) => [
+        { type: 'LoanApplication', id: applicationNumber },
+        { type: 'LoanApplicationList', id: 'ME' },
+      ],
+    }),
     listMyContracts: builder.query<PageResponse<LoanContractSummary>, { page?: number; size?: number }>({
       query: params => ({ url: '/loan-contracts/me', params }),
       providesTags: result => [
@@ -86,14 +121,25 @@ const applicationApi = loanApi.injectEndpoints({
       documentHash: string;
       pdfDocumentHash?: string;
       idempotencyKey: string;
+      signatureMethod: 'CLICK_WRAP_MVP' | 'VNPT_SMART_CA';
     }>({
       query: ({ contractNumber, idempotencyKey, ...body }) => ({
         url: `/loan-contracts/${contractNumber}/sign`,
         method: 'POST',
         headers: { 'Idempotency-Key': idempotencyKey },
-        body: { ...body, signatureMethod: 'CLICK_WRAP_MVP' },
+        body,
       }),
       invalidatesTags: (_result, _error, { contractNumber }) => [
+        { type: 'LoanContract', id: contractNumber },
+        { type: 'LoanContractList', id: 'ME' },
+      ],
+    }),
+    refreshContractSignature: builder.mutation<LoanContractActionResponse, string>({
+      query: contractNumber => ({
+        url: `/loan-contracts/${contractNumber}/signature/refresh`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_result, _error, contractNumber) => [
         { type: 'LoanContract', id: contractNumber },
         { type: 'LoanContractList', id: 'ME' },
       ],
@@ -125,9 +171,12 @@ export const {
   useGetApplicationQuery,
   useGetApplicationHistoryQuery,
   useWithdrawApplicationMutation,
+  useAcceptApplicationTermsMutation,
+  useDeclineApplicationTermsMutation,
   useListMyContractsQuery,
   useGetContractQuery,
   useGetContractHistoryQuery,
   useSignContractMutation,
+  useRefreshContractSignatureMutation,
   useDeclineContractMutation,
 } = applicationApi;

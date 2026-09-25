@@ -84,6 +84,13 @@ export const CONTRACT_STATUS: Record<LoanContractStatus, StatusMeta> = {
     meaning: 'Hợp đồng đã chốt điều khoản và đang chờ bạn xác nhận.',
     next: 'Bạn ký xác nhận trước hạn',
   },
+  SIGNING: {
+    tone: 'amber',
+    label: 'Đang chờ SmartCA',
+    icon: 'clock',
+    meaning: 'Yêu cầu ký đã được gửi tới VNPT SmartCA và đang chờ bạn xác nhận.',
+    next: 'Mở ứng dụng SmartCA, xác nhận rồi quay lại kiểm tra kết quả',
+  },
   SIGNED: {
     tone: 'green',
     label: 'Đã ký',
@@ -184,12 +191,12 @@ export const EDUCATION_LEVEL_OPTIONS = [
 
 /**
  * Backend so khớp chính xác chuỗi này với `finora.loan.pricing-disclosure-version`
- * (mặc định `RATE_DISCLOSURE_V1`); sai một ký tự là hồ sơ bị từ chối với mã
+ * (mặc định `RATE_DISCLOSURE_V2`); sai một ký tự là hồ sơ bị từ chối với mã
  * `PRICING_DISCLOSURE_OUTDATED`. Chưa có endpoint công bố giá trị này nên phải
  * cấu hình phía client cho khớp.
  */
 export const PRICING_DISCLOSURE_VERSION =
-  process.env.EXPO_PUBLIC_PRICING_DISCLOSURE_VERSION ?? 'RATE_DISCLOSURE_V1';
+  process.env.EXPO_PUBLIC_PRICING_DISCLOSURE_VERSION ?? 'RATE_DISCLOSURE_V2';
 
 export const PRICING_DISCLOSURE_TEXT =
-  'Tôi đã xem lãi suất cơ sở, khung lãi suất có thể áp dụng, phí và lịch trả nợ ban đầu. Tôi hiểu lãi suất cuối có thể tăng hoặc giảm sau đánh giá và sẽ được xem lại trước khi ký hợp đồng.';
+  'Tôi đã xem lãi suất cơ sở, khung lãi suất, phí và lịch trả ban đầu. Tôi đồng ý hồ sơ tự tiếp tục nếu điều khoản cuối không bất lợi hơn; nếu lãi, phí hoặc nghĩa vụ trả tăng, FINORA phải hỏi lại trước khi lập hợp đồng.';

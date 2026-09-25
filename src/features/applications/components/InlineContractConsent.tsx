@@ -34,9 +34,12 @@ export default function InlineContractConsent({ contract, countdown, onDone, onS
     if (!accepted) return;
     const succeeded = await consent.sign();
     if (succeeded) {
+      const smartCa = contract.availableSignatureMethod === 'VNPT_SMART_CA';
       Alert.alert(
-        'Đã xác nhận hợp đồng',
-        'FINORA đã ghi nhận xác nhận click-wrap của bạn và tạo bản PDF xác nhận.',
+        smartCa ? 'Đã gửi yêu cầu ký số' : 'Đã xác nhận hợp đồng',
+        smartCa
+          ? 'Hãy mở ứng dụng VNPT SmartCA để xác nhận. Sau đó quay lại FINORA kiểm tra kết quả.'
+          : 'FINORA đã ghi nhận xác nhận click-wrap của bạn và tạo bản PDF xác nhận.',
         [{ text: 'Đã hiểu', onPress: onDone }],
       );
     } else if (consent.error?.stale) {
@@ -119,7 +122,9 @@ export default function InlineContractConsent({ contract, countdown, onDone, onS
 
       <View style={styles.actions}>
         <Button
-          label="Ký xác nhận hợp đồng"
+          label={contract.availableSignatureMethod === 'VNPT_SMART_CA'
+            ? 'Gửi yêu cầu VNPT SmartCA'
+            : 'Ký xác nhận hợp đồng'}
           onPress={sign}
           disabled={!accepted || consent.busy}
           loading={consent.signing}
@@ -152,7 +157,9 @@ export default function InlineContractConsent({ contract, countdown, onDone, onS
       </DisclosureSection>
 
       <Text style={styles.legal}>
-        Đây là xác nhận điện tử dạng click-wrap trong FINORA, chưa phải chữ ký số VNPT SmartCA.
+        {contract.availableSignatureMethod === 'VNPT_SMART_CA'
+          ? 'Hợp đồng chỉ được ghi nhận đã ký sau khi VNPT SmartCA trả kết quả thành công.'
+          : 'Đây là xác nhận điện tử dạng click-wrap trong FINORA, chưa phải chữ ký số VNPT SmartCA.'}
       </Text>
     </View>
   );
