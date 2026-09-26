@@ -1,132 +1,143 @@
-import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useRef } from 'react';
+import { AccessibilityInfo, Platform, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Colors } from '@/constants/colors';
-import { Spacing, Text_ } from '@/theme';
-import { FormStepProgress, PHeader, PItem, Screen } from '@/components/phone';
-import { Button, Card, Field, SectionLabel } from '@/components/ui';
-import { ErrorState, LoadingScreen } from '@/components/feedback';
-import { formatVND } from '@/utils/format';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Spacing } from '@/theme';
 import type { MarketStackParamList } from '@/navigation/types';
-import { defaultDisbursementDate, REPAYMENT_METHOD_LABEL } from '../constant';
+import { LOAN_STEP_GUTTER } from '../constant';
 import { useProduct } from '../hook/useProducts';
-import LoanSelectionControls from '../components/LoanSelectionControls';
+import { useLoanSelection, type LoanSelectionField } from '../hooks/useLoanSelection';
+import { toLoanTermsView } from '../mappers/loanSelection';
+import DisbursementDateField from '../components/DisbursementDateField';
+import LoanAmountField from '../components/LoanAmountField';
+import LoanPrimaryButton from '../components/LoanPrimaryButton';
+import LoanProductIntro from '../components/LoanProductIntro';
+import LoanSelectionStatus from '../components/LoanSelectionStatus';
+import LoanStepBackdrop from '../components/LoanStepBackdrop';
+import LoanStepFooter from '../components/LoanStepFooter';
+import LoanStepHeader from '../components/LoanStepHeader';
+import LoanStepNote from '../components/LoanStepNote';
+import LoanTermField from '../components/LoanTermField';
+import LoanTermsCard from '../components/LoanTermsCard';
 
 type Nav = NativeStackNavigationProp<MarketStackParamList, 'ProductDetail'>;
 
-/** Bước 1/3 — chọn khoản vay một lần; amount/term được truyền xuyên suốt hai bước sau. */
+/**
+ * Bước 1/3 "Nhập khoản vay" (mockup 26/09/2026): chọn số tiền, kỳ hạn và ngày
+ * giải ngân dự kiến một lần; hai bước sau chỉ đọc lại đúng bốn giá trị qua params.
+ */
 export default function ProductDetailScreen() {
   const nav = useNavigation<Nav>();
   const route = useRoute<RouteProp<MarketStackParamList, 'ProductDetail'>>();
+  const insets = useSafeAreaInsets();
   const { data, loading, error, reload } = useProduct(route.params.productId);
+  const selection = useLoanSelection(data);
 
-  const [initializedProductId, setInitializedProductId] = useState<number | null>(null);
-  const [amount, setAmount] = useState(0);
-  const [term, setTerm] = useState(0);
-  const [disbursementDate, setDisbursementDate] = useState(defaultDisbursementDate);
-  const [amountError, setAmountError] = useState<string | null>(null);
-  const [dateError, setDateError] = useState<string | null>(null);
+  // Giữ thứ tự ưu tiên của màn cũ: có lỗi thì báo lỗi kèm thử lại, kể cả khi còn
+  // bản cũ trong cache, thay vì cho nhập trên điều khoản có thể đã lỗi thời.
+  const product = !loading && !error ? data : undefined;
+  const terms = product ? toLoanTermsView(product) : null;
 
-  useEffect(() => {
-    if (!data || initializedProductId === data.id) return;
-    // Mỗi Product có biên khác nhau nên khởi tạo lại lựa chọn khi người dùng mở Product mới.
-    setAmount(Math.min(data.maxAmount, Math.max(data.minAmount, 50_000_000)));
-    setTerm(data.minTermMonths);
-    setDisbursementDate(defaultDisbursementDate());
-    setInitializedProductId(data.id);
-  }, [data, initializedProductId]);
+  // Vị trí hai trường có thể sai trong vùng cuộn, để bấm "Tiếp tục" mà sai thì
+  // cuộn tới đúng trường (trường số tiền có thể đã trôi khỏi màn).
+  const scrollRef = useRef<ScrollView>(null);
+  const fieldOffsets = useRef<Record<LoanSelectionField, number>>({ amount: 0, date: 0 });
+  const trackField = (field: LoanSelectionField) => (event: LayoutChangeEvent) => {
+    fieldOffsets.current[field] = event.nativeEvent.layout.y;
+  };
 
-  if (loading) return <Screen><LoadingScreen cards={2} /></Screen>;
-  if (error) return <Screen><ErrorState message={error} onRetry={reload} /></Screen>;
-  if (!data) return null;
+  const goBack = () => (nav.canGoBack() ? nav.goBack() : nav.navigate('Products'));
 
   const onContinue = () => {
-    if (amount < data.minAmount || amount > data.maxAmount) {
-      setAmountError(
-        `Số tiền phải nằm trong khoảng ${formatVND(data.minAmount)} – ${formatVND(data.maxAmount)}.`,
-      );
+    const result = selection.submit();
+    if (!result) return;
+    if (!result.ok) {
+      const y = Math.max(0, fieldOffsets.current[result.field] - Spacing.xl);
+      scrollRef.current?.scrollTo({ y, animated: true });
+      // Android/web tự đọc dòng lỗi nhờ `accessibilityLiveRegion`; iOS không có cơ chế
+      // đó nên đọc thành tiếng ở đây (đọc cả hai nơi thì Android bị đọc hai lần).
+      if (Platform.OS === 'ios') AccessibilityInfo.announceForAccessibility(result.message);
       return;
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(disbursementDate) || disbursementDate < new Date().toISOString().slice(0, 10)) {
-      setDateError('Ngày giải ngân dự kiến phải là hôm nay hoặc một ngày trong tương lai.');
-      return;
-    }
-    setAmountError(null);
-    setDateError(null);
-    nav.navigate('Schedule', {
-      productId: data.id,
-      amount,
-      termMonths: term,
-      expectedDisbursementDate: disbursementDate,
-    });
+    nav.navigate('Schedule', result.params);
   };
 
   return (
-    <Screen>
-      <PHeader title="Nhập khoản vay" back />
-      <FormStepProgress current={1} total={3} label="Chọn khoản vay" />
+    <LoanStepBackdrop>
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.sm }]}
+        keyboardShouldPersistTaps="handled"
+        // Trên web, "on-drag" của react-native-web bỏ focus ở MỌI lần cuộn, kể cả khi
+        // trình duyệt tự cuộn ô vừa chạm (ngày giải ngân ở cuối màn) lên cho thấy;
+        // bàn phím vừa mở đã đóng. Chỉ bật trên máy thật, nơi nó chỉ chạy khi người dùng kéo.
+        keyboardDismissMode={Platform.OS === 'web' ? 'none' : 'on-drag'}
+        automaticallyAdjustKeyboardInsets
+        showsVerticalScrollIndicator={false}
+      >
+        <LoanStepHeader title="Nhập khoản vay" step={1} total={3} onBack={goBack} />
 
-      <Card style={styles.productCard}>
-        <View style={styles.head}>
-          <View style={styles.title}>
-            <Text style={styles.code}>SẢN PHẨM VAY</Text>
-            <Text style={styles.name}>{data.name}</Text>
+        {product && terms ? (
+          <>
+            <View style={styles.section}>
+              <LoanProductIntro name={product.name} repaymentLabel={terms.repaymentLabel} />
+              <LoanTermsCard items={terms.items} />
+            </View>
+
+            <View style={styles.section} onLayout={trackField('amount')}>
+              <LoanAmountField
+                amount={selection.amount}
+                minAmount={product.minAmount}
+                maxAmount={product.maxAmount}
+                error={selection.amountError}
+                onChange={selection.changeAmount}
+              />
+            </View>
+
+            <View style={styles.section}>
+              <LoanTermField
+                termMonths={selection.termMonths}
+                minTermMonths={product.minTermMonths}
+                maxTermMonths={product.maxTermMonths}
+                onChange={selection.changeTermMonths}
+              />
+            </View>
+
+            <View style={styles.section} onLayout={trackField('date')}>
+              <DisbursementDateField
+                value={selection.disbursementDate}
+                error={selection.dateError}
+                onChange={selection.changeDisbursementDate}
+              />
+            </View>
+
+            {/* Lời công bố lãi suất lấy nguyên văn `rateNotice` của backend. */}
+            <View style={styles.note}>
+              <LoanStepNote>{product.rateNotice}</LoanStepNote>
+            </View>
+          </>
+        ) : (
+          <View style={styles.section}>
+            <LoanSelectionStatus error={error} onRetry={reload} />
           </View>
-          <Text style={styles.secure}>● Khoản vay minh bạch</Text>
-        </View>
-        <PItem label="Lãi suất cơ sở" value={`${data.annualInterestRate.toFixed(2).replace('.', ',')}%/năm`} valueTone="up" />
-        <PItem label="Khung có thể áp dụng" value={`${data.minAnnualInterestRate}% – ${data.maxAnnualInterestRate}%/năm`} />
-        <PItem label="Kỳ hạn tối đa" value={`${data.maxTermMonths} tháng`} />
-        <PItem label="Hạn mức tối đa" value={formatVND(data.maxAmount)} />
-        <PItem label="Cách trả" value={REPAYMENT_METHOD_LABEL[data.repaymentMethod] ?? data.repaymentMethod} last />
-      </Card>
+        )}
+      </ScrollView>
 
-      <SectionLabel style={styles.section}>THÔNG TIN KHOẢN VAY</SectionLabel>
-      <LoanSelectionControls
-        amount={amount}
-        termMonths={term}
-        minAmount={data.minAmount}
-        maxAmount={data.maxAmount}
-        minTermMonths={data.minTermMonths}
-        maxTermMonths={data.maxTermMonths}
-        amountError={amountError ?? undefined}
-        onAmountChange={(value) => { setAmount(value); setAmountError(null); }}
-        onTermChange={setTerm}
-      />
-
-      <Field
-        label="Ngày giải ngân dự kiến"
-        value={disbursementDate}
-        onChangeText={(value) => { setDisbursementDate(value); setDateError(null); }}
-        placeholder="YYYY-MM-DD"
-        helper="Ngày này được dùng để tính lịch trả dự kiến ở bước tiếp theo"
-        required
-        error={dateError ?? undefined}
-        style={styles.dateField}
-      />
-
-      <Text style={styles.notice}>{data.rateNotice}</Text>
-      <Button label="Tiếp tục →" onPress={onContinue} style={styles.action} />
-    </Screen>
+      {/* Lỗi thì thẻ lỗi đã có nút "Thử lại"; nút "Tiếp tục" bị khoá sẽ chỉ gây rối. */}
+      {error ? null : (
+        <LoanStepFooter>
+          <LoanPrimaryButton label="Tiếp tục" onPress={onContinue} disabled={!product} />
+        </LoanStepFooter>
+      )}
+    </LoanStepBackdrop>
   );
 }
 
 const styles = StyleSheet.create({
-  productCard: { gap: Spacing.sm },
-  head: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: Spacing.lg,
-    marginBottom: Spacing.md,
-  },
-  title: { flexShrink: 1, gap: 2 },
-  name: { ...Text_.heading, color: Colors.ink },
-  code: { ...Text_.captionBold, color: Colors.ink3 },
-  secure: { ...Text_.captionBold, color: Colors.emerald },
-  notice: { ...Text_.micro, color: Colors.ink2, marginTop: Spacing.xl, lineHeight: 22 },
-  section: { marginTop: Spacing.section },
-  dateField: { marginTop: Spacing.xxl, marginBottom: 0 },
-  action: { marginTop: Spacing.xl },
+  scroll: { flex: 1 },
+  content: { paddingHorizontal: LOAN_STEP_GUTTER, paddingBottom: Spacing.xxl },
+  section: { marginTop: Spacing.xxl },
+  note: { marginTop: Spacing.xl },
 });

@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Colors } from '@/constants/colors';
-import { Spacing, Text_ } from '@/theme';
-import { Screen } from '@/components/phone';
-import { Button, Field, InfoNote } from '@/components/ui';
 import type { AuthStackParamList } from '@/navigation/types';
+import { FORGOT_PASSWORD_BACKGROUND } from '../backgrounds';
+import AuthButton from '../components/AuthButton';
+import AuthField from '../components/AuthField';
+import AuthLayout from '../components/AuthLayout';
+import AuthNote from '../components/AuthNote';
+import AuthSwitchLink from '../components/AuthSwitchLink';
 import FormError from '../components/FormError';
 import { OTP_LENGTH } from '../constants';
 import { useFieldErrors } from '../hooks/useFieldErrors';
@@ -37,18 +38,14 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <Screen light>
-      <View style={styles.head}>
-        <Text style={styles.title} accessibilityRole="header">
-          Quên mật khẩu
-        </Text>
-        <Text style={styles.sub}>
-          Nhập email đã đăng ký, chúng tôi sẽ gửi mã {OTP_LENGTH} số để đặt lại mật khẩu.
-        </Text>
-      </View>
-
-      <Field
+    <AuthLayout
+      background={FORGOT_PASSWORD_BACKGROUND}
+      title="Quên mật khẩu"
+      subtitle={`Nhập email đã đăng ký, chúng tôi sẽ gửi mã ${OTP_LENGTH} số để đặt lại mật khẩu.`}
+    >
+      <AuthField
         label="Email"
+        icon="mail"
         value={email}
         onChangeText={v => {
           setEmail(v);
@@ -57,42 +54,34 @@ export default function ForgotPasswordScreen() {
         onBlur={() => validateField({ email }, 'email')}
         placeholder="vidu@email.com"
         keyboardType="email-address"
-        required
-        error={errors.email}
         autoComplete="email"
         autoCapitalize="none"
+        returnKeyType="send"
+        onSubmitEditing={() => void onSubmit()}
+        required
+        error={errors.email}
         editable={!submitting}
       />
 
-      <InfoNote tone="info">
-        Nếu email có trong hệ thống, mã sẽ được gửi trong vòng vài phút. Mỗi email chỉ được yêu cầu
-        tối đa 3 lần mỗi giờ.
-      </InfoNote>
+      <AuthNote>
+        Nếu email có trong hệ thống, mã sẽ được gửi trong vòng vài phút. Vui lòng kiểm tra cả hộp
+        thư đến và thư rác (spam).
+      </AuthNote>
 
       <FormError message={error} />
 
-      <Button
+      <AuthButton
         label="Gửi mã xác thực"
+        trailingIcon="arrowRight"
         onPress={() => void onSubmit()}
         loading={submitting}
-        style={styles.submit}
       />
 
-      <Text style={styles.hint}>
-        Nhớ ra mật khẩu?{' '}
-        <Text style={styles.link} onPress={() => nav.goBack()}>
-          Quay lại đăng nhập
-        </Text>
-      </Text>
-    </Screen>
+      <AuthSwitchLink
+        prompt="Nhớ ra mật khẩu?"
+        action="Quay lại đăng nhập"
+        onPress={() => nav.goBack()}
+      />
+    </AuthLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  head: { gap: Spacing.md, marginBottom: Spacing.xxl, paddingTop: Spacing.page },
-  title: { ...Text_.display, color: Colors.ink },
-  sub: { ...Text_.micro, color: Colors.ink3 },
-  submit: { marginTop: Spacing.lg },
-  hint: { ...Text_.micro, color: Colors.ink3, textAlign: 'center', marginTop: Spacing.xl },
-  link: { color: Colors.brand, fontFamily: Text_.microBold.fontFamily },
-});

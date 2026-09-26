@@ -1,3 +1,4 @@
+import type { ImageSourcePropType } from 'react-native';
 import type { TagTone } from '@/components/ui';
 import type { IconName } from '@/constants/icons';
 import type { LoanContractStatus } from '@/types/contract';
@@ -151,6 +152,26 @@ export const PURPOSE_LABELS: Record<string, string> = {
   OTHER: 'Khác',
 };
 
+/**
+ * Icon của thẻ hồ sơ theo mục đích vay — trường có cấu trúc duy nhất nói hồ sơ
+ * vay để làm gì (contract không có "loại sản phẩm"). `OTHER` và mã backend mới
+ * bổ sung dùng icon hồ sơ trung tính thay vì đoán từ tên sản phẩm do admin đặt.
+ */
+export const PURPOSE_ICONS: Partial<Record<string, IconName>> = {
+  DEBT_CONSOLIDATION: 'layers',
+  CREDIT_CARD: 'creditCard',
+  HOME_IMPROVEMENT: 'home',
+  MAJOR_PURCHASE: 'shoppingBag',
+  MEDICAL: 'heartPulse',
+  CAR: 'car',
+  SMALL_BUSINESS: 'briefcase',
+  MOVING: 'truck',
+  VACATION: 'plane',
+  EDUCATION: 'graduationCap',
+};
+
+export const NEUTRAL_PURPOSE_ICON: IconName = 'fileText';
+
 export const REPAYMENT_LABELS: Record<string, string> = {
   ANNUITY: 'Trả góp đều hằng kỳ',
   EQUAL_PRINCIPAL: 'Gốc đều, lãi giảm dần',
@@ -200,3 +221,95 @@ export const PRICING_DISCLOSURE_VERSION =
 
 export const PRICING_DISCLOSURE_TEXT =
   'Tôi đã xem lãi suất cơ sở, khung lãi suất, phí và lịch trả ban đầu. Tôi đồng ý hồ sơ tự tiếp tục nếu điều khoản cuối không bất lợi hơn; nếu lãi, phí hoặc nghĩa vụ trả tăng, FINORA phải hỏi lại trước khi lập hợp đồng.';
+
+/* ---------------- Màn "Hồ sơ vay" (mockup 26/09/2026) ---------------- */
+
+/** Trên web và máy tính bảng, giữ cột nội dung cỡ điện thoại thay vì giãn theo cửa sổ. */
+export const APPLICATION_LIST_MAX_WIDTH = 480;
+
+/** Lề hai bên của mockup (hẹp hơn lề 20 của các màn cũ, thẻ gần mép hơn). */
+export const APPLICATION_LIST_PADDING = 16;
+
+export type ApplicationsBackground = {
+  source: ImageSourcePropType;
+  width: number;
+  height: number;
+  /**
+   * Hàng cắt đôi ảnh. Nửa trên (sóng + hình minh hoạ) cuộn cùng đầu trang, nửa
+   * dưới (sóng đáy) đứng yên ở đáy màn; khoảng hở giữa hai nửa lấp bằng đúng
+   * màu hàng này (`Colors.applicationsBackdrop`) nên không lộ vết nối.
+   */
+  splitRow: number;
+  /** Mép trái cụm minh hoạ (tờ giấy nhỏ bay bên trái), theo pixel ảnh gốc. */
+  illustrationLeft: number;
+  /** Mép dưới cụm minh hoạ, tính cả quầng sáng dưới huy hiệu dấu tích. */
+  illustrationBottom: number;
+};
+
+/**
+ * Ảnh nền của màn (1024×1536, Hải tạo bằng ChatGPT). Màn dài hơn ảnh theo tỉ
+ * lệ, kéo giãn thì méo sóng, nên ảnh chỉ phóng theo bề rộng cột rồi cắt đôi.
+ * Các mốc đo bằng PIL trên ảnh gốc.
+ */
+export const APPLICATIONS_BACKGROUND: ApplicationsBackground = {
+  source: require('@/assets/applications-background.png'),
+  width: 1024,
+  height: 1536,
+  splitRow: 800,
+  illustrationLeft: 490,
+  illustrationBottom: 332,
+};
+
+/**
+ * Nhóm lọc ở màn "Hồ sơ vay". Mỗi hồ sơ thuộc đúng một nhóm, suy từ cùng bộ ba
+ * trạng thái (hồ sơ, hợp đồng, xác nhận điều khoản) mà `applicationJourneyStatus`
+ * dùng để in nhãn trên thẻ — xem `mappers/applicationStage.ts`.
+ */
+export type ApplicationStage = 'action' | 'signed' | 'reviewing' | 'rejected' | 'stopped' | 'other';
+
+/**
+ * Thứ tự chip cố định, không đổi theo dữ liệu để chip không nhảy chỗ sau mỗi
+ * lần tải lại: việc người vay cần làm trước, rồi khoản đã ký, hồ sơ đang xét,
+ * cuối cùng là các hồ sơ đã khép lại.
+ */
+export const APPLICATION_STAGES: readonly { key: ApplicationStage; label: string }[] = [
+  { key: 'action', label: 'Chờ bạn xử lý' },
+  { key: 'signed', label: 'Đã ký' },
+  { key: 'reviewing', label: 'Đang xét duyệt' },
+  { key: 'rejected', label: 'Không được duyệt' },
+  { key: 'stopped', label: 'Đã dừng' },
+  { key: 'other', label: 'Trạng thái khác' },
+];
+
+/* ---------------- Màn "Chi tiết hồ sơ vay" (mockup 26/09/2026) ---------------- */
+
+/**
+ * Nhãn ngắn của phương thức trả cho ô thông số hẹp ở thẻ tóm tắt; câu đầy đủ
+ * vẫn là `REPAYMENT_LABELS` ở thẻ thanh toán và phần thông tin đã gửi.
+ */
+export const REPAYMENT_SHORT_LABELS: Record<string, string> = {
+  ANNUITY: 'Trả góp đều',
+  EQUAL_PRINCIPAL: 'Gốc đều',
+};
+
+/**
+ * Mép trái vật thể gần nhất nằm ngang hàng tiêu đề màn chi tiết (tờ giấy mờ bay
+ * phía trên tập hồ sơ), theo pixel ảnh `applications-background.png`, đo bằng
+ * PIL. Tiêu đề và mã hồ sơ dừng trước mốc này nên không đè lên hình minh hoạ;
+ * `illustrationLeft` (490) nằm thấp hơn hàng chữ nên không dùng làm giới hạn.
+ */
+export const DETAIL_HEADER_TEXT_LIMIT = 630;
+
+/* ---------------- Màn "Nộp hồ sơ" — bước 3/3 (mockup 26/09/2026) ---------------- */
+
+/**
+ * Bảng chọn (mục đích vay, học vấn, nhà ở) mở ngoài cột nội dung nên tự giới hạn
+ * bề rộng, khớp cột 480pt của `LoanStepBackdrop` bên products.
+ */
+export const APPLY_FORM_SHEET_MAX_WIDTH = 480;
+
+/**
+ * Bo góc chung của dòng nhập, hộp ghi chú và ô xác nhận ở bước 3/3 (mockup ≈14pt,
+ * nằm giữa `Radius.sm` và `Radius.md`); thẻ khoản vay đã chọn dùng `Radius.md`.
+ */
+export const APPLY_FORM_BOX_RADIUS = 14;

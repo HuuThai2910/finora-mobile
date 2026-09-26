@@ -1,12 +1,15 @@
-import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { StyleSheet, Text, type TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '@/constants/colors';
-import { FontFamily, Spacing, Text_ } from '@/theme';
-import { Screen } from '@/components/phone';
-import { Button, Checkbox, Field } from '@/components/ui';
+import { FontFamily } from '@/theme';
 import type { AuthStackParamList } from '@/navigation/types';
+import AuthButton from '../components/AuthButton';
+import AuthCheckbox from '../components/AuthCheckbox';
+import AuthField from '../components/AuthField';
+import AuthLayout from '../components/AuthLayout';
+import AuthSwitchLink from '../components/AuthSwitchLink';
 import FormError from '../components/FormError';
 import { PASSWORD_MIN_LENGTH, PRIVACY_LABEL, TERMS_LABEL } from '../constants';
 import { useFieldErrors } from '../hooks/useFieldErrors';
@@ -14,6 +17,12 @@ import { useRegistration } from '../hooks/useRegistration';
 import { validateRegister } from '../schemas/authForms';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
+
+/** Nguyên câu đồng ý để trình đọc màn hình đọc đúng điều người dùng xác nhận. */
+const CONSENT_LABEL = `Tôi đồng ý với ${TERMS_LABEL} và ${PRIVACY_LABEL}`;
+
+/** Giữ tên tài liệu trên cùng một dòng, tránh ngắt kiểu "Chính | sách bảo vệ…". */
+const keepTogether = (name: string) => name.replace(/ /g, ' ');
 
 /**
  * Tạo tài khoản — bước khai thông tin.
@@ -32,6 +41,9 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const phoneRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
+  const confirmRef = useRef<TextInput>(null);
   const { errors, validateField, clearField, validateSubmit } = useFieldErrors(validateRegister);
   const { submit, submitting, error } = useRegistration();
 
@@ -52,16 +64,10 @@ export default function RegisterScreen() {
   };
 
   return (
-    <Screen light>
-      <View style={styles.head}>
-        <Text style={styles.title} accessibilityRole="header">
-          Tạo tài khoản
-        </Text>
-        <Text style={styles.sub}>Miễn phí · chỉ mất 3 phút</Text>
-      </View>
-
-      <Field
+    <AuthLayout title="Tạo tài khoản" subtitle="Miễn phí · chỉ mất 3 phút">
+      <AuthField
         label="Email"
+        icon="mail"
         value={email}
         onChangeText={v => {
           setEmail(v);
@@ -70,15 +76,18 @@ export default function RegisterScreen() {
         onBlur={() => validateField(values, 'email')}
         placeholder="vidu@email.com"
         keyboardType="email-address"
-        required
-        error={errors.email}
-        helper="Mã xác thực sẽ được gửi tới email này"
         autoComplete="email"
         autoCapitalize="none"
+        returnKeyType="next"
+        onSubmitEditing={() => phoneRef.current?.focus()}
+        required
+        error={errors.email}
         editable={!submitting}
       />
-      <Field
+      <AuthField
         label="Số điện thoại"
+        icon="phone"
+        inputRef={phoneRef}
         value={phone}
         onChangeText={v => {
           setPhone(v);
@@ -87,13 +96,17 @@ export default function RegisterScreen() {
         onBlur={() => validateField(values, 'phone')}
         placeholder="0912 345 678"
         keyboardType="phone-pad"
+        autoComplete="tel"
+        returnKeyType="next"
+        onSubmitEditing={() => passwordRef.current?.focus()}
         required
         error={errors.phone}
-        autoComplete="tel"
         editable={!submitting}
       />
-      <Field
+      <AuthField
         label="Mật khẩu"
+        icon="lock"
+        inputRef={passwordRef}
         value={password}
         onChangeText={v => {
           setPassword(v);
@@ -102,14 +115,18 @@ export default function RegisterScreen() {
         onBlur={() => validateField(values, 'password')}
         placeholder="Nhập mật khẩu"
         secure
-        required
-        error={errors.password}
-        helper={`Tối thiểu ${PASSWORD_MIN_LENGTH} ký tự`}
         autoComplete="new-password"
+        returnKeyType="next"
+        onSubmitEditing={() => confirmRef.current?.focus()}
+        required
+        helper={`Tối thiểu ${PASSWORD_MIN_LENGTH} ký tự`}
+        error={errors.password}
         editable={!submitting}
       />
-      <Field
+      <AuthField
         label="Nhập lại mật khẩu"
+        icon="lock"
+        inputRef={confirmRef}
         value={confirmPassword}
         onChangeText={v => {
           setConfirmPassword(v);
@@ -118,57 +135,44 @@ export default function RegisterScreen() {
         onBlur={() => validateField(values, 'confirmPassword')}
         placeholder="Nhập lại mật khẩu ở trên"
         secure
+        autoComplete="new-password"
+        returnKeyType="done"
         required
         error={errors.confirmPassword}
-        autoComplete="new-password"
         editable={!submitting}
       />
 
-      <Checkbox
+      <AuthCheckbox
         checked={acceptedTerms}
         onChange={v => {
           setAcceptedTerms(v);
           clearField('acceptedTerms');
         }}
-        label="Đồng ý điều khoản sử dụng"
+        label={CONSENT_LABEL}
+        error={errors.acceptedTerms}
       >
-        <Text style={styles.terms}>
-          Đồng ý <Text style={styles.link}>{TERMS_LABEL}</Text> &{' '}
-          <Text style={styles.link}>{PRIVACY_LABEL}</Text>
+        {/* Tên tài liệu chỉ in đậm, không tô màu link: chưa có trang tài liệu để
+            mở, chữ trông bấm được mà bấm không ra gì thì còn tệ hơn. */}
+        <Text style={styles.consent}>
+          Tôi đồng ý với <Text style={styles.consentDoc}>{keepTogether(TERMS_LABEL)}</Text> và{' '}
+          <Text style={styles.consentDoc}>{keepTogether(PRIVACY_LABEL)}</Text>.
         </Text>
-      </Checkbox>
-      {errors.acceptedTerms ? (
-        <Text style={styles.fieldError} accessibilityLiveRegion="polite">
-          {errors.acceptedTerms}
-        </Text>
-      ) : null}
+      </AuthCheckbox>
 
       <FormError message={error} />
 
-      <Button
+      <AuthButton
         label="Tạo tài khoản → nhận mã"
         onPress={() => void onSubmit()}
         loading={submitting}
-        style={styles.submit}
       />
 
-      <Text style={styles.hint}>
-        Đã có tài khoản?{' '}
-        <Text style={styles.link} onPress={() => nav.goBack()}>
-          Đăng nhập
-        </Text>
-      </Text>
-    </Screen>
+      <AuthSwitchLink prompt="Đã có tài khoản?" action="Đăng nhập" onPress={() => nav.goBack()} />
+    </AuthLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  head: { alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.xxl, paddingTop: Spacing.xl },
-  title: { ...Text_.display, color: Colors.ink },
-  sub: { ...Text_.micro, color: Colors.ink3 },
-  terms: { ...Text_.micro, color: Colors.ink2 },
-  link: { color: Colors.brand, fontFamily: FontFamily.bold },
-  fieldError: { ...Text_.micro, color: Colors.red, marginBottom: Spacing.md },
-  submit: { marginTop: Spacing.lg },
-  hint: { ...Text_.micro, color: Colors.ink3, textAlign: 'center', marginTop: Spacing.xl },
+  consent: { fontFamily: FontFamily.regular, fontSize: 14, lineHeight: 22, color: Colors.authLabel },
+  consentDoc: { fontFamily: FontFamily.semibold },
 });

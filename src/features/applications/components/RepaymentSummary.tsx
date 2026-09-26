@@ -1,14 +1,14 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Card } from '@/components/ui';
-import Icon from '@/components/ui/Icon';
+import { StyleSheet, Text, View } from 'react-native';
 import { Colors } from '@/constants/colors';
-import { IconSize, MIN_TOUCH, Radius, Spacing, Text_, tabularNums } from '@/theme';
+import { FontFamily, Spacing, tabularNums } from '@/theme';
 import { formatDate, formatDong } from '@/utils/format';
+import DetailButton from './DetailButton';
+import DetailCard from './DetailCard';
 
 type Props = {
   /** Số tiền của kỳ đầu tiên. */
   firstInstallment: number;
-  /** Kỳ cao nhất; chỉ nói tới khi khác kỳ đầu (phương thức gốc đều). */
+  /** Kỳ cao nhất; chỉ nói tới khi khác kỳ đầu. */
   maximumInstallment: number;
   repaymentLabel: string;
   principal: number;
@@ -18,18 +18,27 @@ type Props = {
   totalRepayment: number;
   expectedDisbursementDate: string;
   periodCount: number;
-  /** Hồ sơ là số dự kiến, hợp đồng là số đã chốt. */
+  /** Hồ sơ chưa duyệt là số dự kiến, đã duyệt là lịch theo điều khoản sau thẩm định. */
   estimate: boolean;
   onOpenSchedule: () => void;
 };
 
 /**
- * Toàn bộ phần tiền của một khoản vay gói trong một khối.
- *
- * Trước đây số tiền bị rải ra ba chỗ: kỳ trả ở một thẻ, gốc/lãi/phí ở thẻ "chi
- * phí", ngày giải ngân ở thẻ "mốc thời gian" — trong đó gốc và tổng phải trả
- * đã hiện ở phía trên. Gom lại vừa bỏ được trùng lặp, vừa cho thấy phép cộng
- * gốc + lãi + phí ra tổng, thứ mà ba thẻ rời không thể hiện được.
+ * Lịch trả của hồ sơ là snapshot, không phải lịch vận hành sau giải ngân, nên
+ * luôn đi kèm câu nói rõ đó là số nào. Câu này trước đây là hộp thông báo riêng
+ * dưới thẻ; nay nằm cuối thẻ ở cỡ chữ phụ để không tranh chỗ với số tiền.
+ */
+const NOTES = {
+  estimate:
+    'Đây là số dự kiến tính lúc bạn nộp hồ sơ. Lịch trả chính thức chỉ hình thành sau khi hợp đồng có hiệu lực và khoản vay được giải ngân.',
+  approved:
+    'Đây là lịch theo điều khoản sau thẩm định và là cơ sở lập hợp đồng. Ngày trả thực tế có thể dịch theo ngày giải ngân.',
+} as const;
+
+/**
+ * "Thông tin thanh toán" (mockup 26/09/2026): toàn bộ phần tiền của khoản vay
+ * trong một thẻ, số phải trả mỗi kỳ in lớn, rồi gốc + lãi + phí cộng ra tổng.
+ * Frontend chỉ trình bày số Loan Service đã tính, không tự tính lại.
  */
 export default function RepaymentSummary({
   firstInstallment,
@@ -46,15 +55,17 @@ export default function RepaymentSummary({
   onOpenSchedule,
 }: Props) {
   const varyingInstallment = maximumInstallment > firstInstallment;
+  const scheduleLabel =
+    periodCount > 0 ? `Xem lịch trả đầy đủ ${periodCount} kỳ` : 'Xem lịch trả từng kỳ';
 
   return (
-    <Card style={styles.card}>
+    <DetailCard title="Thông tin thanh toán" icon="wallet">
       <View>
         <View style={styles.amountRow}>
-          <Text style={styles.amount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+          <Text style={styles.amount} maxFontSizeMultiplier={1.2}>
             {formatDong(firstInstallment)}
           </Text>
-          <Text style={styles.unit}>{varyingInstallment ? 'kỳ đầu' : 'mỗi kỳ'}</Text>
+          <Text style={styles.unit}>{varyingInstallment ? '/ kỳ đầu' : '/ kỳ'}</Text>
         </View>
         <Text style={styles.caption}>
           {varyingInstallment
@@ -63,82 +74,115 @@ export default function RepaymentSummary({
         </Text>
       </View>
 
-      <View style={styles.breakdown}>
-        <Line label="Tiền gốc" value={formatDong(principal)} />
-        <Line label="Tiền lãi" value={formatDong(interest)} />
-        <Line label="Phí" value={formatDong(fees)} />
-        {penalties > 0 ? <Line label="Phạt đang ghi nhận" value={formatDong(penalties)} /> : null}
-        <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>
-            {estimate ? 'Tổng phải trả dự kiến' : 'Tổng phải trả'}
-          </Text>
-          <Text style={styles.totalValue}>{formatDong(totalRepayment)}</Text>
-        </View>
+      <View style={styles.figures}>
+        <Figure label="Tiền gốc" value={formatDong(principal)} />
+        <Figure label="Tiền lãi" value={formatDong(interest)} divided />
+        <Figure label="Phí" value={formatDong(fees)} divided />
       </View>
 
-      <Text style={styles.disbursement}>
-        Lịch trả tính từ ngày giải ngân dự kiến {formatDate(expectedDisbursementDate)}.
-      </Text>
-
-      <Pressable
-        onPress={onOpenSchedule}
-        accessibilityRole="button"
-        accessibilityLabel={
-          periodCount > 0 ? `Xem lịch trả đầy đủ ${periodCount} kỳ` : 'Xem lịch trả từng kỳ'
-        }
-        style={({ pressed }) => [styles.link, pressed && styles.pressed]}
-      >
-        <Text style={styles.linkText}>
-          {periodCount > 0 ? `Xem lịch trả đầy đủ ${periodCount} kỳ` : 'Xem lịch trả từng kỳ'}
+      <View style={styles.totals}>
+        {penalties > 0 ? (
+          <View style={styles.line}>
+            <Text style={styles.lineLabel}>Phạt đang ghi nhận</Text>
+            <Text style={styles.lineValue}>{formatDong(penalties)}</Text>
+          </View>
+        ) : null}
+        <View style={styles.line}>
+          <Text style={styles.totalLabel}>{estimate ? 'Tổng phải trả dự kiến' : 'Tổng phải trả'}</Text>
+          <Text style={styles.totalValue} maxFontSizeMultiplier={1.3}>
+            {formatDong(totalRepayment)}
+          </Text>
+        </View>
+        <Text style={styles.fine}>
+          Lịch trả tính từ ngày giải ngân dự kiến {formatDate(expectedDisbursementDate)}.
         </Text>
-        <Icon name="chevronRight" size={IconSize.xs} color={Colors.brand} />
-      </Pressable>
-    </Card>
+        <Text style={styles.fine}>{estimate ? NOTES.estimate : NOTES.approved}</Text>
+      </View>
+
+      <DetailButton
+        label={scheduleLabel}
+        variant="row"
+        icon="calendarCheck"
+        onPress={onOpenSchedule}
+      />
+    </DetailCard>
   );
 }
 
-function Line({ label, value }: { label: string; value: string }) {
+function Figure({ label, value, divided = false }: { label: string; value: string; divided?: boolean }) {
   return (
-    <View style={styles.line}>
-      <Text style={styles.lineLabel}>{label}</Text>
-      <Text style={styles.lineValue}>{value}</Text>
+    <View
+      style={[styles.figure, divided && styles.figureDivided]}
+      accessible
+      accessibilityLabel={`${label}: ${value}`}
+    >
+      <Text style={styles.figureValue} maxFontSizeMultiplier={1.3}>
+        {value}
+      </Text>
+      <Text style={styles.figureLabel} maxFontSizeMultiplier={1.3}>
+        {label}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { gap: Spacing.xl },
-  amountRow: { flexDirection: 'row', alignItems: 'baseline', gap: Spacing.md },
-  amount: { ...Text_.figure, color: Colors.ink, flexShrink: 1, ...tabularNums },
-  unit: { ...Text_.micro, color: Colors.ink3 },
-  caption: { ...Text_.micro, color: Colors.ink2, marginTop: Spacing.xs },
-  breakdown: { gap: Spacing.md },
-  line: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.lg },
-  lineLabel: { ...Text_.micro, color: Colors.ink2 },
-  lineValue: { ...Text_.micro, color: Colors.ink, ...tabularNums },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: Spacing.lg,
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.line,
+  amountRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: Spacing.md },
+  amount: {
+    fontFamily: FontFamily.extrabold,
+    fontSize: 30,
+    lineHeight: 40,
+    letterSpacing: -0.4,
+    color: Colors.authInk,
+    ...tabularNums,
   },
-  totalLabel: { ...Text_.body, color: Colors.ink },
-  totalValue: { ...Text_.bodyBold, color: Colors.ink, ...tabularNums },
-  disbursement: { ...Text_.caption, color: Colors.ink3 },
-  link: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.md,
-    minHeight: MIN_TOUCH,
-    paddingHorizontal: Spacing.xl,
-    marginHorizontal: -Spacing.md,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.brand50,
+  unit: { fontFamily: FontFamily.regular, fontSize: 15, lineHeight: 21, color: Colors.authMuted },
+  caption: { fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authMuted },
+  // Mỗi cột rộng theo con số của nó rồi chia đều phần dư: số tiền tỷ đồng vẫn
+  // nằm trọn một dòng thay vì bị ép vào một phần ba bề ngang.
+  figures: { flexDirection: 'row' },
+  figure: { flexGrow: 1, flexShrink: 1, flexBasis: 'auto', gap: 2, paddingRight: Spacing.md },
+  figureDivided: {
+    paddingLeft: 10,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: Colors.authBorder,
   },
-  pressed: { opacity: 0.7 },
-  linkText: { ...Text_.microBold, color: Colors.brand },
+  figureValue: {
+    fontFamily: FontFamily.bold,
+    fontSize: 13.5,
+    lineHeight: 19,
+    color: Colors.authInk,
+    ...tabularNums,
+  },
+  figureLabel: { fontFamily: FontFamily.regular, fontSize: 12, lineHeight: 17, color: Colors.authMuted },
+  totals: {
+    gap: 6,
+    paddingTop: Spacing.lg,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.authBorder,
+  },
+  line: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    columnGap: Spacing.lg,
+  },
+  lineLabel: { fontFamily: FontFamily.regular, fontSize: 13.5, lineHeight: 20, color: Colors.authLabel },
+  lineValue: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 13.5,
+    lineHeight: 20,
+    color: Colors.authInk,
+    ...tabularNums,
+  },
+  totalLabel: { fontFamily: FontFamily.semibold, fontSize: 15, lineHeight: 22, color: Colors.authInk },
+  totalValue: {
+    fontFamily: FontFamily.extrabold,
+    fontSize: 19,
+    lineHeight: 27,
+    color: Colors.authInk,
+    ...tabularNums,
+  },
+  fine: { fontFamily: FontFamily.regular, fontSize: 12, lineHeight: 18, color: Colors.authMuted },
 });

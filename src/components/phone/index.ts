@@ -6,3 +6,4 @@ export { default as TabBar, TAB_ICONS } from './TabBar';
 export { default as StepList, type Step, type StepState } from './StepList';
 export { default as FormStepProgress } from './FormStepProgress';
 export { default as ShapBar, type ShapFactor } from './ShapBar';
+export { default as WaveBackdrop } from './WaveBackdrop';

@@ -4,44 +4,19 @@ import { Colors } from '@/constants/colors';
 import { Radius, Spacing, Text_, tabularNums } from '@/theme';
 import type { LoanApplication } from '@/types/loan';
 import { formatAnnualRate } from '@/utils/format';
-
-type RateDirection = 'lower' | 'same' | 'higher';
-
-function getDirection(baseRate: number, finalRate: number): RateDirection {
-  if (finalRate < baseRate) return 'lower';
-  if (finalRate > baseRate) return 'higher';
-  return 'same';
-}
-
-const COPY: Record<RateDirection, { title: string; description: string; tone: 'green' | 'blue' | 'amber' }> = {
-  lower: {
-    title: 'Bạn được giảm lãi suất',
-    description: 'Kết quả đánh giá tín dụng cho phép áp dụng mức lãi thấp hơn mức cơ sở ban đầu.',
-    tone: 'green',
-  },
-  same: {
-    title: 'Lãi suất được giữ nguyên',
-    description: 'Kết quả đánh giá không làm thay đổi mức lãi suất cơ sở bạn đã xem khi nộp hồ sơ.',
-    tone: 'blue',
-  },
-  higher: {
-    title: 'Lãi suất được điều chỉnh tăng',
-    description: 'Mức lãi mới phản ánh kết quả đánh giá tín dụng và vẫn nằm trong khung đã công bố của sản phẩm.',
-    tone: 'amber',
-  },
-};
+import { PRICING_CHOICE_NOTES, pricingChangeOf } from '../mappers/pricingChange';
 
 /**
  * Giải thích điều khoản trước/sau thẩm định bằng dữ liệu Loan đã chốt.
  * Component không tự tính lãi hay lịch trả và không công khai grade/chi tiết mô hình cho borrower.
+ * Câu chữ và điều kiện hiển thị nằm ở `pricingChangeOf` để màn chi tiết hồ sơ
+ * (vẽ theo mockup mới) và màn hợp đồng luôn nói cùng một điều.
  */
 export default function PricingChangeNotice({ application }: { application: LoanApplication }) {
-  const finalRate = application.finalAnnualInterestRate;
-  if (application.status !== 'APPROVED' || finalRate == null) return null;
+  const change = pricingChangeOf(application);
+  if (!change) return null;
 
-  const baseRate = application.productSnapshot.annualInterestRate;
-  const direction = getDirection(baseRate, finalRate);
-  const copy = COPY[direction];
+  const { baseRate, finalRate, direction, copy, pending } = change;
 
   return (
     <Card style={[styles.card, styles[direction]]}>
@@ -59,16 +34,14 @@ export default function PricingChangeNotice({ application }: { application: Loan
         <RateCell label="Lúc nộp hồ sơ" value={formatAnnualRate(baseRate)} />
         <Text style={styles.arrow}>→</Text>
         <RateCell
-          label={application.termsConfirmation?.status === 'PENDING' ? 'Đề nghị sau thẩm định' : 'Áp dụng cuối'}
+          label={pending ? 'Đề nghị sau thẩm định' : 'Áp dụng cuối'}
           value={formatAnnualRate(finalRate)}
           emphasized
         />
       </View>
 
       <Text style={styles.choice}>
-        {application.termsConfirmation?.status === 'PENDING'
-          ? 'Hãy đối chiếu lịch trả bên dưới. Hợp đồng chỉ được lập nếu bạn chủ động chấp nhận đề nghị này.'
-          : 'Điều khoản không bất lợi hơn nên hồ sơ đã tự tiếp tục theo chấp thuận lúc nộp. Bạn vẫn đọc toàn bộ PDF và quyết định ký hoặc từ chối hợp đồng.'}
+        {pending ? PRICING_CHOICE_NOTES.pending : PRICING_CHOICE_NOTES.autoContinued}
       </Text>
     </Card>
   );

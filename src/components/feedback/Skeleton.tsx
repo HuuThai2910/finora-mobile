@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Animated, StyleSheet, View, useAnimatedValue, type StyleProp, type ViewStyle } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { Radius, Spacing } from '@/theme';
 
@@ -17,7 +17,8 @@ type Props = {
  * khi dữ liệu về.
  */
 export function Skeleton({ height = 20, width = '100%', radius = Radius.sm, style }: Props) {
-  const opacity = useAnimatedValue(0.4);
+  // Không dùng `useAnimatedValue`: react-native-web chưa có hook này nên bản web vỡ.
+  const opacity = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
     const anim = Animated.loop(

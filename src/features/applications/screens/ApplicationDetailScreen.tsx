@@ -1,33 +1,29 @@
-import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ErrorState, LoadingScreen } from '@/components/feedback';
-import { PHeader, Screen } from '@/components/phone';
-import { Button, InfoNote } from '@/components/ui';
-import { Colors } from '@/constants/colors';
 import type { ProfileStackParamList } from '@/navigation/types';
-import { Spacing, Text_ } from '@/theme';
 import { REPAYMENT_LABELS } from '../constant';
 import { useApplicationDetail } from '../hook/useApplicationDetail';
-import { contractActionLabel } from '../mappers/statusMeta';
+import { contractActionOf } from '../mappers/applicationSummary';
+import ApplicationDetailError from '../components/ApplicationDetailError';
+import ApplicationDetailScaffold from '../components/ApplicationDetailScaffold';
+import ApplicationDetailSkeleton from '../components/ApplicationDetailSkeleton';
+import ApplicationSummaryCard from '../components/ApplicationSummaryCard';
+import ApplicationTimelineCard from '../components/ApplicationTimelineCard';
 import DeclaredInfoSection from '../components/DeclaredInfoSection';
-import KeyTermsStrip from '../components/KeyTermsStrip';
-import ProcessTimeline from '../components/ProcessTimeline';
-import PricingChangeNotice from '../components/PricingChangeNotice';
+import PricingResultCard from '../components/PricingResultCard';
 import RepaymentSummary from '../components/RepaymentSummary';
-import StatusBanner from '../components/StatusBanner';
-import WithdrawSection from '../components/WithdrawSection';
 import TermsConfirmationSection from '../components/TermsConfirmationSection';
+import WithdrawSection from '../components/WithdrawSection';
 
 type Nav = NativeStackNavigationProp<ProfileStackParamList, 'ApplicationDetail'>;
 
 /**
- * Chi tiết hồ sơ vay, sắp xếp theo đúng thứ tự câu hỏi của người vay:
- * hồ sơ đang ở đâu, kế tiếp là gì, mỗi kỳ phải trả bao nhiêu, đã đi qua những
- * mốc nào, rồi mới tới bản khai để tra cứu.
+ * Chi tiết hồ sơ vay (mockup 26/09/2026), sắp xếp theo đúng thứ tự câu hỏi của
+ * người vay: hồ sơ đang ở đâu, kế tiếp là gì, mỗi kỳ phải trả bao nhiêu, đã đi
+ * qua những mốc nào, rồi mới tới bản khai để tra cứu.
  *
  * Lịch trả ở đây là snapshot lúc nộp hồ sơ, không phải lịch vận hành sau giải
- * ngân, nên luôn đi kèm cảnh báo và nằm ở màn riêng khi xem đầy đủ.
+ * ngân, nên luôn đi kèm câu nói rõ đó là số nào và nằm ở màn riêng khi xem đầy đủ.
  */
 export default function ApplicationDetailScreen() {
   const navigation = useNavigation<Nav>();
@@ -36,61 +32,76 @@ export default function ApplicationDetailScreen() {
 
   if (state.loading) {
     return (
-      <Screen>
-        <PHeader title="Hồ sơ vay" back />
-        <LoadingScreen cards={4} />
-      </Screen>
+      <ApplicationDetailScaffold applicationNumber={applicationNumber}>
+        <ApplicationDetailSkeleton />
+      </ApplicationDetailScaffold>
     );
   }
 
   if (state.loadError || !state.view) {
     return (
-      <Screen>
-        <PHeader title="Hồ sơ vay" back />
-        <ErrorState
+      <ApplicationDetailScaffold
+        applicationNumber={applicationNumber}
+        onRefresh={state.reload}
+        refreshing={state.refreshing}
+      >
+        <ApplicationDetailError
           message={state.loadError ?? 'Không tải được chi tiết hồ sơ vay.'}
+          retrying={state.refreshing}
           onRetry={state.reload}
         />
-      </Screen>
+      </ApplicationDetailScaffold>
     );
   }
 
-  const { application, displayedSchedule, status, keyTerms, timeline, timelineFailed, canWithdraw, periodCount, contract } =
-    state.view;
-  const snapshot = displayedSchedule;
+  const {
+    application,
+    displayedSchedule: snapshot,
+    status,
+    keyTerms,
+    decision,
+    timeline,
+    timelineFailed,
+    canWithdraw,
+    periodCount,
+    contract,
+  } = state.view;
   const repaymentLabel =
     REPAYMENT_LABELS[application.productSnapshot.repaymentMethod] ??
     application.productSnapshot.repaymentMethod;
+  const contractAction = contractActionOf(application, contract);
 
   return (
-    <Screen onRefresh={state.reload} refreshing={state.refreshing}>
-      <PHeader title="Hồ sơ vay" back hint={application.applicationNumber} />
-
-      <StatusBanner
+    <ApplicationDetailScaffold
+      applicationNumber={application.applicationNumber}
+      onRefresh={state.reload}
+      refreshing={state.refreshing}
+    >
+      <ApplicationSummaryCard
+        productName={application.productSnapshot.name}
+        amount={application.requestedAmount}
         status={status}
+        decision={decision}
+        keyTerms={keyTerms}
         action={
-          application.status === 'APPROVED' && (
-            application.termsConfirmation?.status === 'AUTO_AUTHORIZED'
-            || application.termsConfirmation?.status === 'ACCEPTED'
-            || application.termsConfirmation == null
-          ) ? (
-            <Button
-              label={contract ? contractActionLabel(contract.status) : 'Xem hợp đồng'}
-              onPress={() =>
-                contract
-                  ? navigation.navigate('ContractDetail', { contractNumber: contract.contractNumber })
-                  : navigation.navigate('MyContracts')
+          contractAction
+            ? {
+                label: contractAction.label,
+                urgent: contractAction.urgent,
+                onPress: () =>
+                  contractAction.contractNumber
+                    ? navigation.navigate('ContractDetail', {
+                        contractNumber: contractAction.contractNumber,
+                      })
+                    : navigation.navigate('MyContracts'),
               }
-            />
-          ) : null
+            : null
         }
       />
 
-      <PricingChangeNotice application={application} />
+      <PricingResultCard application={application} />
 
       <TermsConfirmationSection application={application} onDone={state.reload} />
-
-      <KeyTermsStrip terms={keyTerms} />
 
       <RepaymentSummary
         firstInstallment={snapshot.firstInstallment}
@@ -112,20 +123,8 @@ export default function ApplicationDetailScreen() {
         }
       />
 
-      <InfoNote tone="info" style={styles.note}>
-        {application.status === 'APPROVED'
-          ? 'Đây là lịch theo điều khoản sau thẩm định và là cơ sở lập hợp đồng. Ngày trả thực tế có thể dịch theo ngày giải ngân.'
-          : 'Đây là số dự kiến tính lúc bạn nộp hồ sơ. Lịch trả chính thức chỉ hình thành sau khi hợp đồng có hiệu lực và khoản vay được giải ngân.'}
-      </InfoNote>
+      <ApplicationTimelineCard steps={timeline} status={application.status} failed={timelineFailed} />
 
-      <ProcessTimeline title="TIẾN TRÌNH XỬ LÝ" steps={timeline} failed={timelineFailed} />
-
-      <View style={styles.declared}>
-        <Text style={styles.declaredTitle}>Thông tin bạn đã gửi</Text>
-        <Text style={styles.declaredHint}>
-          Bản chụp tại thời điểm nộp hồ sơ. Nội dung này không thay đổi khi bạn cập nhật hồ sơ cá nhân.
-        </Text>
-      </View>
       <DeclaredInfoSection application={application} />
 
       {canWithdraw ? (
@@ -136,13 +135,6 @@ export default function ApplicationDetailScreen() {
           clearError={state.withdraw.clearError}
         />
       ) : null}
-    </Screen>
+    </ApplicationDetailScaffold>
   );
 }
-
-const styles = StyleSheet.create({
-  note: { marginTop: Spacing.lg },
-  declared: { marginTop: Spacing.section, gap: Spacing.xs },
-  declaredTitle: { ...Text_.title, color: Colors.ink },
-  declaredHint: { ...Text_.micro, color: Colors.ink3 },
-});

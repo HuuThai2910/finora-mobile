@@ -1,12 +1,13 @@
-import { useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Alert, type TextInput } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Colors } from '@/constants/colors';
-import { FontFamily, Spacing, Text_ } from '@/theme';
-import { Screen } from '@/components/phone';
-import { Button, Field } from '@/components/ui';
 import type { AuthStackParamList } from '@/navigation/types';
+import { RESET_PASSWORD_BACKGROUND } from '../backgrounds';
+import AuthButton from '../components/AuthButton';
+import AuthField from '../components/AuthField';
+import AuthLayout from '../components/AuthLayout';
+import AuthSwitchLink from '../components/AuthSwitchLink';
 import FormError from '../components/FormError';
 import { PASSWORD_MIN_LENGTH } from '../constants';
 import { useFieldErrors } from '../hooks/useFieldErrors';
@@ -30,6 +31,7 @@ export default function ResetPasswordScreen() {
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const confirmRef = useRef<TextInput>(null);
   const { errors, validateField, clearField, validateSubmit } = useFieldErrors(validateResetPassword);
   const reset = useResetPassword(email);
 
@@ -47,15 +49,13 @@ export default function ResetPasswordScreen() {
   };
 
   return (
-    <Screen light>
-      <View style={styles.head}>
-        <Text style={styles.title} accessibilityRole="header">
-          Đặt lại mật khẩu
-        </Text>
-        <Text style={styles.sub}>Chọn mật khẩu mới cho tài khoản {email}.</Text>
-      </View>
-
-      <Field
+    <AuthLayout
+      background={RESET_PASSWORD_BACKGROUND}
+      title="Đặt lại mật khẩu"
+      subtitle={`Chọn mật khẩu mới cho tài khoản ${email}.`}
+    >
+      {/* Mockup không vẽ icon đầu ô: hai ô cùng là mật khẩu, nhãn đã phân biệt được. */}
+      <AuthField
         label="Mật khẩu mới"
         value={newPassword}
         onChangeText={v => {
@@ -66,13 +66,16 @@ export default function ResetPasswordScreen() {
         placeholder="Nhập mật khẩu mới"
         secure
         required
-        error={errors.newPassword}
         helper={`Tối thiểu ${PASSWORD_MIN_LENGTH} ký tự`}
+        error={errors.newPassword}
         autoComplete="new-password"
+        returnKeyType="next"
+        onSubmitEditing={() => confirmRef.current?.focus()}
         editable={!reset.submitting}
       />
-      <Field
+      <AuthField
         label="Nhập lại mật khẩu mới"
+        inputRef={confirmRef}
         value={confirmPassword}
         onChangeText={v => {
           setConfirmPassword(v);
@@ -84,26 +87,21 @@ export default function ResetPasswordScreen() {
         required
         error={errors.confirmPassword}
         autoComplete="new-password"
+        returnKeyType="go"
+        onSubmitEditing={() => void onSubmit()}
         editable={!reset.submitting}
       />
 
       <FormError message={reset.error} />
 
-      <Button label="Đổi mật khẩu" onPress={() => void onSubmit()} loading={reset.submitting} />
+      <AuthButton
+        label="Đổi mật khẩu"
+        trailingIcon="arrowRight"
+        onPress={() => void onSubmit()}
+        loading={reset.submitting}
+      />
 
-      <Text style={styles.hint}>
-        <Text style={styles.link} onPress={() => nav.navigate('Login')}>
-          Quay lại đăng nhập
-        </Text>
-      </Text>
-    </Screen>
+      <AuthSwitchLink action="Quay lại đăng nhập" onPress={() => nav.navigate('Login')} />
+    </AuthLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  head: { gap: Spacing.md, paddingTop: Spacing.page, marginBottom: Spacing.xl },
-  title: { ...Text_.display, color: Colors.ink },
-  sub: { ...Text_.micro, color: Colors.ink3 },
-  hint: { ...Text_.micro, color: Colors.ink3, textAlign: 'center', marginTop: Spacing.xl },
-  link: { color: Colors.brand, fontFamily: FontFamily.semibold },
-});

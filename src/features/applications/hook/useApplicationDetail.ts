@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { Step } from '@/components/phone';
 import type { LoanApplication } from '@/types/loan';
 import type { LoanContractSummary } from '@/types/contract';
-import { formatAnnualRate, formatDong } from '@/utils/format';
 import {
   useGetApplicationHistoryQuery,
   useGetApplicationQuery,
@@ -11,9 +10,14 @@ import {
 } from '../api/applicationApi';
 import { WITHDRAWABLE_STATUSES, type StatusMeta } from '../constant';
 import { toActionError, toLoadError, type ActionError } from '../mappers/apiError';
+import {
+  buildKeyTerms,
+  decisionDateOf,
+  type DecisionDate,
+  type KeyTerm,
+} from '../mappers/applicationSummary';
 import { applicationJourneyStatus } from '../mappers/statusMeta';
 import { buildApplicationTimeline } from '../mappers/timeline';
-import type { KeyTerm } from '../components/KeyTermsStrip';
 
 const HISTORY_PAGE_SIZE = 20;
 const CONTRACT_LOOKUP_SIZE = 100;
@@ -23,7 +27,13 @@ export type ApplicationDetailView = {
   /** Lịch phù hợp với trạng thái người vay đang xem: ban đầu hoặc đã chốt sau duyệt. */
   displayedSchedule: LoanApplication['calculationSnapshot'];
   status: StatusMeta;
+  /** Kỳ hạn, lãi suất, hình thức trả của thẻ tóm tắt (số tiền in riêng, cỡ lớn). */
   keyTerms: KeyTerm[];
+  /**
+   * Ngày ra kết quả lấy từ lịch sử chuyển trạng thái; `null` khi hồ sơ chưa có
+   * kết quả hoặc lịch sử chưa tải được.
+   */
+  decision: DecisionDate | null;
   timeline: Step[];
   timelineFailed: boolean;
   canWithdraw: boolean;
@@ -111,18 +121,8 @@ export function useApplicationDetail(applicationNumber: string): ApplicationDeta
           contract?.status,
           application.termsConfirmation?.status,
         ),
-        keyTerms: [
-          { label: 'Số tiền vay', value: formatDong(application.requestedAmount) },
-          { label: 'Kỳ hạn', value: `${application.requestedTermMonths} tháng` },
-          {
-            label: 'Lãi suất',
-            value: formatAnnualRate(
-              showFinalTerms && application.finalAnnualInterestRate != null
-                ? application.finalAnnualInterestRate
-                : application.productSnapshot.annualInterestRate,
-            ),
-          },
-        ],
+        keyTerms: buildKeyTerms(application, showFinalTerms),
+        decision: decisionDateOf(application, historyQuery.data?.data ?? []),
         timeline: buildApplicationTimeline(historyQuery.data?.data ?? [], application.status),
         timelineFailed: Boolean(historyQuery.error),
         canWithdraw: WITHDRAWABLE_STATUSES.includes(application.status),
