@@ -96,3 +96,41 @@ export const LOAN_AMOUNT_STEP = 1_000_000;
 
 /** Số tiền điền sẵn khi mở một Product (kẹp vào biên của Product), giữ như màn cũ. */
 export const DEFAULT_LOAN_AMOUNT = 50_000_000;
+
+/* ------------------ Màn "Gói vay ưu đãi" (mockup 26/09/2026) ------------------ */
+
+/** Cột nội dung dừng ở cùng bề rộng các màn đã vẽ lại, để trên web thẻ không phình. */
+export const PACKAGES_MAX_WIDTH = 480;
+
+/** Lề hai bên, đo từ mockup (thẻ cách mép màn 16pt), cùng lề màn Sàn. */
+export const PACKAGES_PADDING = 16;
+
+/** Khoảng cách giữa hai thẻ gói (cả thẻ giả lúc đang tải), đo từ mockup. */
+export const PACKAGE_CARD_GAP = 14;
+
+/** Ô biểu tượng vuông bo góc ở đầu thẻ; thẻ giả lúc tải dùng cùng số đo. */
+export const PACKAGE_TILE = { size: 44, radius: 12 } as const;
+
+/**
+ * Banner đầu màn (2072×759, Hải tạo bằng ChatGPT): robot cầm hộp quà, dấu %, đồng
+ * xu, lá hai bên ở phía phải; nửa trái chỉ là đồi và mây. Trải cả ảnh thì robot
+ * còn ~60pt, nhỏ hơn hẳn mockup, nên ảnh phóng để đoạn từ cột `cropLeft` tới mép
+ * phải vừa khít cột (lá bên trái của nhóm hình bắt đầu ở cột ~1274). Mốc đo bằng
+ * PIL theo các điểm ảnh đậm màu (lệch kênh > 70): nhóm hình nằm từ hàng
+ * `objectTop` (đỉnh ăng-ten) tới hàng `groundRow` (đáy hộp quà, chồng xu).
+ */
+export const PACKAGES_HERO: {
+  source: ImageSourcePropType;
+  width: number;
+  height: number;
+  cropLeft: number;
+  objectTop: number;
+  groundRow: number;
+} = {
+  source: require('@/assets/packages-hero.png'),
+  width: 2072,
+  height: 759,
+  cropLeft: 1180,
+  objectTop: 323,
+  groundRow: 650,
+};

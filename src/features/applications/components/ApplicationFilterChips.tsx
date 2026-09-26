@@ -2,12 +2,14 @@ import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { FontFamily, Radius, Spacing } from '@/theme';
 import { APPLICATION_LIST_PADDING } from '../constant';
-import type { StageChip, StageFilter } from '../mappers/applicationStage';
+type FilterChip<K extends string> = { key: K; label: string; count: number };
 
-type Props = {
-  chips: readonly StageChip[];
-  selected: StageFilter;
-  onSelect: (key: StageFilter) => void;
+type Props<K extends string> = {
+  chips: readonly FilterChip<K>[];
+  selected: K;
+  onSelect: (key: K) => void;
+  /** Danh từ đếm trong nhãn đọc ("3 hồ sơ", "2 hợp đồng"); dùng chung cho màn hợp đồng. */
+  noun?: string;
 };
 
 /** Chip cao 34pt như mockup; nới vùng chạm theo chiều dọc cho đủ 44pt. */
@@ -19,7 +21,12 @@ const TOUCH_SLOP = 5;
  * được một nhóm nên đọc như nhóm nút radio; chip đang chọn phân biệt bằng nền
  * đặc (khác hẳn chip viền mảnh) chứ không chỉ bằng màu chữ.
  */
-export default function ApplicationFilterChips({ chips, selected, onSelect }: Props) {
+export default function ApplicationFilterChips<K extends string>({
+  chips,
+  selected,
+  onSelect,
+  noun = 'hồ sơ',
+}: Props<K>) {
   return (
     <ScrollView
       horizontal
@@ -27,7 +34,7 @@ export default function ApplicationFilterChips({ chips, selected, onSelect }: Pr
       style={styles.scroller}
       contentContainerStyle={styles.row}
       accessibilityRole="radiogroup"
-      accessibilityLabel="Lọc hồ sơ theo trạng thái"
+      accessibilityLabel={`Lọc ${noun} theo trạng thái`}
     >
       {chips.map(chip => {
         const active = chip.key === selected;
@@ -38,7 +45,7 @@ export default function ApplicationFilterChips({ chips, selected, onSelect }: Pr
             hitSlop={{ top: TOUCH_SLOP, bottom: TOUCH_SLOP }}
             accessibilityRole="radio"
             accessibilityState={{ checked: active }}
-            accessibilityLabel={`${chip.label}, ${chip.count} hồ sơ`}
+            accessibilityLabel={`${chip.label}, ${chip.count} ${noun}`}
             style={({ pressed }) => [
               styles.chip,
               active ? styles.chipActive : styles.chipIdle,

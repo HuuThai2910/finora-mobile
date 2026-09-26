@@ -457,6 +457,25 @@ export const ICONS = {
       d: 'M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z',
     },
   ],
+  // Màn "Lịch sử ví" (mockup 26/09/2026): ô icon của giao dịch nhận phân bổ/lãi
+  // (hộp quà) và giao dịch tiền ra (mũi tên lên). Nét chuẩn của Lucide (gift, arrow-up).
+  gift: [
+    { t: 'rect', x: 3, y: 8, w: 18, h: 4, rx: 1 },
+    { t: 'path', d: 'M12 8v13' },
+    { t: 'path', d: 'M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7' },
+    { t: 'path', d: 'M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5' },
+  ],
+  arrowUp: [
+    { t: 'path', d: 'm5 12 7-7 7 7' },
+    { t: 'path', d: 'M12 19V5' },
+  ],
+  // Màn "Gói vay ưu đãi" (mockup 26/09/2026): cột "Hình thức" trên thẻ gói (hoá
+  // đơn). Nét chuẩn của Lucide (receipt).
+  receipt: [
+    { t: 'path', d: 'M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z' },
+    { t: 'path', d: 'M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8' },
+    { t: 'path', d: 'M12 17.5v-11' },
+  ],
 } satisfies Record<string, IconShape[]>;
 
 export type IconName = keyof typeof ICONS;

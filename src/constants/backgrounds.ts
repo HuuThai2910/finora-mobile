@@ -38,3 +38,37 @@ export const HOME_WAVES: WaveBackground = {
   middleFrom: Colors.homeWaveMid,
   middleTo: Colors.homeWaveLow,
 };
+
+/**
+ * Nền màn "Hợp đồng của tôi" (798×1971): sóng và hai linh vật cầm hợp đồng nằm
+ * trọn trong 400 hàng đầu, bên dưới là nền trơn nên không có lớp sóng đáy
+ * (`bottomStart` bằng chiều cao ảnh). Phóng đúng bề rộng cột như mockup.
+ */
+export const CONTRACTS_WAVES: WaveBackground = {
+  source: require('@/assets/contracts-background.png'),
+  width: 798,
+  height: 1971,
+  topEnd: 400,
+  bottomStart: 1971,
+  zoom: 1,
+  focusX: 0.5,
+  middleFrom: Colors.contractsFill,
+  middleTo: Colors.contractsFill,
+};
+
+/**
+ * Nền màn "Lịch sử ví" (798×1972, mockup 26/09/2026): đồi sóng và hai linh vật
+ * giọt nước cầm đồng xu nằm trọn trong 420 hàng đầu, bên dưới là nền trơn (lệch
+ * ≤ 3/255) nên không có lớp sóng đáy. Phóng đúng bề rộng cột như mockup.
+ */
+export const WALLET_HISTORY_WAVES: WaveBackground = {
+  source: require('@/assets/wallet-background.png'),
+  width: 798,
+  height: 1972,
+  topEnd: 420,
+  bottomStart: 1972,
+  zoom: 1,
+  focusX: 0.5,
+  middleFrom: Colors.walletHistoryFill,
+  middleTo: Colors.walletHistoryFill,
+};

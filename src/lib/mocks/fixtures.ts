@@ -90,13 +90,13 @@ export const EKYC_DRAFT_RESULT: EkycVerifyResult = {
 export const BALANCE: WalletBalance = { available: 12_500_000, held: 0 };
 
 export const WALLET_TRANSACTIONS: WalletTransaction[] = [
-  { id: 'TX-01', occurredAt: '10/07 21:14', description: 'Nạp ví — VietQR / VCB', amount: 5_000_000, direction: 'in' },
-  { id: 'TX-02', occurredAt: '05/07 09:12', description: 'Nhận phân bổ LN-1975 kỳ 7', amount: 842_500, direction: 'in' },
-  { id: 'TX-03', occurredAt: '15/06 08:00', description: 'Trả nợ kỳ 3 — LN-1980', amount: 4_320_000, direction: 'out' },
-  { id: 'TX-04', occurredAt: '12/06 10:31', description: 'Nhận phân bổ LN-1990 kỳ 4', amount: 480_100, direction: 'in' },
-  { id: 'TX-05', occurredAt: '02/06 14:32', description: 'Rút về VCB •••• 8842', amount: 3_000_000, direction: 'out' },
-  { id: 'TX-06', occurredAt: '15/05 08:00', description: 'Trả nợ kỳ 2 — LN-1980', amount: 4_320_000, direction: 'out' },
-  { id: 'TX-07', occurredAt: '28/04 16:05', description: 'Đầu tư LN-2011 (phong tỏa)', amount: 10_300_000, direction: 'out' },
+  { id: 'TX-01', occurredAt: '2026-07-10T21:14:00+07:00', description: 'Nạp ví — VietQR / VCB', amount: 5_000_000, direction: 'in' },
+  { id: 'TX-02', occurredAt: '2026-07-05T09:12:00+07:00', description: 'Nhận phân bổ LN-1975 kỳ 7', amount: 842_500, direction: 'in' },
+  { id: 'TX-03', occurredAt: '2026-06-15T08:00:00+07:00', description: 'Trả nợ kỳ 3 — LN-1980', amount: 4_320_000, direction: 'out' },
+  { id: 'TX-04', occurredAt: '2026-06-12T10:31:00+07:00', description: 'Nhận phân bổ LN-1990 kỳ 4', amount: 480_100, direction: 'in' },
+  { id: 'TX-05', occurredAt: '2026-06-02T14:32:00+07:00', description: 'Rút về VCB •••• 8842', amount: 3_000_000, direction: 'out' },
+  { id: 'TX-06', occurredAt: '2026-05-15T08:00:00+07:00', description: 'Trả nợ kỳ 2 — LN-1980', amount: 4_320_000, direction: 'out' },
+  { id: 'TX-07', occurredAt: '2026-04-28T16:05:00+07:00', description: 'Đầu tư LN-2011 (phong tỏa)', amount: 10_300_000, direction: 'out' },
 ];
 
 export const TOPUP: TopUpInstruction = {
@@ -355,10 +355,49 @@ export const NOTIFICATIONS: AppNotification[] = [
 
 /* ---------------- Gói vay VENTO ---------------- */
 
+/**
+ * Mockup "Gói vay ưu đãi" (26/09/2026) thêm dòng đối tượng dưới tên gói và ba
+ * cột Hạn mức / Thời hạn / Hình thức. Bản cũ chưa có các trường này nên số liệu
+ * lấy theo mockup; `audience` và `form` của gói điện thoại / P2P mockup không ghi
+ * rõ, là giá trị minh hoạ tự đặt.
+ */
 export const VENTO_PACKAGES = [
-  { code: 'PVHP', name: 'Vay học phí', rateLabel: '18%/năm', method: 'Declining Balance' },
-  { code: 'PVMDT', name: 'Vay mua điện thoại', rateLabel: '17%/năm', method: 'Declining Balance' },
-  { code: 'PLVN', name: 'P2P Lending – VN Standard', rateLabel: '15%/năm', method: 'Theo hạng tín dụng' },
+  {
+    code: 'PVHP',
+    name: 'Vay học phí',
+    rateLabel: '18%/năm',
+    method: 'Declining Balance',
+    audience: 'Dành riêng sinh viên',
+    minAmount: 5_000_000,
+    maxAmount: 100_000_000,
+    minTermMonths: 6,
+    maxTermMonths: 36,
+    form: 'Theo học phí',
+  },
+  {
+    code: 'PVMDT',
+    name: 'Vay mua điện thoại',
+    rateLabel: '17%/năm',
+    method: 'Declining Balance',
+    audience: 'Mua máy trả góp',
+    minAmount: 3_000_000,
+    maxAmount: 50_000_000,
+    minTermMonths: 6,
+    maxTermMonths: 24,
+    form: 'Hóa đơn mua hàng',
+  },
+  {
+    code: 'PLVN',
+    name: 'P2P Lending – VN Standard',
+    rateLabel: '15%/năm',
+    method: 'Theo hạng tín dụng',
+    audience: 'Theo hạng tín dụng',
+    minAmount: 10_000_000,
+    maxAmount: 500_000_000,
+    minTermMonths: 6,
+    maxTermMonths: 36,
+    form: 'Gọi vốn P2P',
+  },
 ] as const;
 
 export const VENTO_PACKAGE_DETAIL = {

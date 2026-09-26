@@ -192,6 +192,53 @@ export const Colors = {
   // khi mở bảng chọn (mục đích vay, học vấn, nhà ở): lấy tông `authInk` pha trong
   // để nền sóng vẫn lộ ra mà bảng chọn trắng tách hẳn khỏi màn.
   applyFormScrim: 'rgba(10,44,104,0.36)',
+
+  // Màn "Hợp đồng của tôi" (mockup 26/09/2026). Chữ, thẻ, chip dùng lại nhóm
+  // auth*/tint* ở trên; màu dưới đây đo bằng PIL từ `contracts-background.png`.
+  /**
+   * Từ hàng 400 xuống đáy ảnh chỉ còn nền trơn (lệch ≤ 9/255 theo chiều ngang,
+   * trung bình #f4fafe–#f5fafe); phần màn dài hơn ảnh lấp bằng màu này.
+   */
+  contractsFill: '#f5fafe',
+
+  // Màn "Sàn khoản vay" (mockup 26/09/2026). Thẻ, chip, chữ dùng lại nhóm auth*/tint*
+  // ở trên; hai màu dưới đây đo bằng PIL từ `market-hero.png`.
+  /** Hàng trên cùng của banner (lệch ≤ 10/255): lót sau thanh trạng thái và khi kéo làm mới. */
+  marketSky: '#e8f2fd',
+  /** Hàng cuối của banner (lệch ≤ 14/255): nền màn nối liền mép dưới banner. */
+  marketFill: '#ecf3fe',
+  /**
+   * Nền ô ghi chú cuối màn sàn: `authNoteBg` gần trùng `marketFill` nên ô chìm
+   * mất; tông này đậm hơn một bậc như mockup, chữ `authMuted` trên nền này vẫn ≥ 4,5:1.
+   */
+  marketNote: '#e4eefc',
+
+  // Màn "Lịch sử ví" (mockup 26/09/2026). Thẻ, chữ, ô icon dùng lại nhóm
+  // auth*/tint* ở trên; màu dưới đây đo bằng PIL từ `wallet-background.png`.
+  /**
+   * Từ hàng 420 xuống đáy ảnh chỉ còn nền trơn (lệch ≤ 3/255 theo chiều ngang,
+   * trung bình #f3f9fe–#f4fafe); phần màn dài hơn dải minh hoạ lấp bằng màu này.
+   */
+  walletHistoryFill: '#f4fafe',
+  /**
+   * Nền ô ghi chú đối soát cuối danh sách: `tintBlue` gần trùng nền nên ô chìm
+   * mất; tông này đậm hơn một bậc như mockup, chữ `authMuted` trên nền này đạt 4,58:1.
+   */
+  walletHistoryNote: '#e4eefc',
+  /**
+   * Số tiền vào ("+5.000.000 đ") trên thẻ trắng. `green` chỉ đạt 3,77:1 trên nền
+   * trắng (chữ 15pt đậm chưa phải "chữ lớn" của WCAG); tông này giữ sắc xanh lá
+   * mà đạt 5,17:1.
+   */
+  walletHistoryIn: '#0a7d4f',
+
+  // Màn "Gói vay ưu đãi" (mockup 26/09/2026). Thẻ, ô icon, viên lãi suất dùng lại
+  // nhóm auth*/tint*/green* ở trên; hai màu dưới đây đo bằng PIL từ `packages-hero.png`
+  // (2072×759), trên đoạn ảnh thật sự hiện trên màn (cột 1100 trở sang phải).
+  /** Hàng trên cùng của banner (lệch ≤ 5/255): lót sau thanh trạng thái và khi kéo làm mới. */
+  packagesSky: '#e1f0fd',
+  /** Hàng cuối của banner (lệch ≤ 5/255): nền màn nối liền mép dưới banner, không lộ vết ghép. */
+  packagesFill: '#e8f2fd',
 } as const;
 
 export type ColorName = keyof typeof Colors;

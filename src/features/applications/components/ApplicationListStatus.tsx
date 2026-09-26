@@ -6,8 +6,14 @@ import { FontFamily, MIN_TOUCH, Radius, SoftShadow, Spacing } from '@/theme';
 
 type Props =
   | { kind: 'error'; message: string; retrying: boolean; onRetry: () => void }
-  | { kind: 'empty'; onBrowseProducts: () => void }
-  | { kind: 'filtered'; stageLabel: string; onShowAll: () => void };
+  | { kind: 'empty'; title: string; hint: string; action: string; onAction: () => void }
+  | {
+      kind: 'filtered';
+      stageLabel: string;
+      /** "hồ sơ" hoặc "hợp đồng" — màn hợp đồng dùng chung khối này. */
+      noun: string;
+      onShowAll: () => void;
+    };
 
 type Message = {
   icon: IconName;
@@ -34,31 +40,32 @@ function messageFor(props: Exclude<Props, { kind: 'filtered' }>): Message {
   return {
     icon: 'fileText',
     danger: false,
-    title: 'Bạn chưa có hồ sơ vay nào',
-    hint: 'Chọn một sản phẩm vay phù hợp để nộp hồ sơ. Hồ sơ đã nộp sẽ hiện ở đây để bạn theo dõi.',
-    action: 'Xem sản phẩm vay',
-    onAction: props.onBrowseProducts,
+    title: props.title,
+    hint: props.hint,
+    action: props.action,
+    onAction: props.onAction,
     busy: false,
   };
 }
 
 /**
  * Nội dung thay chỗ danh sách khi không có thẻ nào để vẽ: lỗi tải, chưa có hồ
- * sơ, hoặc nhóm đang lọc vừa trống sau lần tải lại. Nằm trong thẻ trắng như thẻ
- * hồ sơ để không chìm vào lớp sóng phía sau, và luôn chỉ ra việc làm tiếp theo.
+ * sơ/hợp đồng, hoặc nhóm đang lọc vừa trống sau lần tải lại. Nằm trong thẻ trắng
+ * để không chìm vào lớp sóng phía sau, và luôn chỉ ra việc làm tiếp theo. Màn
+ * "Hợp đồng của tôi" dùng chung, nên câu chữ trạng thái trống do màn truyền vào.
  */
 export default function ApplicationListStatus(props: Props) {
   if (props.kind === 'filtered') {
     return (
       <View style={[styles.card, styles.compact]} accessibilityLiveRegion="polite">
-        <Text style={styles.hint}>{`Không còn hồ sơ nào ở mục “${props.stageLabel}”.`}</Text>
+        <Text style={styles.hint}>{`Không còn ${props.noun} nào ở mục “${props.stageLabel}”.`}</Text>
         <Pressable
           onPress={props.onShowAll}
           accessibilityRole="button"
           hitSlop={{ top: 12, bottom: 12 }}
           style={({ pressed }) => pressed && styles.pressed}
         >
-          <Text style={styles.link}>Xem tất cả hồ sơ</Text>
+          <Text style={styles.link}>{`Xem tất cả ${props.noun}`}</Text>
         </Pressable>
       </View>
     );

@@ -8,7 +8,11 @@ export type WalletTxDirection = 'in' | 'out';
 
 export interface WalletTransaction {
   id: string;
-  /** Ngày giờ đã format sẵn theo mockup, ví dụ "10/07 21:14". */
+  /**
+   * Thời điểm phát sinh theo ISO 8601 có múi giờ, ví dụ "2026-07-10T21:14:00+07:00".
+   * Trước đây là chuỗi "10/07 21:14" đã format sẵn nên thiếu năm, không nhóm được
+   * theo tháng; màn hình tự format bằng `formatRecentTime` như trang chủ.
+   */
   occurredAt: string;
   description: string;
   amount: number;

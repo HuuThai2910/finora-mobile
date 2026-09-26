@@ -58,7 +58,10 @@ export default function MyApplicationsScreen() {
       return (
         <ApplicationListStatus
           kind="empty"
-          onBrowseProducts={() => navigation.navigate('Sàn', { screen: 'Products' })}
+          title="Bạn chưa có hồ sơ vay nào"
+          hint="Chọn một sản phẩm vay phù hợp để nộp hồ sơ. Hồ sơ đã nộp sẽ hiện ở đây để bạn theo dõi."
+          action="Xem sản phẩm vay"
+          onAction={() => navigation.navigate('Sàn', { screen: 'Products' })}
         />
       );
     }
@@ -66,6 +69,7 @@ export default function MyApplicationsScreen() {
       <ApplicationListStatus
         kind="filtered"
         stageLabel={selectedStage?.label ?? ''}
+        noun="hồ sơ"
         onShowAll={() => filter.select('all')}
       />
     );

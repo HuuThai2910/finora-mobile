@@ -313,3 +313,33 @@ export const APPLY_FORM_SHEET_MAX_WIDTH = 480;
  * nằm giữa `Radius.sm` và `Radius.md`); thẻ khoản vay đã chọn dùng `Radius.md`.
  */
 export const APPLY_FORM_BOX_RADIUS = 14;
+
+/* ---------------- Màn "Hợp đồng của tôi" (mockup 26/09/2026) ---------------- */
+
+/**
+ * Các mốc của hình minh hoạ trong `contracts-background.png` (pixel ảnh gốc, đo
+ * bằng PIL). Ảnh đặt sát mép trên màn như mockup, không lùi theo vùng an toàn.
+ */
+export const CONTRACT_LIST_ART = {
+  /** Đỉnh đầu linh vật xanh: hàng tiêu đề nằm trọn phía trên mốc này thì không cần né hình. */
+  top: 150,
+  /** Mép dưới cụm linh vật + chậu lá: hàng chip lọc bắt đầu từ đây. */
+  bottom: 299,
+  /** Mép trái đầu linh vật xanh (hàng 150–210) — vật gần nhất ngang hàng tiêu đề. */
+  titleLimit: 467,
+} as const;
+
+/**
+ * Thứ tự chip lọc ở màn hợp đồng, cố định để chip không nhảy chỗ sau mỗi lần tải
+ * lại: việc cần người vay làm trước, rồi hợp đồng đã ký, cuối cùng là hợp đồng đã
+ * khép lại. Chip dùng đúng nhãn trạng thái trên thẻ (`CONTRACT_STATUS`).
+ */
+export const CONTRACT_FILTER_ORDER: readonly LoanContractStatus[] = [
+  'PENDING_SIGNATURE',
+  'SIGNING',
+  'SIGNED',
+  'EFFECTIVE',
+  'COMPLETED',
+  'EXPIRED',
+  'DECLINED',
+];
