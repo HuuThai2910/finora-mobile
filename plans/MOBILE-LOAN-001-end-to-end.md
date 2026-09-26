@@ -422,3 +422,19 @@ withdraw UI, polling theo AppState, component test và kiểm thử end-to-end t
   thành công với 1.152 module và thư mục export tạm đã được xóa sau kiểm tra.
 - Kiểm thử thao tác mở/lưu/chia sẻ PDF và consent bằng hash trên emulator/thiết bị thật vẫn cần thực hiện
   cùng Loan Service đã chạy migration V9.
+
+## 20. Khắc phục PDF có xác thực và preview bị treo (cập nhật 2026-09-26)
+
+- PDF không còn đưa thẳng endpoint bảo vệ ra `Linking.openURL`. Mobile tải bytes qua cùng API client có
+  Bearer token, refresh một lần khi 401, kiểm tra `Content-Type: application/pdf` và từ chối file rỗng.
+- Web mở blob PDF trong viewer toàn màn hình; native ghi đúng bytes vào cache rồi hiển thị ngay trong FINORA
+  bằng WebView. Bảng chia sẻ chỉ dùng cho nút “Lưu hoặc chia sẻ” hoặc fallback khi thiết bị không render được PDF.
+- File cache được tái sử dụng đúng theo `contractNumber`; không dùng lại PDF của Contract trước nếu navigation
+  cập nhật route trên cùng component.
+- Repayment preview có timeout 15 giây và nhận `AbortSignal`; request cũ bị hủy khi đổi amount/term/date,
+  rời màn hình hoặc retry, nên loading không còn chờ vô hạn khi kết nối thiết bị bị đứt.
+- Đối chiếu trực tiếp Loan → Fineract cho Product 1, 50.000.000 đồng: 6/12/18/24 tháng đều trả đủ số kỳ
+  trong 0,36–0,67 giây. `npx tsc --noEmit` và Expo web export đều đạt sau thay đổi.
+- `react-native-webview` 13.16.1 được thêm theo Expo SDK 57; TypeScript, web/iOS/Android export đều đạt.
+  Còn cần thao tác thật trên iOS/Android để xác nhận cuộn/zoom tài liệu và hành vi quay lại màn Contract trước
+  khi đánh dấu acceptance criterion thiết bị đạt.

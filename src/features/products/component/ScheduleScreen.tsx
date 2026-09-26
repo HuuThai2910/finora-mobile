@@ -25,12 +25,12 @@ export default function ScheduleScreen() {
   const { productId, amount, termMonths, expectedDisbursementDate } = useRoute<RouteProp<MarketStackParamList, 'Schedule'>>().params;
 
   const { data, loading, error, reload } = useAsync(
-    () =>
+    (signal) =>
       getRepaymentPreview(productId, {
         amount,
         termMonths,
         expectedDisbursementDate,
-      }),
+      }, signal),
     [productId, amount, termMonths, expectedDisbursementDate],
   );
 

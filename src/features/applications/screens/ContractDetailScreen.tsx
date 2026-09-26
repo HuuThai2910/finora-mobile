@@ -9,6 +9,7 @@ import { Colors } from '@/constants/colors';
 import type { ProfileStackParamList } from '@/navigation/types';
 import { MIN_TOUCH, Spacing, Text_ } from '@/theme';
 import ContractOverviewCard from '../components/ContractOverviewCard';
+import ContractPdfViewer from '../components/ContractPdfViewer';
 import InlineContractConsent from '../components/InlineContractConsent';
 import ProcessTimeline from '../components/ProcessTimeline';
 import PricingChangeNotice from '../components/PricingChangeNotice';
@@ -247,6 +248,15 @@ function ContractDetailBody({
       </Pressable>
 
       <ProcessTimeline title="LỊCH SỬ HỢP ĐỒNG" steps={timeline} failed={timelineFailed} />
+
+      <ContractPdfViewer
+        visible={pdf.previewUri !== null}
+        uri={pdf.previewUri}
+        title={`Hợp đồng ${contract.contractNumber}`}
+        onClose={pdf.closePreview}
+        onShare={pdf.sharePdf}
+        sharing={pdf.sharing}
+      />
     </Screen>
   );
 }

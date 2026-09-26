@@ -16,7 +16,10 @@ export type AsyncState<T> = {
  *
  * Lỗi không bị nuốt: nó được giữ lại và trả về cho màn hình hiển thị.
  */
-export function useAsync<T>(fetcher: () => Promise<T>, deps: readonly unknown[] = []): AsyncState<T> {
+export function useAsync<T>(
+  fetcher: (signal?: AbortSignal) => Promise<T>,
+  deps: readonly unknown[] = [],
+): AsyncState<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,10 +30,11 @@ export function useAsync<T>(fetcher: () => Promise<T>, deps: readonly unknown[] 
 
   useEffect(() => {
     let alive = true;
+    const controller = new AbortController();
     setLoading(true);
     setError(null);
 
-    run()
+    run(controller.signal)
       .then(result => {
         if (alive) setData(result);
       })
@@ -43,6 +47,7 @@ export function useAsync<T>(fetcher: () => Promise<T>, deps: readonly unknown[] 
 
     return () => {
       alive = false;
+      controller.abort();
     };
   }, [run, tick]);
 
