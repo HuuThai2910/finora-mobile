@@ -8,7 +8,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { Colors } from '@/constants/colors';
-import { FontFamily, FontSize, MIN_TOUCH, Radius, Spacing } from '@/theme';
+import { FontFamily, FontSize, IconSize, MIN_TOUCH, Radius, Spacing } from '@/theme';
 import Icon from './Icon';
 import type { IconName } from '@/constants/icons';
 
@@ -19,6 +19,8 @@ type Props = {
   onPress?: () => void;
   variant?: ButtonVariant;
   icon?: IconName;
+  /** Icon sát mép phải, nhãn vẫn căn giữa nút — dùng cho mũi tên "đi tiếp". */
+  trailingIcon?: IconName;
   loading?: boolean;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -45,6 +47,7 @@ export default function Button({
   onPress,
   variant = 'brand',
   icon,
+  trailingIcon,
   loading = false,
   disabled = false,
   style,
@@ -83,6 +86,11 @@ export default function Button({
           </>
         )}
       </View>
+      {trailingIcon && !loading ? (
+        <View style={styles.trailing}>
+          <Icon name={trailingIcon} size={IconSize.md} color={v.fg} />
+        </View>
+      ) : null}
     </Pressable>
   );
 }
@@ -96,6 +104,7 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.md },
   label: { fontFamily: FontFamily.bold, fontSize: FontSize.title },
+  trailing: { position: 'absolute', right: Spacing.xxl, top: 0, bottom: 0, justifyContent: 'center' },
   pressed: { opacity: 0.82 },
   disabled: { opacity: 0.45 },
 });

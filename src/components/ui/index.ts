@@ -1,4 +1,6 @@
 export { default as Icon } from './Icon';
+export { default as BrandLogo } from './BrandLogo';
+export { decorativeSvgProps } from './decorativeSvgProps';
 export { default as Tag, type TagTone } from './Tag';
 export { default as Button, type ButtonVariant } from './Button';
 export { default as Field } from './Field';

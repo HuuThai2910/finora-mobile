@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Colors } from '@/constants/colors';
-import { FontFamily, Spacing, Text_ } from '@/theme';
-import { Screen } from '@/components/phone';
-import { Button } from '@/components/ui';
 import type { AuthStackParamList } from '@/navigation/types';
+import { OTP_BACKGROUND } from '../backgrounds';
+import AuthButton from '../components/AuthButton';
+import AuthLayout from '../components/AuthLayout';
+import AuthSwitchLink from '../components/AuthSwitchLink';
 import FormError from '../components/FormError';
 import OtpInput from '../components/OtpInput';
-import { OTP_LENGTH, OTP_MAX_ATTEMPTS } from '../constants';
+import OtpResend from '../components/OtpResend';
+import { OTP_LENGTH } from '../constants';
 import { useOtpCountdown } from '../hooks/useOtpCountdown';
 import { useResendResetOtp, useVerifyResetOtp } from '../hooks/usePasswordReset';
 import { validateResetOtp } from '../schemas/authForms';
@@ -62,12 +62,11 @@ export default function ResetOtpScreen() {
   };
 
   return (
-    <Screen light style={styles.screen}>
-      <Text style={styles.title} accessibilityRole="header">
-        Nhập mã xác thực
-      </Text>
-      <Text style={styles.sub}>Mã {OTP_LENGTH} số đã gửi tới {email}</Text>
-
+    <AuthLayout
+      background={OTP_BACKGROUND}
+      title="Nhập mã xác thực"
+      subtitle={`Mã ${OTP_LENGTH} số đã gửi tới ${email}`}
+    >
       <OtpInput
         value={otp}
         onChange={v => {
@@ -79,39 +78,22 @@ export default function ResetOtpScreen() {
 
       <FormError message={otpError ?? verify.error ?? resend.error} />
 
-      <Button
+      <AuthButton
         label="Tiếp tục"
+        trailingIcon="arrowRight"
         onPress={() => void onSubmit()}
         loading={verify.submitting}
         disabled={busy}
       />
 
-      <Text style={styles.hint}>
-        {countdown.canResend ? (
-          <Text style={styles.link} onPress={() => void onResend()}>
-            Gửi lại mã
-          </Text>
-        ) : (
-          `Gửi lại sau ${countdown.label}`
-        )}
-        {` · sai ${OTP_MAX_ATTEMPTS} lần phải yêu cầu mã mới`}
-      </Text>
+      <OtpResend
+        canResend={countdown.canResend}
+        countdownLabel={countdown.label}
+        onResend={() => void onResend()}
+        disabled={busy}
+      />
 
-      <Text style={styles.hint}>
-        <Text style={styles.link} onPress={() => nav.navigate('Login')}>
-          Quay lại đăng nhập
-        </Text>
-      </Text>
-    </Screen>
+      <AuthSwitchLink action="Quay lại đăng nhập" onPress={() => nav.navigate('Login')} />
+    </AuthLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  // Không dùng `center`: ô OTP tự bật bàn phím khi vào màn, vùng cuộn thu lại
-  // và `center` sẽ cắt cụt phần trên lẫn phần dưới mà không cuộn tới được.
-  screen: { justifyContent: 'flex-start' },
-  title: { ...Text_.display, color: Colors.ink, textAlign: 'center', marginTop: Spacing.page },
-  sub: { ...Text_.micro, color: Colors.ink3, textAlign: 'center', marginTop: Spacing.md },
-  hint: { ...Text_.micro, color: Colors.ink3, textAlign: 'center', marginTop: Spacing.xl },
-  link: { color: Colors.brand, fontFamily: FontFamily.semibold },
-});

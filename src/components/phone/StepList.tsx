@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text, View, useAnimatedValue } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { FontFamily, FontSize, Spacing, Text_ } from '@/theme';
 
@@ -42,7 +42,8 @@ export default function StepList({ steps }: { steps: readonly Step[] }) {
 }
 
 function Dot({ step, index }: { step: Step; index: number }) {
-  const opacity = useAnimatedValue(1);
+  // Không dùng `useAnimatedValue`: react-native-web chưa có hook này nên bản web vỡ.
+  const opacity = useRef(new Animated.Value(1)).current;
   const loop = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {

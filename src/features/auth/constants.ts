@@ -23,9 +23,9 @@ export const PASSWORD_MIN_LENGTH = 8;
 export const OTP_RESEND_SECONDS = 60;
 
 /**
- * Nhãn rút gọn để dòng đồng ý nằm gọn một hàng trên màn đăng ký.
- * Tên đầy đủ của tài liệu: "Điều khoản sử dụng" và "Chính sách bảo vệ dữ liệu
- * cá nhân" — hiển thị đủ ở trang tài liệu khi mở.
+ * Tên đầy đủ của hai tài liệu người dùng đồng ý khi đăng ký, theo `bản-đẹp.html`.
+ * Không rút gọn cho vừa một dòng: người dùng phải biết chính xác mình đồng ý
+ * với tài liệu nào, nên dòng đồng ý chấp nhận xuống hai hàng.
  */
-export const TERMS_LABEL = 'Điều khoản';
-export const PRIVACY_LABEL = 'Chính sách bảo mật';
+export const TERMS_LABEL = 'Điều khoản sử dụng';
+export const PRIVACY_LABEL = 'Chính sách bảo vệ dữ liệu cá nhân';

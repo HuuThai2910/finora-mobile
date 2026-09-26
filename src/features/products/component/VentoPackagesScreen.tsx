@@ -1,92 +1,87 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { EmptyState, ErrorState } from '@/components/feedback';
 import { Colors } from '@/constants/colors';
-import { IconSize, Radius, Spacing, Text_ } from '@/theme';
-import { PHeader, Screen } from '@/components/phone';
-import { Icon } from '@/components/ui';
-import { ErrorState, LoadingScreen } from '@/components/feedback';
 import type { MarketStackParamList } from '@/navigation/types';
+import PackageCard from '../components/PackageCard';
+import PackageListSkeleton from '../components/PackageListSkeleton';
+import PackagesHero from '../components/PackagesHero';
+import { PACKAGE_CARD_GAP, PACKAGES_MAX_WIDTH, PACKAGES_PADDING } from '../constant';
 import { useVentoPackages } from '../hook/useProducts';
+import { toPackageCardView } from '../mappers/packageCard';
 
 type Nav = NativeStackNavigationProp<MarketStackParamList, 'VentoPackages'>;
 
-/** Màn 27 — gói vay ưu đãi (thẻ nền navy, khác cách trình bày với màn Sản phẩm vay). */
+/** Đáy chừa một khoảng để thẻ cuối không sát thanh tab. */
+const BOTTOM_SPACE = 40;
+
+/**
+ * Màn 27 — gói vay ưu đãi (mockup 26/09/2026): banner robot cầm hộp quà, rồi thẻ
+ * trắng từng gói với lãi suất và ba thông số. Bấm thẻ mở chi tiết gói.
+ */
 export default function VentoPackagesScreen() {
   const nav = useNavigation<Nav>();
+  const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
+  const width = Math.min(windowWidth, PACKAGES_MAX_WIDTH);
+  // Nội dung cao ít nhất bằng khung cuộn để nền liền màu tới đáy màn.
+  const [viewportHeight, setViewportHeight] = useState(0);
   const { data, loading, error, reload } = useVentoPackages();
 
-  return (
-    <Screen>
-      <PHeader
-        title="Gói vay ưu đãi"
-        back
-        right={<Icon name="search" size={IconSize.sm} color={Colors.ink2} />}
+  const renderPackages = () => {
+    if (loading && !data) return <PackageListSkeleton />;
+    if (error) return <ErrorState message={error} onRetry={reload} />;
+    if (!data?.length) {
+      return (
+        <EmptyState
+          icon="search"
+          title="Chưa có gói vay ưu đãi"
+          hint="Bạn vẫn có thể vay theo các sản phẩm vay thông thường."
+          actionLabel="Xem sản phẩm vay"
+          onAction={() => nav.navigate('Products')}
+        />
+      );
+    }
+    return data.map(pkg => (
+      <PackageCard
+        key={pkg.code}
+        view={toPackageCardView(pkg)}
+        onPress={() => nav.navigate('PackageDetail', { code: pkg.code })}
       />
+    ));
+  };
 
-      <Text style={styles.lead}>Chọn gói phù hợp — lãi suất ưu đãi theo sản phẩm</Text>
-
-      {loading ? (
-        <LoadingScreen cards={3} />
-      ) : error ? (
-        <ErrorState message={error} onRetry={reload} />
-      ) : (
-        data?.map(pkg => (
-          <Pressable
-            key={pkg.code}
-            onPress={() => nav.navigate('PackageDetail', { code: pkg.code })}
-            accessibilityRole="button"
-            accessibilityLabel={`${pkg.name}, ${pkg.rateLabel}`}
-            style={({ pressed }) => [styles.card, pressed && styles.pressed]}
-          >
-            <View style={styles.left}>
-              <View style={styles.icon}>
-                <Icon name="coins" size={IconSize.lg} color={Colors.onDark} />
-              </View>
-              <View style={styles.info}>
-                <Text style={styles.name}>{pkg.name}</Text>
-                <Text style={styles.meta}>
-                  {pkg.code} · {pkg.method}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.right}>
-              <Text style={styles.rate}>{pkg.rateLabel}</Text>
-              <Icon name="chevronRight" size={IconSize.xs} color={Colors.onDarkMuted} />
-            </View>
-          </Pressable>
-        ))
-      )}
-    </Screen>
+  return (
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={styles.scroll}
+      showsVerticalScrollIndicator={false}
+      onLayout={e => setViewportHeight(e.nativeEvent.layout.height)}
+      refreshControl={
+        <RefreshControl
+          // Lần tải đầu đã có khung giả; vòng xoay chỉ dành cho kéo làm mới.
+          refreshing={loading && !!data}
+          onRefresh={reload}
+          // iOS đọc `tintColor`, Android đọc `colors`.
+          tintColor={Colors.authPrimary}
+          colors={[Colors.authPrimary]}
+        />
+      }
+    >
+      <View style={{ width, minHeight: viewportHeight }}>
+        <PackagesHero width={width} topInset={insets.top} />
+        <View style={styles.cards}>{renderPackages()}</View>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  lead: { ...Text_.micro, color: Colors.ink3, marginBottom: Spacing.xl },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.lg,
-    backgroundColor: Colors.navy,
-    borderRadius: Radius.lg,
-    padding: Spacing.xl,
-    marginBottom: Spacing.lg,
-  },
-  pressed: { opacity: 0.8 },
-  left: { flexDirection: 'row', alignItems: 'center', gap: Spacing.lg, flexShrink: 1 },
-  icon: {
-    width: 54,
-    height: 54,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.onDarkFaint,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  info: { flexShrink: 1, gap: 2 },
-  name: { ...Text_.bodyBold, color: Colors.onDark },
-  meta: { ...Text_.caption, color: Colors.onDarkMuted },
-  right: { alignItems: 'flex-end', gap: Spacing.xs },
-  rate: { ...Text_.bodyBold, color: '#6ee7b7' },
+  // Nền trùng hàng cuối banner: phủ hai bên cột trên web rộng, nối liền mép dưới ảnh.
+  root: { flex: 1, backgroundColor: Colors.packagesFill },
+  scroll: { flexGrow: 1, alignItems: 'center' },
+  cards: { gap: PACKAGE_CARD_GAP, paddingHorizontal: PACKAGES_PADDING, paddingBottom: BOTTOM_SPACE },
 });

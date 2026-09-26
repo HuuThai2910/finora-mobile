@@ -1,39 +1,56 @@
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
-import { FontFamily, FontSize, Radius, Spacing, Text_ } from '@/theme';
-import { PItem, Screen } from '@/components/phone';
-import { Button, SectionLabel, Tag } from '@/components/ui';
-import { ErrorState, LoadingScreen } from '@/components/feedback';
-import { useAuth } from '@/providers/AuthProvider';
+import { Spacing } from '@/theme';
 import type { IconName } from '@/constants/icons';
+import { ErrorState } from '@/components/feedback';
+import { useAuth } from '@/providers/AuthProvider';
 import type { ProfileStackParamList } from '@/navigation/types';
-import { KYC_LABEL, KYC_TONE, LOGOUT_CONFIRM_BODY, LOGOUT_CONFIRM_TITLE } from '../constant';
-import { useMyProfile, useSettingsMenu } from '../hook/useAccount';
+import {
+  COMING_SOON,
+  LOGOUT_CONFIRM_BODY,
+  LOGOUT_CONFIRM_TITLE,
+  NOTIFICATION_SETTINGS,
+  PROFILE_MAX_WIDTH,
+  SECURITY_SETTINGS,
+  type UpcomingSetting,
+} from '../constant';
+import { useMyProfile } from '../hook/useAccount';
+import { useScheduleShortcut } from '../hook/useScheduleShortcut';
+import ProfileBackdrop from './ProfileBackdrop';
+import ProfileHeader from './ProfileHeader';
+import ProfileShortcuts, { type ProfileShortcut } from './ProfileShortcuts';
+import ProfileSkeleton from './ProfileSkeleton';
+import SettingsCard from './SettingsCard';
+import SettingsRow from './SettingsRow';
 
 type Nav = NativeStackNavigationProp<ProfileStackParamList, 'Profile'>;
 
 /**
- * Màn 26 — hồ sơ cá nhân, màn gốc của tab Hồ sơ.
+ * Màn 26 — hồ sơ cá nhân, màn gốc của tab Hồ sơ (vẽ lại theo mockup 26/09/2026).
  *
- * Các dòng menu chỉ có nhãn (không chữ phụ) và gom theo nhóm để màn không thành
- * bức tường chữ; trạng thái eKYC hiển thị một lần duy nhất ở phần đầu, dòng
- * "Xác thực eKYC" chỉ xuất hiện khi còn việc phải làm.
+ * Màn chỉ điều phối dữ liệu và điều hướng. Mỗi dòng hoặc dẫn tới một màn có
+ * thật, hoặc hiện mờ "Sắp có": mockup điền sẵn số liệu mẫu (ngân hàng liên kết,
+ * Face ID, số thiết bị...) nhưng app chưa có các chức năng đó nên không hiển thị
+ * số liệu giả, cũng không vẽ thành nút bấm.
  */
 export default function AccountScreen() {
   const nav = useNavigation<Nav>();
+  const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
+  const width = Math.min(windowWidth, PROFILE_MAX_WIDTH);
   const { signOut } = useAuth();
   const profile = useMyProfile();
-  const menu = useSettingsMenu();
+  const schedule = useScheduleShortcut();
 
-  const loading = profile.loading || menu.loading;
-  const error = profile.error ?? menu.error;
-  const reload = () => {
-    profile.reload();
-    menu.reload();
-  };
+  const openInfo = () => nav.navigate('AccountInfo');
+  const startEkyc = () => nav.navigate('EkycCapture', { side: 'front' });
+  const openSchedule = () =>
+    schedule.kind === 'contract'
+      ? nav.navigate('RepaymentSchedule', { source: 'contract', number: schedule.contractNumber })
+      : nav.navigate('MyContracts');
 
   const onLogout = () =>
     Alert.alert(LOGOUT_CONFIRM_TITLE, LOGOUT_CONFIRM_BODY, [
@@ -41,112 +58,124 @@ export default function AccountScreen() {
       { text: 'Đăng xuất', style: 'destructive', onPress: signOut },
     ]);
 
-  if (loading) return <Screen><LoadingScreen cards={3} /></Screen>;
-  if (error) return <Screen><ErrorState message={error} onRetry={reload} /></Screen>;
-  if (!profile.data) return null;
+  const shortcuts: readonly ProfileShortcut[] = [
+    {
+      icon: 'fileText',
+      title: 'Hồ sơ vay',
+      subtitle: 'Xem chi tiết các khoản vay',
+      onPress: () => nav.navigate('MyApplications'),
+    },
+    {
+      icon: 'file',
+      title: 'Hợp đồng',
+      subtitle: 'Xem và tải về hợp đồng',
+      onPress: () => nav.navigate('MyContracts'),
+    },
+    {
+      icon: 'calendar',
+      title: 'Lịch trả nợ',
+      subtitle: 'Theo dõi lịch trả nợ',
+      onPress: openSchedule,
+      hint:
+        schedule.kind === 'contract'
+          ? `Mở lịch trả nợ của hợp đồng ${schedule.contractNumber}`
+          : 'Mở danh sách hợp đồng để chọn khoản vay',
+    },
+  ];
 
   const p = profile.data;
-  const verified = p.kycStatus === 'KYC_VERIFIED';
+  const verified = p?.kycStatus === 'KYC_VERIFIED';
+
+  // Lần tải đầu đã có khung giả; vòng xoay kéo-làm-mới chỉ hiện khi tải lại.
+  const refreshing = profile.loading && p !== null;
+
+  let body: React.ReactNode;
+  if (profile.error) {
+    body = <ErrorState message={profile.error} onRetry={profile.reload} />;
+  } else if (!p) {
+    body = <ProfileSkeleton />;
+  } else {
+    body = (
+      <>
+        <ProfileHeader profile={p} width={width} onOpenInfo={openInfo} onStartEkyc={startEkyc} />
+
+        <View style={styles.shortcuts}>
+          <ProfileShortcuts items={shortcuts} />
+        </View>
+
+        <View style={styles.groups}>
+          <SettingsCard icon="user" title="Tài khoản">
+            {/* Chỉ còn hiện khi còn việc phải làm; đã định danh thì nhãn ở đầu trang đã đủ. */}
+            {!verified ? (
+              <SettingsRow
+                icon="scan"
+                title="Xác thực eKYC"
+                subtitle="Chụp mặt trước và mặt sau CCCD"
+                onPress={startEkyc}
+              />
+            ) : null}
+            <SettingsRow
+              icon="id"
+              title="Thông tin tài khoản"
+              subtitle="Xem thông tin cá nhân"
+              onPress={openInfo}
+              divider={!verified}
+            />
+          </SettingsCard>
+
+          <UpcomingGroup icon="shieldCheck" title="Bảo mật & Liên kết" items={SECURITY_SETTINGS} />
+          <UpcomingGroup icon="bell" title="Thông báo & Cài đặt" items={NOTIFICATION_SETTINGS} />
+
+          <SettingsCard>
+            <SettingsRow icon="logout" title="Đăng xuất" onPress={onLogout} danger />
+          </SettingsCard>
+        </View>
+      </>
+    );
+  }
 
   return (
-    <Screen onRefresh={reload} refreshing={false}>
-      <View style={styles.head}>
-        <LinearGradient
-          colors={[Colors.navy, Colors.brand]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.avatar}
-        >
-          <Text style={styles.initial}>{p.initial}</Text>
-        </LinearGradient>
-
-        <View style={styles.identity}>
-          {/* Chưa quét eKYC thì chưa có tên — hiện email để biết đang ở tài
-              khoản nào, tag bên dưới đã nói trạng thái định danh. */}
-          <Text style={styles.name} accessibilityRole="header" numberOfLines={1}>
-            {p.fullName ?? p.email}
-          </Text>
-          <View style={styles.tags}>
-            <Tag tone={KYC_TONE[p.kycStatus]} small>
-              {KYC_LABEL[p.kycStatus]}
-            </Tag>
-            {/* Điểm tín dụng chưa có trong `GET /users/me`; ẩn hẳn thay vì hiển thị số rỗng */}
-            {p.creditGrade && p.creditScore !== null ? (
-              <Tag tone="blue" small>{`Điểm ${p.creditGrade}+ · ${p.creditScore}`}</Tag>
-            ) : null}
-          </View>
-        </View>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={styles.scroll}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={profile.reload} tintColor={Colors.authPrimary} />
+      }
+    >
+      <View style={{ width }}>
+        <ProfileBackdrop width={width} />
+        <View style={[styles.content, { paddingTop: insets.top + Spacing.lg }]}>{body}</View>
       </View>
+    </ScrollView>
+  );
+}
 
-      <SectionLabel>Tài khoản</SectionLabel>
-      {!verified ? (
-        <PItem
-          label="Xác thực eKYC"
-          icon="scan"
-          onPress={() => nav.navigate('EkycCapture', { side: 'front' })}
-        />
-      ) : null}
-      <PItem
-        label="Thông tin tài khoản"
-        icon="id"
-        onPress={() => nav.navigate('AccountInfo')}
-        last
-      />
+type UpcomingGroupProps = { icon: IconName; title: string; items: readonly UpcomingSetting[] };
 
-      <SectionLabel style={styles.section}>Khoản vay</SectionLabel>
-      <PItem
-        label="Hồ sơ vay của tôi"
-        icon="coins"
-        onPress={() => nav.navigate('MyApplications')}
-      />
-      <PItem
-        label="Hợp đồng vay của tôi"
-        icon="file"
-        onPress={() => nav.navigate('MyContracts')}
-      />
-      <PItem
-        label="Lịch trả nợ"
-        icon="clock"
-        value={<Tag tone="gray" small>Sắp triển khai</Tag>}
-        last
-      />
-
-      <SectionLabel style={styles.section}>Cài đặt</SectionLabel>
-      {menu.data?.map((m, i) => (
-        <PItem
-          key={m.label}
-          label={m.label}
-          icon={m.icon as IconName}
-          value={m.value}
-          onPress={() => {}}
-          last={i === (menu.data?.length ?? 0) - 1}
+/** Nhóm cài đặt mà mọi mục đều chưa có chức năng thật (xem `SECURITY_SETTINGS`). */
+function UpcomingGroup({ icon, title, items }: UpcomingGroupProps) {
+  return (
+    <SettingsCard icon={icon} title={title}>
+      {items.map((item, index) => (
+        <SettingsRow
+          key={item.title}
+          icon={item.icon}
+          title={item.title}
+          subtitle={COMING_SOON}
+          divider={index > 0}
         />
       ))}
-
-      <Button label="Đăng xuất" variant="danger" onPress={onLogout} style={styles.logout} />
-    </Screen>
+    </SettingsCard>
   );
 }
 
 const styles = StyleSheet.create({
-  head: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xl,
-    paddingVertical: Spacing.xl,
-    marginBottom: Spacing.lg,
-  },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: Radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  initial: { fontFamily: FontFamily.extrabold, fontSize: FontSize.heading, color: Colors.onDark },
-  identity: { flexShrink: 1, gap: Spacing.sm },
-  name: { ...Text_.title, color: Colors.ink },
-  tags: { flexDirection: 'row', gap: Spacing.md, flexWrap: 'wrap' },
-  section: { marginTop: Spacing.section },
-  logout: { marginTop: Spacing.section },
+  // Cùng màu phần nền trơn của ảnh sóng: vùng lộ ra khi kéo quá đà và hai bên
+  // cột nội dung trên web đều liền màu với ảnh.
+  root: { flex: 1, backgroundColor: Colors.productsBackdrop },
+  scroll: { flexGrow: 1, alignItems: 'center' },
+  content: { paddingHorizontal: Spacing.xl, paddingBottom: Spacing.section },
+  shortcuts: { marginTop: Spacing.xl },
+  groups: { marginTop: Spacing.lg, gap: Spacing.lg },
 });

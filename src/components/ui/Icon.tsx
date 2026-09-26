@@ -2,6 +2,7 @@ import Svg, { Circle, Ellipse, Line, Path, Polyline, Rect } from 'react-native-s
 import { ICONS, type IconName, type IconShape } from '@/constants/icons';
 import { Colors } from '@/constants/colors';
 import { IconSize } from '@/theme';
+import { decorativeSvgProps } from './decorativeSvgProps';
 
 type Props = {
   name: IconName;
@@ -34,8 +35,7 @@ export default function Icon({
       strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
-      accessibilityElementsHidden
-      importantForAccessibility="no"
+      {...decorativeSvgProps}
     >
       {shapes.map((s, i) => {
         switch (s.t) {

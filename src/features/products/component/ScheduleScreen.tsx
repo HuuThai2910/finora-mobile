@@ -1,115 +1,159 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
-import { FontFamily, FontSize, Radius, Spacing, Text_, tabularNums } from '@/theme';
-import { FormStepProgress, PHeader, PItem, Screen } from '@/components/phone';
-import { Button } from '@/components/ui';
-import { ErrorState, LoadingScreen } from '@/components/feedback';
-import RepaymentScheduleList from '@/components/loan/RepaymentScheduleList';
-import { useAsync } from '@/hooks/useAsync';
-import { formatDong, formatVND } from '@/utils/format';
+import { FontFamily, FontSize, LineHeight, Radius, SoftShadow, Spacing, lh } from '@/theme';
+import { ErrorState } from '@/components/feedback';
 import type { MarketStackParamList } from '@/navigation/types';
-import { REPAYMENT_METHOD_LABEL } from '../constant';
-import { getRepaymentPreview } from '../api';
+import { LOAN_STEP_GUTTER } from '../constant';
+import { useRepaymentPreview } from '../hooks/useRepaymentPreview';
+import { toScheduleSummaryView } from '../mappers/repaymentSchedule';
+import LoanPrimaryButton from '../components/LoanPrimaryButton';
+import LoanStepBackdrop from '../components/LoanStepBackdrop';
+import LoanStepFooter from '../components/LoanStepFooter';
+import LoanStepHeader from '../components/LoanStepHeader';
+import ScheduleEmptyNote from '../components/ScheduleEmptyNote';
+import ScheduleIntro from '../components/ScheduleIntro';
+import SchedulePeriodCard from '../components/SchedulePeriodCard';
+import ScheduleSkeleton from '../components/ScheduleSkeleton';
+import ScheduleSummaryCard from '../components/ScheduleSummaryCard';
 
 type Nav = NativeStackNavigationProp<MarketStackParamList, 'Schedule'>;
 
+/** Khoảng cách giữa các thẻ kỳ, đo từ mockup. */
+const CARD_GAP = 12;
+
 /**
- * Màn 12 — lịch trả nợ dự kiến.
+ * Bước 2/3 "Xác nhận khoản vay" — lịch trả dự kiến, vẽ theo mockup 26/09/2026.
  * Số liệu do backend tính (`POST /loan-products/{id}/repayment-previews`);
- * client không tự tính tiền.
+ * client không tự tính tiền. Sang bước 3 với đúng bốn tham số nhận từ bước 1.
  */
 export default function ScheduleScreen() {
   const nav = useNavigation<Nav>();
-  const { productId, amount, termMonths, expectedDisbursementDate } = useRoute<RouteProp<MarketStackParamList, 'Schedule'>>().params;
+  const { params } = useRoute<RouteProp<MarketStackParamList, 'Schedule'>>();
+  const insets = useSafeAreaInsets();
+  const { data, loading, error, reload } = useRepaymentPreview(params.productId, params);
 
-  const { data, loading, error, reload } = useAsync(
-    (signal) =>
-      getRepaymentPreview(productId, {
-        amount,
-        termMonths,
-        expectedDisbursementDate,
-      }, signal),
-    [productId, amount, termMonths, expectedDisbursementDate],
-  );
+  // Những kỳ người dùng đã bấm đổi so với mặc định (kỳ đầu mở, các kỳ sau thu gọn).
+  // Giữ ở màn chứ không trong từng thẻ: FlatList gỡ thẻ đã cuộn xa khỏi màn hình,
+  // state đặt trong thẻ sẽ mất khi người dùng cuộn lại.
+  const [toggled, setToggled] = useState<ReadonlySet<number>>(() => new Set());
 
-  if (loading) return <Screen><LoadingScreen cards={3} /></Screen>;
-  if (error) {
+  // Một tham chiếu cho cả danh sách để thẻ kỳ (đã memo) không vẽ lại khi thẻ khác đổi.
+  const togglePeriod = useCallback((period: number) => {
+    setToggled(current => {
+      const next = new Set(current);
+      if (next.has(period)) next.delete(period);
+      else next.add(period);
+      return next;
+    });
+  }, []);
+
+  // Mở thẳng màn này (tải lại trang web) thì không còn bước 1 phía sau để quay về.
+  const goBack = () =>
+    nav.canGoBack() ? nav.goBack() : nav.navigate('ProductDetail', { productId: params.productId });
+
+  const goToApplyForm = () =>
+    nav.navigate('ApplyForm', {
+      productId: params.productId,
+      amount: params.amount,
+      termMonths: params.termMonths,
+      expectedDisbursementDate: params.expectedDisbursementDate,
+    });
+
+  const header = <LoanStepHeader title="Xác nhận khoản vay" step={2} total={3} onBack={goBack} />;
+  const frame = [styles.content, { paddingTop: insets.top + Spacing.sm }];
+
+  // Đang tải hoặc lỗi: vẫn giữ đầu màn để người vay quay lại được. Như màn cũ, nút
+  // sang bước 3 chỉ xuất hiện khi đã có lịch để xem.
+  if (loading || error || !data) {
     return (
-      <Screen>
-        <ErrorState
-          message={error}
-          hint="Thông tin khoản vay bạn đã chọn vẫn được giữ nguyên."
-          onRetry={reload}
-        />
-      </Screen>
+      <LoanStepBackdrop>
+        <ScrollView style={styles.scroll} contentContainerStyle={frame} showsVerticalScrollIndicator={false}>
+          {header}
+          <View style={styles.belowHeader}>
+            {loading ? (
+              <ScheduleSkeleton />
+            ) : error ? (
+              <View style={styles.errorCard}>
+                <ErrorState
+                  message={error}
+                  hint="Thông tin khoản vay bạn đã chọn vẫn được giữ nguyên."
+                  onRetry={reload}
+                />
+              </View>
+            ) : null}
+          </View>
+        </ScrollView>
+      </LoanStepBackdrop>
     );
   }
-  if (!data) return null;
 
-  const method = REPAYMENT_METHOD_LABEL[data.repaymentMethod] ?? data.repaymentMethod;
+  const summary = toScheduleSummaryView(data, params);
 
   return (
-    <Screen
-      footer={
-        <Button
-          label="Tiếp tục nhập hồ sơ →"
-          variant="navyPill"
-          onPress={() => nav.navigate('ApplyForm', {
-            productId,
-            amount,
-            termMonths,
-            expectedDisbursementDate,
-          })}
-        />
-      }
-    >
-      <PHeader title="Xác nhận khoản vay" back />
-      <FormStepProgress current={2} total={3} label="Xem lịch trả dự kiến" />
-
-      <View style={styles.summary}>
-        <Text style={styles.summaryLabel}>TỔNG SỐ TIỀN VAY</Text>
-        <Text style={styles.summaryAmount}>{formatDong(amount)}</Text>
-        <Text style={styles.summaryMeta}>
-          {termMonths} tháng · lãi suất cơ sở {data.annualInterestRate}%/năm · kỳ đầu {formatDong(data.firstInstallment)}
-        </Text>
-      </View>
-
-      <View style={styles.totals}>
-        <View style={[styles.total, styles.totalBrand]}>
-          <Text style={styles.totalLabel}>TỔNG TRẢ</Text>
-          <Text style={[styles.totalValue, { color: Colors.brand }]}>
-            {formatVND(data.totalRepayment)}
-          </Text>
-        </View>
-        <View style={[styles.total, styles.totalGreen]}>
-          <Text style={styles.totalLabel}>TỔNG LÃI</Text>
-          <Text style={[styles.totalValue, { color: Colors.emerald }]}>
-            {formatVND(data.totalInterest)}
-          </Text>
-        </View>
-      </View>
-
-      <PItem label="Kỳ đầu trả" value={formatDong(data.firstInstallment)} />
-      <PItem label="Kỳ cao nhất" value={formatDong(data.maximumInstallment)} last />
-
-      <Text style={styles.method}>Phương thức trả: {method}</Text>
-      <RepaymentScheduleList periods={data.periods} />
-    </Screen>
+    <LoanStepBackdrop>
+      {/* Lịch có thể tới 60 kỳ nên dùng FlatList: chỉ dựng những thẻ gần vùng nhìn thấy. */}
+      <FlatList
+        style={styles.scroll}
+        // Kiểu TS ghi mảng, nhưng Loan Service bản cũ không trả `periods` (màn cũ cũng đỡ trường hợp này).
+        data={data.periods ?? []}
+        keyExtractor={item => String(item.period)}
+        renderItem={({ item, index }) => (
+          <SchedulePeriodCard
+            period={item}
+            expanded={(index === 0) !== toggled.has(item.period)}
+            onToggle={togglePeriod}
+          />
+        )}
+        extraData={toggled}
+        ItemSeparatorComponent={CardGap}
+        ListHeaderComponent={
+          <View>
+            {header}
+            <View style={styles.belowHeader}>
+              <ScheduleIntro />
+            </View>
+            <ScheduleSummaryCard summary={summary} />
+            <Text style={styles.section} accessibilityRole="header">
+              Lịch trả từng kỳ
+            </Text>
+          </View>
+        }
+        ListEmptyComponent={<ScheduleEmptyNote />}
+        contentContainerStyle={frame}
+        showsVerticalScrollIndicator={false}
+      />
+      <LoanStepFooter>
+        <LoanPrimaryButton label="Tiếp tục" onPress={goToApplyForm} />
+      </LoanStepFooter>
+    </LoanStepBackdrop>
   );
 }
 
+function CardGap() {
+  return <View style={styles.gap} />;
+}
+
 const styles = StyleSheet.create({
-  summary: { padding: Spacing.xxl, marginBottom: Spacing.xl, alignItems: 'center', gap: Spacing.sm, backgroundColor: Colors.navy, borderRadius: Radius.xl },
-  summaryLabel: { ...Text_.captionBold, color: Colors.onDarkMuted },
-  summaryAmount: { fontFamily: FontFamily.extrabold, fontSize: FontSize.figure, color: Colors.onDark, ...tabularNums },
-  summaryMeta: { ...Text_.micro, color: Colors.onDarkMuted, textAlign: 'center' },
-  totals: { flexDirection: 'row', gap: Spacing.lg, marginBottom: Spacing.xl },
-  total: { flex: 1, borderRadius: Radius.lg, padding: Spacing.xl, alignItems: 'center', gap: Spacing.xs },
-  totalBrand: { backgroundColor: Colors.brand50 },
-  totalGreen: { backgroundColor: Colors.greenBg },
-  totalLabel: { ...Text_.caption, color: Colors.ink3, letterSpacing: 0.5 },
-  totalValue: { fontFamily: FontFamily.extrabold, fontSize: FontSize.title, ...tabularNums },
-  method: { ...Text_.micro, color: Colors.ink3, marginTop: Spacing.xl, textAlign: 'center' },
+  scroll: { flex: 1 },
+  content: { flexGrow: 1, paddingHorizontal: LOAN_STEP_GUTTER, paddingBottom: Spacing.xxl },
+  belowHeader: { marginTop: Spacing.xxl },
+  errorCard: {
+    backgroundColor: Colors.card,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.xl,
+    ...SoftShadow.card,
+  },
+  section: {
+    marginTop: Spacing.xxxl,
+    marginBottom: Spacing.lg,
+    fontFamily: FontFamily.bold,
+    fontSize: FontSize.title,
+    lineHeight: lh(FontSize.title, LineHeight.heading),
+    color: Colors.authInk,
+  },
+  gap: { height: CARD_GAP },
 });
