@@ -14,6 +14,7 @@ import PricingResultCard from '../components/PricingResultCard';
 import RepaymentSummary from '../components/RepaymentSummary';
 import TermsConfirmationSection from '../components/TermsConfirmationSection';
 import WithdrawSection from '../components/WithdrawSection';
+import { applicationTimelineStop } from '../mappers/detailTimeline';
 
 type Nav = NativeStackNavigationProp<ProfileStackParamList, 'ApplicationDetail'>;
 
@@ -123,7 +124,11 @@ export default function ApplicationDetailScreen() {
         }
       />
 
-      <ApplicationTimelineCard steps={timeline} status={application.status} failed={timelineFailed} />
+      <ApplicationTimelineCard
+        steps={timeline}
+        stop={applicationTimelineStop(application.status)}
+        failed={timelineFailed}
+      />
 
       <DeclaredInfoSection application={application} />
 

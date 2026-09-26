@@ -17,7 +17,7 @@ const TONES: Record<PricingChangeCopy['tone'], { badge: string; bg: string; fg: 
 /**
  * "Kết quả điều khoản" theo mockup 26/09/2026: lãi suất lúc đăng ký → lãi suất
  * sau thẩm định, kèm lời giải thích. Cùng dữ liệu và điều kiện hiển thị với
- * `PricingChangeNotice` (màn hợp đồng vẫn dùng bản đó) qua `pricingChangeOf`.
+ * `ContractPricingCard` của màn hợp đồng qua `pricingChangeOf`.
  *
  * Câu "đã tự tiếp tục vì không bất lợi hơn" chỉ đúng khi Loan tự uỷ quyền; hồ sơ
  * đã chấp nhận điều khoản bất lợi hơn thì câu đó sai, nên chỉ hiện ở

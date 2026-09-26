@@ -31,12 +31,16 @@ export function formatDate(iso: string): string {
   return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
 }
 
-export function formatDateTime(iso: string): string {
+/** Giờ phút theo múi giờ của máy: "23:13". */
+export function formatTime(iso: string): string {
   if (!iso) return '—';
   const d = new Date(iso);
-  const date = formatDate(iso);
-  const time = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-  return `${time} ${date}`;
+  return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+}
+
+export function formatDateTime(iso: string): string {
+  if (!iso) return '—';
+  return `${formatTime(iso)} ${formatDate(iso)}`;
 }
 
 export function formatPercent(rate: number): string {

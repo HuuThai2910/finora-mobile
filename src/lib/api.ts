@@ -75,8 +75,8 @@ export class ApiError extends Error {
 
 /** Lỗi mạng — phân biệt với lỗi do máy chủ trả về. */
 export class NetworkError extends Error {
-  constructor(cause: unknown) {
-    super('Không kết nối được máy chủ.');
+  constructor(cause: unknown, message = 'Không kết nối được máy chủ.') {
+    super(message);
     this.name = 'NetworkError';
     this.cause = cause;
   }
@@ -89,18 +89,32 @@ export function toUserMessage(error: unknown): string {
   return 'Đã xảy ra lỗi không xác định.';
 }
 
-type RequestOptions = RequestInit & {
+export type ApiRequestInit = RequestInit & {
   /** Gắn `Authorization: Bearer` và tự làm mới token một lần khi gặp 401. */
   authenticated?: boolean;
+  /** Chặn request mạng treo vô hạn trên thiết bị; bỏ trống nếu caller tự quản lý. */
+  timeoutMs?: number;
 };
 
-async function send(baseUrl: string, path: string, init: RequestOptions): Promise<Response> {
-  const { headers, authenticated, ...rest } = init;
+async function send(baseUrl: string, path: string, init: ApiRequestInit): Promise<Response> {
+  const { headers, authenticated, timeoutMs, signal: callerSignal, ...rest } = init;
   const token = authenticated ? await getValidAccessToken() : null;
+  const controller = new AbortController();
+  let timedOut = false;
+  const forwardAbort = () => controller.abort();
+  callerSignal?.addEventListener('abort', forwardAbort, { once: true });
+  if (callerSignal?.aborted) controller.abort();
+  const timer = timeoutMs
+    ? setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, timeoutMs)
+    : undefined;
 
   try {
     return await fetch(`${baseUrl}${path}`, {
       ...rest,
+      signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
         ...MOBILE_CLIENT_HEADERS,
@@ -109,11 +123,21 @@ async function send(baseUrl: string, path: string, init: RequestOptions): Promis
       },
     });
   } catch (e) {
+    if (timedOut) {
+      throw new NetworkError(e, 'Máy chủ phản hồi quá lâu. Vui lòng thử lại.');
+    }
     throw new NetworkError(e);
+  } finally {
+    if (timer) clearTimeout(timer);
+    callerSignal?.removeEventListener('abort', forwardAbort);
   }
 }
 
-async function request<T>(baseUrl: string, path: string, init: RequestOptions = {}): Promise<T> {
+async function response(
+  baseUrl: string,
+  path: string,
+  init: ApiRequestInit = {},
+): Promise<Response> {
   let res = await send(baseUrl, path, init);
 
   // Access token của Keycloak sống ngắn. Gặp 401 thì thử làm mới đúng một lần;
@@ -130,6 +154,12 @@ async function request<T>(baseUrl: string, path: string, init: RequestOptions = 
     const { code, message, traceId } = parseError(body);
     throw new ApiError(res.status, body, code, message, traceId);
   }
+
+  return res;
+}
+
+async function request<T>(baseUrl: string, path: string, init: ApiRequestInit = {}): Promise<T> {
+  const res = await response(baseUrl, path, init);
 
   return parseBody<T>(res);
 }
@@ -148,8 +178,15 @@ async function parseBody<T>(res: Response): Promise<T> {
 }
 
 /** Gọi Loan Service qua gateway, có gắn token của phiên đăng nhập. */
-export const apiFetch = <T>(path: string, init?: RequestInit): Promise<T> =>
+export const apiFetch = <T>(path: string, init?: ApiRequestInit): Promise<T> =>
   request<T>(BASE_URL, path, { ...init, authenticated: true });
+
+/**
+ * Lấy response nhị phân từ Loan Service bằng cùng cơ chế token/refresh như JSON API.
+ * Dùng cho PDF hợp đồng để không đưa bearer token vào URL hoặc trình duyệt ngoài.
+ */
+export const apiFetchResponse = (path: string, init?: ApiRequestInit): Promise<Response> =>
+  response(BASE_URL, path, { ...init, authenticated: true });
 
 /** Gọi endpoint công khai của `finora-user` — đăng nhập, đăng ký, quên mật khẩu. */
 export const authFetch = <T>(path: string, init?: RequestInit): Promise<T> =>

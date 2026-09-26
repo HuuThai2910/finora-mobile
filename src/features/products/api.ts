@@ -36,12 +36,15 @@ export const listPurposes = (): Promise<LoanPurpose[]> =>
 export const getRepaymentPreview = (
   productId: number,
   body: RepaymentPreviewRequest,
+  signal?: AbortSignal,
 ): Promise<RepaymentPreview> =>
   isMocked('products')
     ? catalogMock.getPreview()
     : apiFetch<RepaymentPreview>(`/loan-products/${productId}/repayment-previews`, {
         method: 'POST',
         body: JSON.stringify(body),
+        signal,
+        timeoutMs: 15_000,
       });
 
 /** Gói vay ưu đãi là khái niệm chỉ có trong bản demo VENTO, không có ở backend. */

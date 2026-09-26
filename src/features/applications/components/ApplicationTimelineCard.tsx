@@ -3,8 +3,12 @@ import type { Step } from '@/components/phone';
 import { Icon, type TagTone } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import { FontFamily, Spacing } from '@/theme';
-import type { LoanApplicationStatus } from '@/types/loan';
-import { toTimelineEntries, type TimelineEntry, type TimelineMark } from '../mappers/detailTimeline';
+import {
+  toTimelineEntries,
+  type TimelineEntry,
+  type TimelineMark,
+  type TimelineStop,
+} from '../mappers/detailTimeline';
 import DetailCard from './DetailCard';
 
 const DOT = 22;
@@ -20,8 +24,11 @@ const STATE_TEXT: Record<TimelineMark, string> = {
 };
 
 type Props = {
+  /** Tiêu đề thẻ: hồ sơ và hợp đồng dùng chung cách vẽ, khác tên gọi. */
+  title?: string;
   steps: readonly Step[];
-  status: LoanApplicationStatus;
+  /** Hành trình dừng không thành thì mốc cuối vẽ dấu ✕ (xem `applicationTimelineStop`). */
+  stop: TimelineStop | null;
   /** Lịch sử tải lỗi chỉ báo trong thẻ này, không chặn phần còn lại của màn. */
   failed: boolean;
 };
@@ -31,11 +38,16 @@ type Props = {
  * tích nối bằng nét mảnh. Mỗi loại mốc khác nhau cả ở hình dạng (✓ đặc, vòng có
  * chấm, vòng rỗng, ✕ đặc) và nhãn đọc, không chỉ ở màu.
  */
-export default function ApplicationTimelineCard({ steps, status, failed }: Props) {
-  const entries = toTimelineEntries(steps, status);
+export default function ApplicationTimelineCard({
+  title = 'Tiến trình xử lý hồ sơ',
+  steps,
+  stop,
+  failed,
+}: Props) {
+  const entries = toTimelineEntries(steps, stop);
 
   return (
-    <DetailCard title="Tiến trình xử lý hồ sơ" icon="clock">
+    <DetailCard title={title} icon="clock">
       {failed ? (
         <Notice text="Chưa tải được tiến trình xử lý. Kéo xuống để tải lại; các thông tin khác vẫn dùng được." />
       ) : entries.length === 0 ? (

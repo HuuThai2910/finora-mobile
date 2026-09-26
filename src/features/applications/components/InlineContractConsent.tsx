@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
-import { Button, Card, Checkbox, InfoNote } from '@/components/ui';
+import { Checkbox } from '@/components/ui';
 import { Colors } from '@/constants/colors';
-import { Spacing, Text_ } from '@/theme';
+import { FontFamily, Spacing } from '@/theme';
 import type { LoanContractDetail } from '@/types/contract';
 import type { DeclineReasonCode } from '../constant';
 import type { Countdown } from '../hook/useCountdown';
 import { useContractConsent } from '../hook/useContractConsent';
 import DeclineForm from './DeclineForm';
+import DetailButton from './DetailButton';
+import DetailCard from './DetailCard';
+import DetailNote from './DetailNote';
 import DisclosureSection from './DisclosureSection';
 
 type Props = {
@@ -61,9 +64,7 @@ export default function InlineContractConsent({ contract, countdown, onDone, onS
 
   if (mode === 'decline') {
     return (
-      <View style={styles.section}>
-        <Text style={styles.eyebrow}>QUYẾT ĐỊNH CỦA BẠN</Text>
-        <Text style={styles.title}>Từ chối hợp đồng</Text>
+      <DetailCard title="Từ chối hợp đồng" icon="x">
         <DeclineForm
           reason={reason}
           onReasonChange={setReason}
@@ -72,14 +73,14 @@ export default function InlineContractConsent({ contract, countdown, onDone, onS
           error={consent.error?.message}
         />
         <View style={styles.actions}>
-          <Button
+          <DetailButton
             label="Xác nhận từ chối"
             variant="danger"
             onPress={decline}
             disabled={!declineReady || consent.busy}
             loading={consent.declining}
           />
-          <Button
+          <DetailButton
             label="Quay lại xác nhận"
             variant="outline"
             onPress={() => {
@@ -89,23 +90,21 @@ export default function InlineContractConsent({ contract, countdown, onDone, onS
             disabled={consent.busy}
           />
         </View>
-      </View>
+      </DetailCard>
     );
   }
 
   return (
-    <View style={styles.section}>
-      <Text style={styles.eyebrow}>XÁC NHẬN HỢP ĐỒNG</Text>
-      <Text style={styles.title}>Bạn đã xem bản PDF hiện hành</Text>
+    <DetailCard title="Bạn đã xem bản PDF hiện hành" icon="fileText">
       <Text style={styles.description}>
         Chỉ xác nhận khi bạn đồng ý với toàn bộ điều khoản và lịch trả nợ trong tài liệu vừa mở.
       </Text>
 
-      <InfoNote tone={countdown.urgent ? 'warn' : 'info'}>
+      <DetailNote tone={countdown.urgent ? 'warn' : 'info'}>
         {`Hạn xác nhận ${countdown.label || 'sắp kết thúc'}. Quá hạn thì hợp đồng này không ký được nữa.`}
-      </InfoNote>
+      </DetailNote>
 
-      <Card style={styles.consentCard}>
+      <View style={styles.consentBox}>
         <Checkbox
           checked={accepted}
           onChange={setAccepted}
@@ -116,12 +115,12 @@ export default function InlineContractConsent({ contract, countdown, onDone, onS
             đang được FINORA cung cấp.
           </Text>
         </Checkbox>
-      </Card>
+      </View>
 
-      {consent.error ? <InfoNote tone="warn">{consent.error.message}</InfoNote> : null}
+      {consent.error ? <DetailNote tone="warn">{consent.error.message}</DetailNote> : null}
 
       <View style={styles.actions}>
-        <Button
+        <DetailButton
           label={contract.availableSignatureMethod === 'VNPT_SMART_CA'
             ? 'Gửi yêu cầu VNPT SmartCA'
             : 'Ký xác nhận hợp đồng'}
@@ -129,7 +128,7 @@ export default function InlineContractConsent({ contract, countdown, onDone, onS
           disabled={!accepted || consent.busy}
           loading={consent.signing}
         />
-        <Button
+        <DetailButton
           label="Từ chối hợp đồng"
           variant="outline"
           onPress={() => {
@@ -161,7 +160,7 @@ export default function InlineContractConsent({ contract, countdown, onDone, onS
           ? 'Hợp đồng chỉ được ghi nhận đã ký sau khi VNPT SmartCA trả kết quả thành công.'
           : 'Đây là xác nhận điện tử dạng click-wrap trong FINORA, chưa phải chữ ký số VNPT SmartCA.'}
       </Text>
-    </View>
+    </DetailCard>
   );
 }
 
@@ -185,22 +184,13 @@ function Verification({
 }
 
 const styles = StyleSheet.create({
-  section: {
-    gap: Spacing.lg,
-    marginTop: Spacing.section,
-    paddingTop: Spacing.xl,
-    borderTopWidth: 1,
-    borderTopColor: Colors.line,
-  },
-  eyebrow: { ...Text_.captionBold, color: Colors.brand, letterSpacing: 0.6 },
-  title: { ...Text_.title, color: Colors.ink },
-  description: { ...Text_.micro, color: Colors.ink2 },
-  consentCard: { marginTop: Spacing.xs },
-  consentText: { ...Text_.micro, color: Colors.ink2 },
-  actions: { gap: Spacing.lg },
-  legal: { ...Text_.caption, color: Colors.ink3 },
+  description: { fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authMuted },
+  consentBox: { padding: Spacing.lg, borderRadius: 12, backgroundColor: Colors.authNoteBg },
+  consentText: { fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authLabel },
+  actions: { gap: Spacing.md },
+  legal: { fontFamily: FontFamily.regular, fontSize: 12, lineHeight: 17, color: Colors.authMuted },
   verification: { gap: Spacing.xxs, paddingVertical: Spacing.lg },
-  verificationLabel: { ...Text_.caption, color: Colors.ink3 },
-  verificationValue: { ...Text_.micro, color: Colors.ink, flexShrink: 1 },
+  verificationLabel: { fontFamily: FontFamily.regular, fontSize: 12, lineHeight: 17, color: Colors.authMuted },
+  verificationValue: { fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authInk, flexShrink: 1 },
   monospace: { fontFamily: 'monospace' },
 });

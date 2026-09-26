@@ -11,8 +11,8 @@ import { getRepaymentPreview } from '../api';
  *   giải ngân dự kiến) — đúng params của route `Schedule`.
  * - Output: `{ data, loading, error, reload }` của `useAsync`; `reload` gửi lại
  *   đúng request cũ, lựa chọn ở bước 1 không đổi.
- * - Gọi lại mỗi khi một trong bốn giá trị đổi; bỏ kết quả của request cũ nếu màn
- *   đã rời đi (việc này `useAsync` lo).
+ * - Gọi lại mỗi khi một trong bốn giá trị đổi; request cũ bị huỷ qua `signal`
+ *   khi màn rời đi hoặc tham số đổi (việc này `useAsync` lo).
  * - Frontend không tự tính hay làm tròn lại số nào: preview là số của core lending.
  */
 export function useRepaymentPreview(
@@ -21,7 +21,8 @@ export function useRepaymentPreview(
 ): AsyncState<RepaymentPreview> {
   const { amount, termMonths, expectedDisbursementDate } = request;
   return useAsync(
-    () => getRepaymentPreview(productId, { amount, termMonths, expectedDisbursementDate }),
+    signal =>
+      getRepaymentPreview(productId, { amount, termMonths, expectedDisbursementDate }, signal),
     [productId, amount, termMonths, expectedDisbursementDate],
   );
 }
