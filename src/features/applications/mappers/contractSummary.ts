@@ -47,6 +47,14 @@ export function contractFact(
       : null;
 
   switch (contract.status) {
+    case "PENDING_LENDER_SIGNATURES":
+      return {
+        label: "Chuỗi ký",
+        value: "Chờ nhà đầu tư",
+        icon: "users",
+        urgent: false,
+      };
+    case "PENDING_BORROWER_SIGNATURE":
     case "PENDING_SIGNATURE":
       return countdown.expired
         ? {

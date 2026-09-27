@@ -9,7 +9,7 @@ export const useMyApplications = () => {
       item.termsConfirmation == null
       || item.termsConfirmation.status === 'AUTO_AUTHORIZED'
       || item.termsConfirmation.status === 'ACCEPTED'
-    )) ?? false;
+    ) && (item.funding == null || item.funding.status === 'FULLY_FUNDED')) ?? false;
   const contracts = useListMyContractsQuery(
     { page: 0, size: 100 },
     { skip: !hasContractEligibleApplication },

@@ -15,17 +15,9 @@ type Props = {
   sharing: boolean;
 };
 
-/** iOS hiển thị PDF cache bằng WKWebView; Android có nút mở ứng dụng hệ thống nếu WebView không hỗ trợ PDF. */
-export default function ContractPdfViewer({
-  visible,
-  uri,
-  title,
-  onClose,
-  onShare,
-  sharing,
-}: Props) {
+/** iOS hiển thị PDF cache bằng WKWebView; Android có nút mở ứng dụng hệ thống khi cần. */
+export default function PdfViewer({ visible, uri, title, onClose, onShare, sharing }: Props) {
   const [loadError, setLoadError] = useState(false);
-
   return (
     <Modal
       visible={visible}
@@ -41,7 +33,6 @@ export default function ContractPdfViewer({
             <Text style={styles.closeText}>Đóng</Text>
           </Pressable>
         </View>
-
         {uri && !loadError ? (
           <WebView
             source={{ uri }}
@@ -93,14 +84,8 @@ const styles = StyleSheet.create({
   closeText: { ...Text_.microBold, color: Colors.brand },
   viewer: { flex: 1, backgroundColor: Colors.surfaceMuted },
   loading: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.lg,
+    position: 'absolute', top: 0, right: 0, bottom: 0, left: 0,
+    alignItems: 'center', justifyContent: 'center', gap: Spacing.lg,
   },
   loadingText: { ...Text_.micro, color: Colors.ink2 },
   fallback: { flex: 1, justifyContent: 'center', gap: Spacing.xl, padding: Spacing.xxl },

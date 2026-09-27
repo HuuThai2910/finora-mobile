@@ -60,7 +60,8 @@ export default function ContractSummaryCard({ contract, countdown }: Props) {
 
       {fact?.urgent ? (
         <DetailNote tone="warn">
-          {contract.status === 'PENDING_SIGNATURE' && !countdown.expired
+          {(contract.status === 'PENDING_SIGNATURE'
+            || contract.status === 'PENDING_BORROWER_SIGNATURE') && !countdown.expired
             ? `Hạn xác nhận ${fact.value}. Quá hạn thì hợp đồng này không ký được nữa.`
             : 'Hợp đồng đã quá hạn xác nhận nên không còn ký được.'}
         </DetailNote>

@@ -1,5 +1,9 @@
 import type { LoanContractStatus } from '@/types/contract';
-import type { LoanApplicationStatus, TermsConfirmationStatus } from '@/types/loan';
+import type {
+  LoanApplicationStatus,
+  LoanFundingStatus,
+  TermsConfirmationStatus,
+} from '@/types/loan';
 import { APPLICATION_STAGES, type ApplicationStage } from '../constant';
 
 /** Bộ lọc đang chọn ở màn "Hồ sơ vay": một nhóm, hoặc tất cả hồ sơ. */
@@ -21,6 +25,8 @@ const APPLICATION_STAGE: Record<LoanApplicationStatus, ApplicationStage> = {
 };
 
 const CONTRACT_STAGE: Record<LoanContractStatus, ApplicationStage> = {
+  PENDING_LENDER_SIGNATURES: 'reviewing',
+  PENDING_BORROWER_SIGNATURE: 'action',
   PENDING_SIGNATURE: 'action',
   // Yêu cầu ký đã sang VNPT SmartCA nhưng người vay vẫn phải xác nhận trên ứng dụng đó.
   SIGNING: 'action',
@@ -42,12 +48,17 @@ export function applicationStage(
   applicationStatus: LoanApplicationStatus,
   contractStatus?: LoanContractStatus,
   termsStatus?: TermsConfirmationStatus,
+  fundingStatus?: LoanFundingStatus,
 ): ApplicationStage {
   if (applicationStatus === 'APPROVED' && contractStatus) {
     return CONTRACT_STAGE[contractStatus] ?? 'other';
   }
   if (applicationStatus === 'APPROVED' && (termsStatus === 'DECLINED' || termsStatus === 'EXPIRED')) {
     return 'stopped';
+  }
+  if (applicationStatus === 'APPROVED'
+      && (fundingStatus === 'REQUESTED' || fundingStatus === 'FULLY_FUNDED')) {
+    return 'reviewing';
   }
   return APPLICATION_STAGE[applicationStatus] ?? 'other';
 }

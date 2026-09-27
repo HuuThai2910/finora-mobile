@@ -26,6 +26,8 @@ export interface MarketListingDto {
   noteDenomination: string;
   minInvestmentAmount: string;
   status: string;
+  contractNumber: string | null;
+  contractStatus: string | null;
   fundingClosesAt: string;
 }
 
@@ -68,15 +70,15 @@ const estimateReturns = (principal: number, annualRate: number, termMonths: numb
 
 export function toMarketLoan(dto: MarketListingDto): MarketLoan {
   const amount = toNumber(dto.targetAmount);
-  // Backend lưu lãi suất dạng tỷ lệ (0.1500); giao diện hiển thị theo phần trăm.
+  // Contract liên service dùng điểm phần trăm: 15.0000 nghĩa là 15%/năm.
   const rate = toNumber(dto.annualInterestRate);
   const { estimatedMonthlyReturn, estimatedTotalReturn } =
-    estimateReturns(amount, rate, dto.termMonths);
+    estimateReturns(amount, rate / 100, dto.termMonths);
 
   return {
     id: String(dto.listingId),
     amount,
-    annualRate: Number((rate * 100).toFixed(2)),
+    annualRate: Number(rate.toFixed(2)),
     termMonths: dto.termMonths,
     purpose: dto.purpose,
     region: dto.region,
@@ -90,5 +92,7 @@ export function toMarketLoan(dto: MarketListingDto): MarketLoan {
     )} đ`,
     estimatedMonthlyReturn,
     estimatedTotalReturn,
+    contractNumber: dto.contractNumber,
+    contractStatus: dto.contractStatus,
   };
 }

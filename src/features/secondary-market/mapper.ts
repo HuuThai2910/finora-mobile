@@ -77,8 +77,8 @@ export function toNoteListing(dto: NoteListingDto): NoteListing {
     outstandingPrincipal: toNumber(dto.outstandingPrincipal),
     defaulted: dto.defaulted,
     defaultedReason: dto.defaultedReason,
-    // Backend lưu lãi suất dạng tỷ lệ (0.1500); giao diện hiển thị theo phần trăm.
-    annualRate: Number((toNumber(dto.annualInterestRate) * 100).toFixed(2)),
+    // Cùng contract liên service với Market: 15.0000 nghĩa là 15%/năm.
+    annualRate: Number(toNumber(dto.annualInterestRate).toFixed(2)),
     termMonths: dto.termMonths,
     grade: toGrade(dto.creditGrade),
     estimatedFee: toNumber(dto.estimatedFee),

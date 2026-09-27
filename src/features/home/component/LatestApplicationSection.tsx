@@ -57,6 +57,7 @@ export default function LatestApplicationSection({
     application.status,
     contract?.status,
     application.termsConfirmation?.status,
+    application.funding?.status,
   );
   const amount = formatDong(application.requestedAmount);
 

@@ -15,6 +15,9 @@ export interface MarketLoan {
   /** Ước tính dòng tiền nhận về, đã tính sẵn ở phía phát hành. */
   estimatedMonthlyReturn: number;
   estimatedTotalReturn: number;
+  /** Chỉ có sau khi Loan đã phát hành hợp đồng chung cho allocation bị khóa. */
+  contractNumber?: string | null;
+  contractStatus?: string | null;
 }
 
 export type PositionStatus = 'ACTIVE' | 'WATCHLIST' | 'FUNDED' | 'CLOSED';
@@ -63,7 +66,16 @@ export interface InvestmentContract {
   amount: number;
   noteCount: number;
   termMonths: number;
-  status: 'PENDING_SIGNATURE' | 'SIGNED';
+  status: 'PENDING_SIGNATURE' | 'SIGNING' | 'SIGNED';
+  contractStatus: string;
+  version: number;
+  documentHash: string;
+  pdfDocumentHash: string;
+  remainingLenderSignatures: number;
+  availableSignatureProvider: 'MOCK' | 'VNPT_SMART_CA';
+  availableSignatureMethod: 'CLICK_WRAP_MVP' | 'VNPT_SMART_CA';
+  downloadPath: string;
+  expiresAt: string;
 }
 
 export type NoteListingStatus = 'OPEN' | 'SOLD' | 'CANCELLED';

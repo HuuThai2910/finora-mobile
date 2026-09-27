@@ -1,34 +1,53 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Colors } from '@/constants/colors';
 import { IconSize, Radius, Spacing, Text_ } from '@/theme';
 import { PHeader, PItem, Screen } from '@/components/phone';
-import { Button, Icon, InfoNote, SegmentGroup, Tag } from '@/components/ui';
-import { ErrorState, LoadingScreen } from '@/components/feedback';
+import { Button, Icon, InfoNote, Tag } from '@/components/ui';
+import { ErrorState, LoadingScreen, PdfViewer } from '@/components/feedback';
 import { formatDong } from '@/utils/format';
-import { toUserMessage } from '@/lib/api';
-import type { SignatureMethod } from '@/types/invest';
-import { SIGNATURE_METHODS, TRANSFER_LEGAL_NOTE } from '../constant';
+import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
+import { TRANSFER_LEGAL_NOTE } from '../constant';
 import { useInvestmentContract } from '../hook/useInvestment';
+import { useInvestorSmartCa } from '../hook/useInvestorSmartCa';
 import { signContract } from '../api';
+import { useAuthenticatedPdf } from '@/hooks/useAuthenticatedPdf';
 
 /** Màn 29 — chi tiết hợp đồng đầu tư và ký số VNPT SmartCA. */
 export default function InvestContractScreen() {
   const nav = useNavigation();
   const { data, loading, error, reload } = useInvestmentContract();
-  const [method, setMethod] = useState<SignatureMethod>('APP_CONFIRM');
   const [submitting, setSubmitting] = useState(false);
   const [signError, setSignError] = useState<string | null>(null);
+  const [openedPdfHash, setOpenedPdfHash] = useState<string | null>(null);
+  // Retry cùng một thao tác ký phải giữ nguyên key; chỉ tạo key mới sau khi ký thành công.
+  const signKey = useRef(generateIdempotencyKey());
+  const pdf = useAuthenticatedPdf({
+    cacheKey: `${data?.reference ?? 'investment'}-${data?.pdfDocumentHash ?? 'pending'}`,
+    fileName: data?.reference ?? 'investment-contract',
+    downloadPath: data?.downloadPath ?? '/investor/loan-contracts/unavailable/document',
+  });
+  const smartCa = useInvestorSmartCa(data, reload);
 
   const onSign = async () => {
     setSubmitting(true);
     setSignError(null);
     try {
-      await signContract();
-      Alert.alert('Đã ký số', 'Hợp đồng được ghi lên sổ cái sau khi đủ chữ ký.', [
-        { text: 'Xong', onPress: () => nav.goBack() },
-      ]);
+      if (!data) return;
+      const result = await signContract(data, signKey.current);
+      signKey.current = generateIdempotencyKey();
+      reload();
+      if (result.status === 'SIGNING') {
+        Alert.alert(
+          'Đã gửi yêu cầu SmartCA',
+          'Hãy mở ứng dụng VNPT SmartCA, xác nhận giao dịch rồi quay lại FINORA.',
+        );
+      } else {
+        Alert.alert('Đã xác nhận', 'Chữ ký của bạn đã được ghi nhận trên đúng PDF hợp đồng.', [
+          { text: 'Xong', onPress: () => nav.goBack() },
+        ]);
+      }
     } catch (e) {
       setSignError(toUserMessage(e));
     } finally {
@@ -40,13 +59,27 @@ export default function InvestContractScreen() {
   if (error) return <Screen><ErrorState message={error} onRetry={reload} /></Screen>;
   if (!data) return null;
 
+  const providerIsMock = data.availableSignatureProvider === 'MOCK';
+  const signingWithSmartCa = data.status === 'SIGNING';
+  const openedCurrentPdf = openedPdfHash === data.pdfDocumentHash;
+  const signatureWindowOpen = data.contractStatus === 'PENDING_LENDER_SIGNATURES'
+    && new Date(data.expiresAt).getTime() > Date.now();
+
+  const openPdf = async () => {
+    if (await pdf.openPdf()) setOpenedPdfHash(data.pdfDocumentHash);
+  };
+
   return (
     <Screen>
       <PHeader title="Chi tiết hợp đồng đầu tư" back />
 
       <View style={styles.summary}>
         <View style={styles.summaryHead}>
-          <Tag tone="amber" small>Chờ ký số</Tag>
+          <Tag tone={data.status === 'SIGNED' ? 'green' : 'amber'} small>
+            {data.status === 'SIGNED'
+              ? 'Đã ký'
+              : signingWithSmartCa ? 'Đang xác nhận SmartCA' : 'Chờ ký'}
+          </Tag>
           <Text style={styles.reference}>{data.reference}</Text>
         </View>
         <Text style={styles.purpose}>
@@ -56,38 +89,50 @@ export default function InvestContractScreen() {
 
       <PItem label="Vốn đầu tư" value={formatDong(data.amount)} />
       <PItem label="Số notes" value={String(data.noteCount)} />
-      <PItem label="Kỳ hạn" value={`${data.termMonths} tháng`} last />
+      <PItem label="Kỳ hạn" value={`${data.termMonths} tháng`} />
+      <PItem label="Chữ ký nhà đầu tư còn thiếu" value={String(data.remainingLenderSignatures)} last />
 
       <InfoNote tone="warn" style={styles.legal}>
         {TRANSFER_LEGAL_NOTE}
       </InfoNote>
 
       <View style={styles.sign}>
+        <Text style={styles.signTitle}>PDF hợp đồng chung</Text>
+        <Text style={styles.appHint}>
+          Tất cả nhà đầu tư và người vay ký cùng một PDF/hash. Bạn cần đọc bản hiện hành trước khi xác nhận.
+        </Text>
+        <Button
+          label="Mở nội dung hợp đồng PDF"
+          icon="file"
+          onPress={openPdf}
+          loading={pdf.opening}
+          disabled={pdf.opening}
+          style={styles.action}
+        />
+      </View>
+
+      <View style={styles.sign}>
         <Text style={styles.signTitle} accessibilityRole="header">
-          Ký số VNPT SmartCA
+          {providerIsMock ? 'Xác nhận thử nghiệm' : 'Ký số VNPT SmartCA'}
         </Text>
 
-        <SegmentGroup
-          label="Phương thức ký số"
-          options={SIGNATURE_METHODS}
-          value={method}
-          onChange={setMethod}
-          style={styles.methods}
-        />
-
-        {method === 'APP_CONFIRM' ? (
+        {!providerIsMock ? (
           <View style={styles.appConfirm}>
             <View style={styles.appIcon}>
               <Icon name="phone" size={IconSize.xl} color={Colors.brand} />
             </View>
-            <Text style={styles.appText}>Xác nhận trên App SmartCA</Text>
+            <Text style={styles.appText}>
+              {signingWithSmartCa ? 'Đang chờ xác nhận trên SmartCA' : 'Xác nhận bằng VNPT SmartCA'}
+            </Text>
             <Text style={styles.appHint}>
-              Mở ứng dụng VNPT SmartCA trên điện thoại để duyệt yêu cầu ký.
+              {signingWithSmartCa
+                ? 'Mở ứng dụng VNPT SmartCA, xác nhận giao dịch rồi quay lại FINORA để kiểm tra kết quả.'
+                : 'FINORA sẽ gửi giao dịch tới tài khoản SmartCA test đang được cấu hình.'}
             </Text>
           </View>
         ) : (
           <Text style={styles.appHint}>
-            Nhập mật khẩu chứng thư số và mã OTP gửi tới số điện thoại đã đăng ký.
+            Provider MOCK chỉ phục vụ phát triển và không thay thế chữ ký số hợp pháp.
           </Text>
         )}
 
@@ -97,14 +142,43 @@ export default function InvestContractScreen() {
           </Text>
         ) : null}
 
-        <Button
-          label="Ký hợp đồng"
-          icon="pen"
-          onPress={onSign}
-          loading={submitting}
-          style={styles.action}
-        />
+        {smartCa.error ? (
+          <Text style={styles.error} accessibilityLiveRegion="polite">
+            {smartCa.error}
+          </Text>
+        ) : null}
+
+        {signingWithSmartCa ? (
+          <Button
+            label="Tôi đã xác nhận, kiểm tra kết quả"
+            icon="check"
+            onPress={smartCa.check}
+            loading={smartCa.checking}
+            disabled={smartCa.checking}
+            style={styles.action}
+          />
+        ) : (
+          <Button
+            label={providerIsMock ? 'Xác nhận hợp đồng (mock)' : 'Gửi yêu cầu ký SmartCA'}
+            icon="pen"
+            onPress={onSign}
+            loading={submitting}
+            disabled={submitting || data.status === 'SIGNED'
+              || !signatureWindowOpen || !openedCurrentPdf}
+            style={styles.action}
+          />
+        )}
       </View>
+
+      {pdf.error ? <InfoNote tone="warn" style={styles.legal}>{pdf.error}</InfoNote> : null}
+      <PdfViewer
+        visible={pdf.previewUri !== null}
+        uri={pdf.previewUri}
+        title={`Hợp đồng ${data.reference}`}
+        onClose={pdf.closePreview}
+        onShare={pdf.sharePdf}
+        sharing={pdf.sharing}
+      />
     </Screen>
   );
 }
@@ -131,7 +205,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
   },
   signTitle: { ...Text_.title, color: Colors.ink },
-  methods: { marginVertical: Spacing.xl },
   appConfirm: { alignItems: 'center', gap: Spacing.md, marginBottom: Spacing.lg },
   appIcon: {
     width: 78,

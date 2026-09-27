@@ -17,7 +17,13 @@ export type ContractCardView = {
 };
 
 /** Trạng thái mà hạn xác nhận còn là thông tin người vay cần biết. */
-const DEADLINE_STATUSES: readonly LoanContractStatus[] = ['PENDING_SIGNATURE', 'SIGNING', 'EXPIRED'];
+const DEADLINE_STATUSES: readonly LoanContractStatus[] = [
+  'PENDING_LENDER_SIGNATURES',
+  'PENDING_BORROWER_SIGNATURE',
+  'PENDING_SIGNATURE',
+  'SIGNING',
+  'EXPIRED',
+];
 
 /**
  * Mockup ghi "Hạn xác nhận" cho mọi thẻ, nhưng với hợp đồng đã ký, đang hiệu lực

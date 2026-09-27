@@ -7,7 +7,7 @@ import ApplicationDetailSkeleton from '../components/ApplicationDetailSkeleton';
 import ApplicationTimelineCard from '../components/ApplicationTimelineCard';
 import ContractDetailScaffold from '../components/ContractDetailScaffold';
 import ContractDocumentCard from '../components/ContractDocumentCard';
-import ContractPdfViewer from '../components/ContractPdfViewer';
+import { PdfViewer } from '@/components/feedback';
 import ContractPricingCard from '../components/ContractPricingCard';
 import ContractSmartCaCard from '../components/ContractSmartCaCard';
 import ContractSummaryCard from '../components/ContractSummaryCard';
@@ -143,7 +143,7 @@ function ContractDetailBody({
         failed={timelineFailed}
       />
 
-      <ContractPdfViewer
+      <PdfViewer
         visible={pdf.previewUri !== null}
         uri={pdf.previewUri}
         title={`Hợp đồng ${contract.contractNumber}`}

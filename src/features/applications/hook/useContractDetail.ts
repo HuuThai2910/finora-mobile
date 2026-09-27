@@ -57,7 +57,8 @@ export function useContractDetail(contractNumber: string): ContractDetailState {
     if (contract?.applicationNumber) applicationQuery.refetch();
   };
 
-  const waitingSignature = contract?.status === 'PENDING_SIGNATURE';
+  const waitingSignature = contract?.status === 'PENDING_SIGNATURE'
+    || contract?.status === 'PENDING_BORROWER_SIGNATURE';
 
   const view: ContractDetailView | null = contract
     ? {

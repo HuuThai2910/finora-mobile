@@ -43,6 +43,7 @@ export function toApplicationCardView(
     application.status,
     contract?.status,
     application.termsConfirmation?.status,
+    application.funding?.status,
   );
   // Lãi suất chính thức chỉ có sau khi duyệt (định giá theo rủi ro); trước đó chỉ
   // có lãi suất công bố của sản phẩm tại lúc nộp. Hồ sơ duyệt từ trước khi có

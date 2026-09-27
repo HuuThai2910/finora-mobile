@@ -164,12 +164,25 @@ export interface LoanApplication {
   withdrawnAt: string | null;
   withdrawalReason: string | null;
   termsConfirmation: TermsConfirmation | null;
+  funding: LoanFunding | null;
   latestCreditAssessmentId: number | null;
   version: number;
   createdBy: string;
   updatedBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export type LoanFundingStatus = 'REQUESTED' | 'FULLY_FUNDED';
+
+export interface LoanFunding {
+  status: LoanFundingStatus;
+  fundingRound: number;
+  listingVersion: number;
+  requestedAt: string;
+  investmentListingId: number | null;
+  fundedAmount: number | null;
+  fullyFundedAt: string | null;
 }
 
 export interface ConfirmLoanTermsRequest {

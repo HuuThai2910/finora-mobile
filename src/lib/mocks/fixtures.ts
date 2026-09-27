@@ -276,6 +276,15 @@ export const INVESTMENT_CONTRACT: InvestmentContract = {
   noteCount: 20,
   termMonths: 9,
   status: 'PENDING_SIGNATURE',
+  contractStatus: 'PENDING_LENDER_SIGNATURES',
+  version: 0,
+  documentHash: 'a'.repeat(64),
+  pdfDocumentHash: 'b'.repeat(64),
+  remainingLenderSignatures: 2,
+  availableSignatureProvider: 'MOCK',
+  availableSignatureMethod: 'CLICK_WRAP_MVP',
+  downloadPath: '/investor/loan-contracts/INV_1036EB_1779470224528/document',
+  expiresAt: '2026-10-03T00:00:00Z',
 };
 
 /* ---------------- Hồ sơ vay của tôi ---------------- */

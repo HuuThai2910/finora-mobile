@@ -106,13 +106,16 @@ export function contractActionOf(
   const terms = application.termsConfirmation?.status;
   const contractStage =
     application.status === 'APPROVED' &&
-    (terms == null || terms === 'AUTO_AUTHORIZED' || terms === 'ACCEPTED');
+    (terms == null || terms === 'AUTO_AUTHORIZED' || terms === 'ACCEPTED') &&
+    (application.funding == null || application.funding.status === 'FULLY_FUNDED');
   if (!contractStage) return null;
 
-  if (!contract) return { label: 'Xem hợp đồng', contractNumber: null, urgent: true };
+  if (!contract) return null;
   return {
     label: contractActionLabel(contract.status),
     contractNumber: contract.contractNumber,
-    urgent: contract.status === 'PENDING_SIGNATURE' || contract.status === 'SIGNING',
+    urgent: contract.status === 'PENDING_BORROWER_SIGNATURE'
+      || contract.status === 'PENDING_SIGNATURE'
+      || contract.status === 'SIGNING',
   };
 }

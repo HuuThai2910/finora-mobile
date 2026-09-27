@@ -13,7 +13,7 @@ type Props = {
 };
 
 /** Trình xem web dùng blob URL đã tải có xác thực, không đưa bearer token vào iframe. */
-export default function ContractPdfViewer({ visible, uri, title, onClose }: Props) {
+export default function PdfViewer({ visible, uri, title, onClose }: Props) {
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.root}>

@@ -36,6 +36,7 @@ export function useApplicationFilter(
         application.status,
         contract?.status,
         application.termsConfirmation?.status,
+        application.funding?.status,
       ),
     };
   });

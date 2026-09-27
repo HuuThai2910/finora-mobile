@@ -85,6 +85,9 @@ export function useApplicationDetail(applicationNumber: string): ApplicationDeta
   const termsStatus = applicationQuery.data?.termsConfirmation?.status;
   const contractExpected = approved && (
     termsStatus == null || termsStatus === 'AUTO_AUTHORIZED' || termsStatus === 'ACCEPTED'
+  ) && (
+    applicationQuery.data?.funding == null
+    || applicationQuery.data.funding.status === 'FULLY_FUNDED'
   );
   const contractsQuery = useListMyContractsQuery(
     { page: 0, size: CONTRACT_LOOKUP_SIZE },
@@ -109,7 +112,10 @@ export function useApplicationDetail(applicationNumber: string): ApplicationDeta
     item => item.applicationNumber === applicationNumber,
   );
   const contract =
-    (relatedContracts.find(item => item.status === 'PENDING_SIGNATURE') ?? relatedContracts[0])
+    (relatedContracts.find(item => item.status === 'PENDING_BORROWER_SIGNATURE')
+      ?? relatedContracts.find(item => item.status === 'PENDING_LENDER_SIGNATURES')
+      ?? relatedContracts.find(item => item.status === 'PENDING_SIGNATURE')
+      ?? relatedContracts[0])
       ?? null;
 
   const view: ApplicationDetailView | null = application && displayedSchedule
@@ -120,6 +126,7 @@ export function useApplicationDetail(applicationNumber: string): ApplicationDeta
           application.status,
           contract?.status,
           application.termsConfirmation?.status,
+          application.funding?.status,
         ),
         keyTerms: buildKeyTerms(application, showFinalTerms),
         decision: decisionDateOf(application, historyQuery.data?.data ?? []),

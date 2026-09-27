@@ -1,4 +1,4 @@
-import type { PortfolioPosition, PortfolioSummary } from '@/types/invest';
+import type { InvestmentContract, PortfolioPosition, PortfolioSummary } from '@/types/invest';
 
 /**
  * Chuyển danh mục đầu tư từ contract của Investment Service sang model màn hình.
@@ -32,6 +32,23 @@ export interface PortfolioDto {
   positions: PortfolioPositionDto[];
 }
 
+/** Contract Loan trả cho đúng investor đang đăng nhập; không chứa PII của các bên khác. */
+export interface InvestorContractDto {
+  contractNumber: string;
+  contractStatus: string;
+  partyStatus: 'PENDING_SIGNATURE' | 'SIGNING' | 'SIGNED' | 'DECLINED' | 'EXPIRED';
+  contractVersion: number;
+  documentHash: string;
+  pdfDocumentHash: string;
+  investorAmount: number;
+  termMonths: number;
+  allocationCount: number;
+  remainingLenderSignatures: number;
+  availableSignatureProvider: 'MOCK' | 'VNPT_SMART_CA';
+  availableSignatureMethod: 'CLICK_WRAP_MVP' | 'VNPT_SMART_CA';
+  expiresAt: string;
+}
+
 const toNumber = (value: string): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -57,12 +74,34 @@ export function toPortfolioSummary(dto: PortfolioDto): PortfolioSummary {
     // Vốn đang nằm trong các Note còn dư nợ; phần chờ giải ngân hiển thị riêng ở ghi chú.
     investedAmount: toNumber(dto.investedAmount),
     // Lãi suất bình quân theo trọng số dư nợ do backend tính; frontend không tự tính lại.
-    irrPercent: Number((dto.weightedAverageRate * 100).toFixed(2)),
+    irrPercent: Number(dto.weightedAverageRate.toFixed(2)),
     // Tỷ lệ nợ xấu do Loan Service sở hữu, Investment chưa có dữ liệu này.
     // Trả null để màn hình hiện dấu gạch thay vì "0%" — 0% là một khẳng định sai
     // về chất lượng danh mục, còn dấu gạch nói đúng rằng chưa có số liệu.
     nplPercent: null,
     positionCount: dto.positionCount,
     positions: dto.positions.map(toPosition),
+  };
+}
+
+export function toInvestmentContract(dto: InvestorContractDto): InvestmentContract {
+  return {
+    reference: dto.contractNumber,
+    purpose: 'Hợp đồng cho vay nhiều bên',
+    amount: Number(dto.investorAmount),
+    noteCount: dto.allocationCount,
+    termMonths: dto.termMonths,
+    status: dto.partyStatus === 'SIGNED'
+      ? 'SIGNED'
+      : dto.partyStatus === 'SIGNING' ? 'SIGNING' : 'PENDING_SIGNATURE',
+    contractStatus: dto.contractStatus,
+    version: dto.contractVersion,
+    documentHash: dto.documentHash,
+    pdfDocumentHash: dto.pdfDocumentHash,
+    remainingLenderSignatures: dto.remainingLenderSignatures,
+    availableSignatureProvider: dto.availableSignatureProvider,
+    availableSignatureMethod: dto.availableSignatureMethod,
+    downloadPath: `/investor/loan-contracts/${dto.contractNumber}/document`,
+    expiresAt: dto.expiresAt,
   };
 }

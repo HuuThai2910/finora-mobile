@@ -7,6 +7,7 @@ import { WaveBackdrop } from '@/components/phone';
 import { WALLET_HISTORY_WAVES } from '@/constants/backgrounds';
 import { Colors } from '@/constants/colors';
 import type { WalletStackParamList } from '@/navigation/types';
+import { useAuth } from '@/providers/AuthProvider';
 import { FontFamily, Spacing } from '@/theme';
 import { WALLET_HISTORY_MAX_WIDTH, WALLET_HISTORY_PADDING } from '../constant';
 import { useBalance, useTransactions } from '../hook/useWallet';
@@ -17,6 +18,7 @@ import WalletHistorySkeleton from './WalletHistorySkeleton';
 import WalletHistoryStatus from './WalletHistoryStatus';
 import WalletReconcileNote from './WalletReconcileNote';
 import WalletTxCard from './WalletTxCard';
+import InvestorWalletActions from './InvestorWalletActions';
 
 type Nav = NativeStackNavigationProp<WalletStackParamList, 'WalletHistory'>;
 
@@ -30,6 +32,7 @@ const BOTTOM_SPACE = 40;
  */
 export default function WalletHistoryScreen() {
   const nav = useNavigation<Nav>();
+  const { session } = useAuth();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const width = Math.min(windowWidth, WALLET_HISTORY_MAX_WIDTH);
@@ -103,6 +106,12 @@ export default function WalletHistoryScreen() {
             error={balance.error}
             onRetry={balance.reload}
           />
+          {session?.profile.role === 'INVESTOR' ? (
+            <InvestorWalletActions
+              onOpenPortfolio={() => nav.navigate('Portfolio')}
+              onOpenPendingContract={() => nav.navigate('InvestContract')}
+            />
+          ) : null}
           <View style={styles.list}>{renderBody()}</View>
         </View>
       </View>

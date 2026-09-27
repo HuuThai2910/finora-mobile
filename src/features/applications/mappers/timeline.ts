@@ -8,7 +8,7 @@ import { applicationStatusMeta, contractStatusMeta } from './statusMeta';
 type Entry = {
   id: number;
   title: string;
-  actor: 'BORROWER' | 'ADMIN' | 'SYSTEM';
+  actor: 'BORROWER' | 'INVESTOR' | 'ADMIN' | 'SYSTEM';
   at: string;
 };
 

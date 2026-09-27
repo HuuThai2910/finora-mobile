@@ -36,13 +36,29 @@ export default function PortfolioScreen() {
       {loading && !data ? (
         <LoadingScreen cards={2} />
       ) : error ? (
-        <ErrorState message={error} onRetry={reload} />
+        <>
+          <ErrorState message={error} onRetry={reload} />
+          <PItem
+            label="Kiểm tra hợp đồng đầu tư chờ ký"
+            icon="file"
+            onPress={() => nav.navigate('InvestContract')}
+            last
+          />
+        </>
       ) : !data ? null : data.positions.length === 0 ? (
-        <EmptyState
-          icon="chart"
-          title="Chưa có khoản đầu tư"
-          hint="Chọn một khoản vay trên sàn để bắt đầu."
-        />
+        <>
+          <EmptyState
+            icon="chart"
+            title="Chưa có khoản đầu tư"
+            hint="Chọn một khoản vay trên sàn để bắt đầu."
+          />
+          <PItem
+            label="Hợp đồng đầu tư chờ ký"
+            icon="file"
+            onPress={() => nav.navigate('InvestContract')}
+            last
+          />
+        </>
       ) : (
         <>
           <BalanceCard
@@ -93,6 +109,11 @@ export default function PortfolioScreen() {
             ))}
           </View>
 
+          <PItem
+            label="Hợp đồng đầu tư chờ ký"
+            icon="file"
+            onPress={() => nav.navigate('InvestContract')}
+          />
           <PItem
             label="Cấu hình Auto-Invest"
             icon="zap"

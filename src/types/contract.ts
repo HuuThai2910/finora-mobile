@@ -16,7 +16,16 @@ export interface LoanContract {
   documentHash: string;
 }
 
-export type LoanContractStatus = 'PENDING_SIGNATURE' | 'SIGNING' | 'SIGNED' | 'DECLINED' | 'EXPIRED' | 'EFFECTIVE' | 'COMPLETED';
+export type LoanContractStatus =
+  | 'PENDING_LENDER_SIGNATURES'
+  | 'PENDING_BORROWER_SIGNATURE'
+  | 'PENDING_SIGNATURE'
+  | 'SIGNING'
+  | 'SIGNED'
+  | 'DECLINED'
+  | 'EXPIRED'
+  | 'EFFECTIVE'
+  | 'COMPLETED';
 
 export interface LoanContractPdfDocument {
   artifactType: 'SIGNABLE' | 'SIGNED_RECEIPT';
@@ -79,7 +88,7 @@ export interface LoanContractHistory {
   fromStatus: LoanContractStatus | null;
   toStatus: LoanContractStatus;
   reasonCode: string | null;
-  actorType: 'BORROWER' | 'ADMIN' | 'SYSTEM';
+  actorType: 'BORROWER' | 'INVESTOR' | 'ADMIN' | 'SYSTEM';
   actorId: string;
   occurredAt: string;
 }

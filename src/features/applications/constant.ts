@@ -58,8 +58,8 @@ export const APPLICATION_STATUS: Record<LoanApplicationStatus, StatusMeta> = {
     tone: 'green',
     label: 'Đã duyệt',
     icon: 'check',
-    meaning: 'Hồ sơ được duyệt. Hợp đồng vay đã sẵn sàng để bạn đọc và ký.',
-    next: 'Bạn đọc và ký hợp đồng vay',
+    meaning: 'Điều khoản cuối đã được duyệt; hồ sơ sẽ được đưa lên sàn sau khi bạn cho phép.',
+    next: 'Gọi đủ vốn và chờ nhà đầu tư ký trước lượt ký của bạn',
   },
   REJECTED: {
     tone: 'red',
@@ -78,6 +78,20 @@ export const APPLICATION_STATUS: Record<LoanApplicationStatus, StatusMeta> = {
 };
 
 export const CONTRACT_STATUS: Record<LoanContractStatus, StatusMeta> = {
+  PENDING_LENDER_SIGNATURES: {
+    tone: 'amber',
+    label: 'Chờ nhà đầu tư ký',
+    icon: 'users',
+    meaning: 'Khoản vay đã gọi đủ vốn và các nhà đầu tư đang ký cùng một bản hợp đồng.',
+    next: 'Đủ chữ ký nhà đầu tư để mở lượt ký cho bạn',
+  },
+  PENDING_BORROWER_SIGNATURE: {
+    tone: 'amber',
+    label: 'Chờ bạn ký',
+    icon: 'pen',
+    meaning: 'Tất cả nhà đầu tư đã ký; hợp đồng đang chờ xác nhận của bạn.',
+    next: 'Bạn đọc PDF và ký xác nhận trước hạn',
+  },
   PENDING_SIGNATURE: {
     tone: 'amber',
     label: 'Chờ bạn ký',
@@ -117,7 +131,7 @@ export const CONTRACT_STATUS: Record<LoanContractStatus, StatusMeta> = {
     tone: 'green',
     label: 'Đang hiệu lực',
     icon: 'shield',
-    meaning: 'Hợp đồng đã có hiệu lực giữa bạn và FINORA.',
+    meaning: 'Hợp đồng nhiều bên đã đủ chữ ký và có hiệu lực.',
     next: 'Giải ngân theo hợp đồng',
   },
   COMPLETED: {
@@ -185,8 +199,9 @@ export const DECLINE_REASONS: readonly { value: DeclineReasonCode; label: string
   { value: 'OTHER', label: 'Lý do khác' },
 ];
 
-export const ACTOR_LABELS: Record<'BORROWER' | 'ADMIN' | 'SYSTEM', string> = {
+export const ACTOR_LABELS: Record<'BORROWER' | 'INVESTOR' | 'ADMIN' | 'SYSTEM', string> = {
   BORROWER: 'Bạn',
+  INVESTOR: 'Nhà đầu tư',
   ADMIN: 'Chuyên viên FINORA',
   SYSTEM: 'Hệ thống',
 };
@@ -335,6 +350,8 @@ export const CONTRACT_LIST_ART = {
  * khép lại. Chip dùng đúng nhãn trạng thái trên thẻ (`CONTRACT_STATUS`).
  */
 export const CONTRACT_FILTER_ORDER: readonly LoanContractStatus[] = [
+  'PENDING_BORROWER_SIGNATURE',
+  'PENDING_LENDER_SIGNATURES',
   'PENDING_SIGNATURE',
   'SIGNING',
   'SIGNED',

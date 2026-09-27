@@ -1,5 +1,9 @@
 import type { LoanContractStatus } from '@/types/contract';
-import type { LoanApplicationStatus, TermsConfirmationStatus } from '@/types/loan';
+import type {
+  LoanApplicationStatus,
+  LoanFundingStatus,
+  TermsConfirmationStatus,
+} from '@/types/loan';
 import { APPLICATION_STATUS, CONTRACT_STATUS, type StatusMeta } from '../constant';
 
 /**
@@ -33,6 +37,7 @@ export function applicationJourneyStatus(
   applicationStatus: LoanApplicationStatus,
   contractStatus?: LoanContractStatus,
   termsStatus?: TermsConfirmationStatus,
+  fundingStatus?: LoanFundingStatus,
 ): StatusMeta {
   if (applicationStatus === 'APPROVED' && contractStatus) {
     return contractStatusMeta(contractStatus);
@@ -64,11 +69,33 @@ export function applicationJourneyStatus(
       next: null,
     };
   }
+  if (applicationStatus === 'APPROVED' && fundingStatus === 'REQUESTED') {
+    return {
+      tone: 'blue',
+      label: 'Đang gọi vốn',
+      icon: 'clock',
+      meaning: 'Hồ sơ đã được duyệt và đang chờ nhà đầu tư cấp đủ vốn.',
+      next: 'Chờ hoàn tất huy động vốn',
+    };
+  }
+  if (applicationStatus === 'APPROVED' && fundingStatus === 'FULLY_FUNDED' && !contractStatus) {
+    return {
+      tone: 'blue',
+      label: 'Đang lập hợp đồng',
+      icon: 'clock',
+      meaning: 'Khoản vay đã đủ vốn và FINORA đang lập hợp đồng chung cho các bên.',
+      next: 'Chờ các nhà đầu tư ký',
+    };
+  }
   return applicationStatusMeta(applicationStatus);
 }
 
 export function contractActionLabel(status: LoanContractStatus): string {
   switch (status) {
+    case 'PENDING_LENDER_SIGNATURES':
+      return 'Xem hợp đồng đang chờ nhà đầu tư';
+    case 'PENDING_BORROWER_SIGNATURE':
+      return 'Đọc và ký hợp đồng';
     case 'PENDING_SIGNATURE':
       return 'Đọc và ký hợp đồng';
     case 'SIGNING':
