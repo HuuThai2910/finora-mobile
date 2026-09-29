@@ -6,9 +6,8 @@ const GRID = 21;
 const CELL = 10;
 
 /**
- * Ô mã QR trong mockup được vẽ bằng `repeating-conic-gradient` chứ không phải
- * mã thật. Ở đây dựng lại bằng lưới ô đen trắng sinh từ chuỗi payload — giao
- * diện tĩnh, không quét được, đúng như phạm vi đã chốt.
+ * Hiển thị nhận diện trực quan cho payload trả về. Thanh toán thực tế đi qua
+ * checkoutUrl; không tuyên bố lưới minh hoạ này là QR có thể quét.
  */
 export default function QrPlaceholder({ payload }: { payload: string }) {
   const cells = buildPattern(payload);
@@ -17,7 +16,7 @@ export default function QrPlaceholder({ payload }: { payload: string }) {
     <View
       style={styles.frame}
       accessibilityRole="image"
-      accessibilityLabel="Mã VietQR minh hoạ — bản demo không quét được"
+      accessibilityLabel="Mã nhận diện giao dịch thanh toán"
     >
       <View style={styles.grid}>
         {cells.map((on, i) => (
@@ -25,7 +24,7 @@ export default function QrPlaceholder({ payload }: { payload: string }) {
         ))}
       </View>
       <View style={styles.badge}>
-        <Text style={styles.badgeText}>VietQR</Text>
+        <Text style={styles.badgeText}>FINORA</Text>
       </View>
     </View>
   );

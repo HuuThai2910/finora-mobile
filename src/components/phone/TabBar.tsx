@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { StackActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
 import { FontFamily, FontSize, IconSize, Spacing } from '@/theme';
@@ -30,8 +31,21 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
 
         const onPress = () => {
           const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-          if (!focused && !event.defaultPrevented) {
+          if (event.defaultPrevented) return;
+
+          if (!focused) {
             navigation.navigate(route.name);
+            return;
+          }
+
+          // Khi đang ở một màn con (ví dụ: Nạp tiền), bấm lại tab hiện tại phải
+          // đưa người dùng về màn gốc của tab thay vì giữ nguyên màn con.
+          const nestedNavigatorKey = route.state?.key;
+          if (nestedNavigatorKey) {
+            navigation.dispatch({
+              ...StackActions.popToTop(),
+              target: nestedNavigatorKey,
+            });
           }
         };
 

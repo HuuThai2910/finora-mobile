@@ -11,6 +11,7 @@ import { PdfViewer } from '@/components/feedback';
 import ContractPricingCard from '../components/ContractPricingCard';
 import ContractSmartCaCard from '../components/ContractSmartCaCard';
 import ContractSummaryCard from '../components/ContractSummaryCard';
+import ContractDisbursementCard from '../components/ContractDisbursementCard';
 import DetailNote from '../components/DetailNote';
 import InlineContractConsent from '../components/InlineContractConsent';
 import { useContractDetail, type ContractDetailView } from '../hook/useContractDetail';
@@ -89,6 +90,8 @@ function ContractDetailBody({
   return (
     <ContractDetailScaffold onRefresh={reload} refreshing={refreshing}>
       <ContractSummaryCard contract={contract} countdown={countdown} />
+
+      <ContractDisbursementCard contract={contract} />
 
       {pricingApplication ? <ContractPricingCard application={pricingApplication} /> : null}
 

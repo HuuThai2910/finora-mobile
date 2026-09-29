@@ -8,6 +8,8 @@ import { formatDong } from '@/utils/format';
 type Props = {
   /** Số dư khả dụng; null khi chưa tải xong hoặc tải lỗi. */
   available: number | null;
+  /** Tiền đã giữ cho lệnh đầu tư, chưa bị trừ để giải ngân. */
+  held: number | null;
   loading: boolean;
   error: string | null;
   onRetry: () => void;
@@ -21,7 +23,7 @@ const TILE = 44;
  * phải là số dư khả dụng hiện tại. Số dư tải riêng với danh sách giao dịch nên
  * có trạng thái tải/lỗi của riêng nó, không chặn danh sách bên dưới.
  */
-export default function WalletAccountCard({ available, loading, error, onRetry }: Props) {
+export default function WalletAccountCard({ available, held, loading, error, onRetry }: Props) {
   return (
     <View style={styles.card}>
       <View style={styles.account} accessible accessibilityLabel="Tài khoản ví: Ví Finora">
@@ -40,15 +42,15 @@ export default function WalletAccountCard({ available, loading, error, onRetry }
 
       <View style={styles.balance}>
         <Text style={styles.label} maxFontSizeMultiplier={1.4}>
-          Số dư hiện tại
+          Số dư khả dụng
         </Text>
-        <Balance available={available} loading={loading} error={error} onRetry={onRetry} />
+        <Balance available={available} held={held} loading={loading} error={error} onRetry={onRetry} />
       </View>
     </View>
   );
 }
 
-function Balance({ available, loading, error, onRetry }: Props) {
+function Balance({ available, held, loading, error, onRetry }: Props) {
   if (available === null && loading) {
     return <Skeleton width={120} height={22} radius={6} style={styles.skeleton} />;
   }
@@ -70,17 +72,29 @@ function Balance({ available, loading, error, onRetry }: Props) {
 
   const value = formatDong(available);
   return (
-    <Text
-      style={styles.value}
-      // Số dư lớn thì thu nhỏ cho vừa một dòng, không bẻ đôi con số.
-      numberOfLines={1}
-      adjustsFontSizeToFit
-      minimumFontScale={0.7}
-      maxFontSizeMultiplier={1.4}
-      accessibilityLabel={`Số dư hiện tại ${value}`}
-    >
-      {value}
-    </Text>
+    <>
+      <Text
+        style={styles.value}
+        // Số dư lớn thì thu nhỏ cho vừa một dòng, không bẻ đôi con số.
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.7}
+        maxFontSizeMultiplier={1.4}
+        accessibilityLabel={`Số dư khả dụng ${value}`}
+      >
+        {value}
+      </Text>
+      {held !== null && held > 0 ? (
+        <Text
+          style={styles.held}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          accessibilityLabel={`Đang giữ cho lệnh đầu tư ${formatDong(held)}`}
+        >
+          Đang giữ: {formatDong(held)}
+        </Text>
+      ) : null}
+    </>
   );
 }
 
@@ -127,6 +141,14 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     letterSpacing: -0.2,
     color: Colors.authInk,
+    ...tabularNums,
+  },
+  held: {
+    marginTop: 2,
+    fontFamily: FontFamily.medium,
+    fontSize: 11,
+    lineHeight: 15,
+    color: Colors.authMuted,
     ...tabularNums,
   },
   skeleton: { marginTop: 4 },

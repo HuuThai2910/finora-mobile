@@ -27,6 +27,31 @@ export interface TopUpInstruction {
   transferNote: string;
 }
 
+export type TopUpStatus =
+  | 'PROVIDER_PENDING'
+  | 'AWAITING_PAYMENT'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'EXPIRED'
+  | 'RECONCILIATION_REQUIRED';
+
+export interface TopUpOrder {
+  topUpId: string;
+  amount: number;
+  currency: string;
+  provider: 'MOCK' | 'ZALOPAY' | string;
+  providerOrderId: string;
+  providerReference: string | null;
+  checkoutUrl: string | null;
+  qrPayload: string | null;
+  status: TopUpStatus;
+  errorCode: string | null;
+  errorDetail: string | null;
+  expiresAt: string | null;
+  completedAt: string | null;
+  mockCompletionAvailable: boolean;
+}
+
 export interface LinkedBankAccount {
   bank: string;
   maskedNumber: string;

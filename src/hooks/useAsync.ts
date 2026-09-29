@@ -51,5 +51,7 @@ export function useAsync<T>(
     };
   }, [run, tick]);
 
-  return { data, loading, error, reload: () => setTick(t => t + 1) };
+  const reload = useCallback(() => setTick(t => t + 1), []);
+
+  return { data, loading, error, reload };
 }

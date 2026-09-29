@@ -80,6 +80,18 @@ export interface LoanContractDetail extends LoanContractSummary {
   declineReasonCode: string | null;
   declineReasonDetail: string | null;
   effectiveAt: string | null;
+  disbursementStatus:
+    | 'WAITING_PAYMENT'
+    | 'CORE_BOOKING_PENDING'
+    | 'CORE_BOOKING'
+    | 'RETRY_PENDING'
+    | 'REPAIR_REQUIRED'
+    | 'COMPLETED'
+    | 'PAYMENT_FAILED'
+    | null;
+  paymentReference: string | null;
+  fineractLoanId: number | null;
+  disbursedAt: string | null;
   updatedAt: string;
 }
 

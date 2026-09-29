@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WaveBackdrop } from '@/components/phone';
@@ -41,6 +41,22 @@ export default function WalletHistoryScreen() {
 
   const balance = useBalance();
   const transactions = useTransactions();
+  const hasFocusedOnce = useRef(false);
+  const reloadBalance = balance.reload;
+  const reloadTransactions = transactions.reload;
+
+  // WalletHistory vẫn được giữ trong stack khi mở Nạp tiền/Danh mục. Tải lại
+  // lúc quay về để số dư và giao dịch vừa phát sinh không bị hiển thị dữ liệu cũ.
+  useFocusEffect(
+    useCallback(() => {
+      if (hasFocusedOnce.current) {
+        reloadBalance();
+        reloadTransactions();
+      } else {
+        hasFocusedOnce.current = true;
+      }
+    }, [reloadBalance, reloadTransactions]),
+  );
   const groups = useMemo(
     () => (transactions.data ? groupWalletTransactions(transactions.data) : []),
     [transactions.data],
@@ -102,6 +118,7 @@ export default function WalletHistoryScreen() {
           <WalletHistoryHeader width={width} topInset={insets.top} />
           <WalletAccountCard
             available={balance.data?.available ?? null}
+            held={balance.data?.held ?? null}
             loading={balance.loading}
             error={balance.error}
             onRetry={balance.reload}

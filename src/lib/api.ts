@@ -17,6 +17,9 @@ const AUTH_BASE_URL = process.env.EXPO_PUBLIC_AUTH_API_URL ?? 'http://localhost:
 const INVESTMENT_BASE_URL =
   process.env.EXPO_PUBLIC_INVESTMENT_API_URL || AUTH_BASE_URL;
 
+/** Payment Service: ví, nạp tiền, giữ tiền đầu tư và lịch sử giao dịch. */
+const PAYMENT_BASE_URL = process.env.EXPO_PUBLIC_PAYMENT_API_URL || AUTH_BASE_URL;
+
 /**
  * `finora-user` đọc header này để biết trả token trong body thay vì đặt cookie
  * (xem `HttpRequestUtils.isMobileClient`). Thiếu header là mobile không nhận được token.
@@ -199,6 +202,10 @@ export const authFetchWithToken = <T>(path: string, init?: RequestInit): Promise
 /** Gọi Investment Service qua gateway; mọi endpoint đều cần phiên đăng nhập. */
 export const investmentFetch = <T>(path: string, init?: RequestInit): Promise<T> =>
   request<T>(INVESTMENT_BASE_URL, path, { ...init, authenticated: true });
+
+/** Gọi Payment Service bằng access token của người dùng hiện tại. */
+export const paymentFetch = <T>(path: string, init?: ApiRequestInit): Promise<T> =>
+  request<T>(PAYMENT_BASE_URL, path, { ...init, authenticated: true });
 
 type ParsedError = { code: string; message: string | null; traceId: string | null };
 
