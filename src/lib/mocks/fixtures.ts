@@ -21,7 +21,6 @@ import type {
   AutoInvestMatch,
   InvestmentContract,
   MarketLoan,
-  NoteListing,
   PortfolioSummary,
 } from '@/types/invest';
 import type { AppNotification } from '@/types/notification';
@@ -232,26 +231,30 @@ export const MARKET_LOANS: MarketLoan[] = [
 /* ---------------- Danh mục đầu tư ---------------- */
 
 export const PORTFOLIO: PortfolioSummary = {
-  investedAmount: 186_000_000,
-  irrPercent: 15.8,
-  nplPercent: 2.1,
-  positionCount: 28,
+  investedAmount: 46_400_000,
+  pendingAmount: 20_000_000,
+  principalRepaid: 3_600_000,
+  interestReceived: 1_284_500,
+  totalReceived: 4_884_500,
+  activeNoteCount: 50,
+  positionCount: 3,
+  averageRate: 14.62,
   positions: [
     {
-      loanId: 'LN-1975',
-      sharePercent: 12,
-      status: 'ACTIVE',
-      note: 'Kỳ 7 nhận +842.500 đ · 11/07',
-      lastCashflow: 842_500,
+      loanId: 3041, listingId: 31, purpose: 'Mở rộng cửa hàng tạp hoá', grade: 'A', annualRate: 13.5,
+      termMonths: 12, noteCount: 20, principal: 20_000_000, outstanding: 16_400_000,
+      principalRepaid: 3_600_000, interestReceived: 812_000, sharePercent: 20,
     },
     {
-      loanId: 'LN-2031',
-      sharePercent: 5,
-      status: 'WATCHLIST',
-      note: 'Trễ 3 ngày · PD 18% — Early Warning',
+      loanId: 2044, listingId: 24, purpose: 'Học phí cao học', grade: 'B', annualRate: 15,
+      termMonths: 9, noteCount: 20, principal: 20_000_000, outstanding: 20_000_000,
+      principalRepaid: 0, interestReceived: 472_500, sharePercent: 10,
     },
-    { loanId: 'LN-2044', sharePercent: 4, status: 'FUNDED' },
-    { loanId: 'LN-1897', sharePercent: 8, status: 'CLOSED' },
+    {
+      loanId: 1877, listingId: 18, purpose: 'Sửa chữa nhà', grade: 'D', annualRate: 18,
+      termMonths: 6, noteCount: 10, principal: 10_000_000, outstanding: 10_000_000,
+      principalRepaid: 0, interestReceived: 0, sharePercent: 25,
+    },
   ],
 };
 
@@ -261,12 +264,11 @@ export const AUTO_INVEST: AutoInvestConfig = {
   minAnnualRate: 15,
   maxTermMonths: 18,
   amountPerLoan: 4_000_000,
-  maxPortfolioSharePercent: 5,
 };
 
 export const AUTO_INVEST_MATCHES: AutoInvestMatch[] = [
-  { at: '10/07 22:10', loanId: 'LN-2044', grade: 'A', annualRate: 15, matched: true, amount: 4_000_000 },
-  { at: '09/07 15:44', loanId: 'LN-2046', grade: 'C', annualRate: 19, matched: false },
+  { at: '2026-07-10T15:10:00Z', loanId: 'LN-2044', grade: 'A', annualRate: 15, matched: true, amount: 4_000_000 },
+  { at: '2026-07-09T08:44:00Z', loanId: 'LN-2046', grade: 'B', annualRate: 16, matched: false, reason: 'INSUFFICIENT_FUNDS' },
 ];
 
 export const INVESTMENT_CONTRACT: InvestmentContract = {
@@ -522,117 +524,4 @@ export const FALLBACK_PURPOSES: LoanPurpose[] = [
   { code: 'CONSUMPTION', label: 'Tiêu dùng', aiValue: 'consumption', requiresDetail: false },
   { code: 'EDUCATION', label: 'Học phí', aiValue: 'educational', requiresDetail: true },
   { code: 'HOME_IMPROVEMENT', label: 'Sửa chữa nhà', aiValue: 'home_improvement', requiresDetail: true },
-];
-
-/* ---------------- Chợ thứ cấp Notes ---------------- */
-
-/**
- * Bảng tin chợ thứ cấp. Tin thứ ba cố ý thuộc khoản vay nợ xấu để xem được cảnh báo,
- * và giá của nó thấp hơn hẳn dư nợ vì rủi ro thu hồi cao.
- */
-export const SECONDARY_LISTINGS: NoteListing[] = [
-  {
-    reference: 'NL-A1B2C3D4E5F60718',
-    noteNumber: 'NOTE-2044-31-0003',
-    loanId: '2044',
-    sellerId: 'INV-0071',
-    askingPrice: 950_000,
-    outstandingPrincipal: 1_000_000,
-    defaulted: false,
-    defaultedReason: null,
-    annualRate: 15,
-    termMonths: 9,
-    grade: 'A',
-    estimatedFee: 47_500,
-    estimatedProceeds: 902_500,
-    status: 'OPEN',
-    buyerId: null,
-    soldPrice: null,
-    platformFee: null,
-    sellerProceeds: null,
-  },
-  {
-    reference: 'NL-2233445566778899',
-    noteNumber: 'NOTE-2051-12-0001',
-    loanId: '2051',
-    sellerId: 'INV-0104',
-    askingPrice: 480_000,
-    outstandingPrincipal: 500_000,
-    defaulted: false,
-    defaultedReason: null,
-    annualRate: 17,
-    termMonths: 14,
-    grade: 'B',
-    estimatedFee: 24_000,
-    estimatedProceeds: 456_000,
-    status: 'OPEN',
-    buyerId: null,
-    soldPrice: null,
-    platformFee: null,
-    sellerProceeds: null,
-  },
-  {
-    reference: 'NL-DEADBEEF00112233',
-    noteNumber: 'NOTE-1988-07-0002',
-    loanId: '1988',
-    sellerId: 'INV-0052',
-    askingPrice: 300_000,
-    outstandingPrincipal: 800_000,
-    defaulted: true,
-    defaultedReason: 'Khoản vay gốc đang trong tình trạng nợ xấu',
-    annualRate: 19,
-    termMonths: 6,
-    grade: 'D',
-    estimatedFee: 15_000,
-    estimatedProceeds: 285_000,
-    status: 'OPEN',
-    buyerId: null,
-    soldPrice: null,
-    platformFee: null,
-    sellerProceeds: null,
-  },
-];
-
-/** Tin của chính người đang đăng nhập: một tin đang bán, một tin đã bán xong. */
-export const SECONDARY_MY_LISTINGS: NoteListing[] = [
-  {
-    reference: 'NL-MINE00112233AABB',
-    noteNumber: 'NOTE-2033-45-0001',
-    loanId: '2033',
-    sellerId: 'me',
-    askingPrice: 700_000,
-    outstandingPrincipal: 750_000,
-    defaulted: false,
-    defaultedReason: null,
-    annualRate: 16,
-    termMonths: 11,
-    grade: 'B',
-    estimatedFee: 35_000,
-    estimatedProceeds: 665_000,
-    status: 'OPEN',
-    buyerId: null,
-    soldPrice: null,
-    platformFee: null,
-    sellerProceeds: null,
-  },
-  {
-    reference: 'NL-SOLD99887766DDEE',
-    noteNumber: 'NOTE-2012-08-0004',
-    loanId: '2012',
-    sellerId: 'me',
-    askingPrice: 1_000_000,
-    outstandingPrincipal: 1_000_000,
-    defaulted: false,
-    defaultedReason: null,
-    annualRate: 15,
-    termMonths: 5,
-    grade: 'A',
-    estimatedFee: 50_000,
-    estimatedProceeds: 950_000,
-    status: 'SOLD',
-    buyerId: 'INV-0088',
-    soldPrice: 1_000_000,
-    platformFee: 50_000,
-    sellerProceeds: 950_000,
-  },
 ];

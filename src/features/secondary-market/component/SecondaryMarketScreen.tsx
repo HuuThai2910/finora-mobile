@@ -1,94 +1,108 @@
 import { useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Spacing } from '@/theme';
-import { PHeader, Screen } from '@/components/phone';
-import { InfoNote, SectionLabel, SegmentGroup } from '@/components/ui';
-import { EmptyState, ErrorState, LoadingScreen } from '@/components/feedback';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Skeleton } from '@/components/feedback';
+import { WaveBackdrop } from '@/components/phone';
+import { NOTES_MARKET_WAVES } from '@/constants/backgrounds';
+import { Colors } from '@/constants/colors';
 import type { WalletStackParamList } from '@/navigation/types';
-import { BUYER_INTRO } from '../constant';
-import { useMyListings, useSecondaryListings } from '../hook/useSecondaryMarket';
-import NoteListingCard from './NoteListingCard';
+import { Radius, Spacing } from '@/theme';
+import { BOOK_MAX_WIDTH, BOOK_PADDING, MARKET_INTRO, NOTES_ART } from '../constant';
+import { useOrderBooks } from '../hook/useOrderBook';
+import BookHeader from './BookHeader';
+import BookStatusCard from './BookStatusCard';
+import BookSummaryCard from './BookSummaryCard';
+import NotesFooter from './NotesFooter';
 
 type Nav = NativeStackNavigationProp<WalletStackParamList, 'SecondaryMarket'>;
 
-type Tab = 'BROWSE' | 'MINE';
-
-const TABS: ReadonlyArray<{ value: Tab; label: string }> = [
-  { value: 'BROWSE', label: 'Đang bán' },
-  { value: 'MINE', label: 'Tin của tôi' },
-];
+/** Khoảng giữa chân linh vật và mép trên thẻ đầu tiên. */
+const GROUND_GAP = Spacing.xs;
 
 /**
- * Chợ thứ cấp Notes — bảng tin và tin của chính mình.
- *
- * Hai tab dùng hai nguồn dữ liệu khác nhau: bảng tin lấy mọi tin đang mở, tin của tôi lấy cả tin đã
- * bán và đã rút để người bán theo dõi được kết quả.
+ * Chợ Notes — danh sách khoản vay còn Note lưu hành, mỗi khoản một sổ lệnh. Đầu màn là hai linh
+ * vật trao tay đồng xu (ảnh nền của ví, phóng to và canh phải), dưới là thẻ từng sổ với giá mua cao
+ * nhất, giá bán thấp nhất và giá khớp gần nhất.
  */
 export default function SecondaryMarketScreen() {
   const nav = useNavigation<Nav>();
-  const [tab, setTab] = useState<Tab>('BROWSE');
+  const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
+  const width = Math.min(windowWidth, BOOK_MAX_WIDTH);
+  // Nội dung cao ít nhất bằng khung cuộn để nền trơn phủ tới đáy màn.
+  const [viewportHeight, setViewportHeight] = useState(0);
+  const books = useOrderBooks();
 
-  const browse = useSecondaryListings();
-  const mine = useMyListings();
+  // Ảnh phóng `zoom` lần; quy chân linh vật ra toạ độ trên màn để thẻ đầu nằm ngay dưới. Đầu
+  // linh vật thấp hơn hàng tiêu đề nên tiêu đề ngắn không cần né hình.
+  const imageWidth = width * NOTES_MARKET_WAVES.zoom;
+  const scale = imageWidth / NOTES_MARKET_WAVES.width;
+  const headerHeight = NOTES_ART.bottom * scale + GROUND_GAP;
 
-  const active = tab === 'BROWSE' ? browse : mine;
-  const reload = () => {
-    browse.reload();
-    mine.reload();
+  const renderBooks = () => {
+    if (books.loading && !books.data) {
+      return [0, 1, 2].map(i => <Skeleton key={i} height={156} radius={Radius.md} />);
+    }
+    if (books.error) {
+      return (
+        <BookStatusCard
+          icon="alert"
+          danger
+          title={books.error}
+          hint="Kiểm tra kết nối mạng rồi thử lại."
+          action={{ label: 'Thử lại', onPress: books.reload }}
+        />
+      );
+    }
+    if (!books.data?.length) {
+      return <BookStatusCard icon="layers" title="Chưa có Note nào đang lưu hành" hint={MARKET_INTRO} />;
+    }
+    return books.data.map(book => (
+      <BookSummaryCard
+        key={book.listingId}
+        book={book}
+        onPress={() => nav.navigate('OrderBook', { listingId: book.listingId })}
+      />
+    ));
   };
 
   return (
-    <Screen onRefresh={reload} refreshing={active.loading && !!active.data}>
-      <PHeader title="Chợ thứ cấp" back />
-
-      <SegmentGroup<Tab>
-        options={TABS}
-        value={tab}
-        onChange={setTab}
-        label="Chọn danh sách tin đăng bán"
-        style={styles.tabs}
-      />
-
-      {tab === 'BROWSE' && <InfoNote style={styles.note}>{BUYER_INTRO}</InfoNote>}
-
-      {active.loading && !active.data ? (
-        <LoadingScreen cards={3} />
-      ) : active.error ? (
-        <ErrorState message={active.error} onRetry={reload} />
-      ) : !active.data?.length ? (
-        <EmptyState
-          icon="search"
-          title={tab === 'BROWSE' ? 'Chưa có Note nào đang bán' : 'Bạn chưa đăng bán Note nào'}
-          hint={
-            tab === 'BROWSE'
-              ? 'Quay lại sau, hoặc mua Note mới trên sàn gọi vốn.'
-              : 'Mở danh mục đầu tư, chọn một Note đang giữ rồi bấm Đăng bán.'
-          }
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={styles.scroll}
+      showsVerticalScrollIndicator={false}
+      onLayout={e => setViewportHeight(e.nativeEvent.layout.height)}
+      refreshControl={
+        <RefreshControl
+          // Lần tải đầu đã có khung giả; vòng xoay chỉ dành cho kéo làm mới.
+          refreshing={books.loading && !!books.data}
+          onRefresh={books.reload}
+          tintColor={Colors.authPrimary}
+          colors={[Colors.authPrimary]}
         />
-      ) : (
-        <>
-          <SectionLabel>
-            {tab === 'BROWSE' ? `${active.data.length} Note đang bán` : 'Tin đã đăng'}
-          </SectionLabel>
-
-          {active.data.map(listing => (
-            <NoteListingCard
-              key={listing.reference}
-              listing={listing}
-              onPress={() =>
-                nav.navigate('NoteListingDetail', { reference: listing.reference })
-              }
-            />
-          ))}
-        </>
-      )}
-    </Screen>
+      }
+    >
+      <View style={{ width, minHeight: viewportHeight }}>
+        <WaveBackdrop background={NOTES_MARKET_WAVES} width={width} />
+        <View style={styles.content}>
+          <BookHeader
+            title="Chợ Notes"
+            topInset={insets.top}
+            minHeight={headerHeight}
+          />
+          <View style={styles.cards}>{renderBooks()}</View>
+          <NotesFooter onMyOrders={() => nav.navigate('MyBookOrders')} />
+        </View>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  tabs: { marginBottom: Spacing.lg },
-  note: { marginBottom: Spacing.lg },
+  root: { flex: 1, backgroundColor: Colors.walletHistoryFill },
+  scroll: { flexGrow: 1, alignItems: 'center' },
+  content: { gap: Spacing.xl, paddingHorizontal: BOOK_PADDING, paddingBottom: 40 },
+  cards: { gap: Spacing.lg },
 });

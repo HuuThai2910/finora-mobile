@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, type CompositeNavigationProp } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EmptyState, ErrorState } from '@/components/feedback';
 import { Colors } from '@/constants/colors';
-import type { MarketStackParamList } from '@/navigation/types';
+import type { MarketStackParamList, TabParamList } from '@/navigation/types';
 import { Spacing } from '@/theme';
 import { MARKET_MAX_WIDTH, MARKET_PADDING } from '../constant';
 import { useMarketLoans } from '../hook/useMarket';
@@ -14,7 +15,10 @@ import MarketFooter from './MarketFooter';
 import MarketHero from './MarketHero';
 import MarketSkeleton from './MarketSkeleton';
 
-type Nav = NativeStackNavigationProp<MarketStackParamList, 'Market'>;
+type Nav = CompositeNavigationProp<
+  NativeStackNavigationProp<MarketStackParamList, 'Market'>,
+  BottomTabNavigationProp<TabParamList>
+>;
 
 /** Đáy chừa một khoảng để thẻ cuối không sát thanh tab. */
 const BOTTOM_SPACE = 40;
@@ -74,6 +78,7 @@ export default function MarketScreen() {
           <MarketFooter
             onProducts={() => nav.navigate('Products')}
             onPackages={() => nav.navigate('VentoPackages')}
+            onNotesMarket={() => nav.navigate('Ví', { screen: 'SecondaryMarket' })}
           />
         </View>
       </View>
