@@ -239,6 +239,26 @@ export const Colors = {
   packagesSky: '#e1f0fd',
   /** Hàng cuối của banner (lệch ≤ 5/255): nền màn nối liền mép dưới banner, không lộ vết ghép. */
   packagesFill: '#e8f2fd',
+
+  // Chợ Notes — sổ lệnh Ask/Bid (02/10/2026). Nền, thẻ, chữ dùng lại nhóm auth*/tint*/wallet*
+  // ở trên; dưới đây là cặp màu hai phía của sổ. Theo thói quen sàn chứng khoán Việt Nam: mua
+  // xanh lá, bán đỏ — luôn đi kèm chữ "Mua"/"Bán", không để màu là tín hiệu duy nhất.
+  /** Chữ và nút phía mua: tương phản với trắng 5,17:1 (cả hai chiều). */
+  bookBid: '#0a7d4f',
+  /** Chữ và nút phía bán: tương phản với trắng 5,78:1 (cả hai chiều). */
+  bookAsk: '#c2263a',
+  /** Thanh độ sâu sau mỗi mức giá: nhạt để số trên thanh vẫn đọc rõ. */
+  bookBidBar: 'rgba(10,125,79,0.12)',
+  bookAskBar: 'rgba(194,38,58,0.10)',
+  /** Dải chênh lệch giữa hai phía của thang giá. */
+  bookSpread: '#f3f7fd',
+  /** Nền rất nhạt của cả cột mua/bán khi sổ chia hai cột cạnh nhau: chỉ để tách hai phía. */
+  bookBidColumn: 'rgba(10,125,79,0.045)',
+  bookAskColumn: 'rgba(194,38,58,0.04)',
+  /** Viền chip trên thẻ giá xanh: tách chip khỏi nền gradient như mockup. */
+  bookChipBorder: 'rgba(255,255,255,0.32)',
+  /** Chấm "Trực tiếp" khi đang nhận đẩy qua SSE. */
+  bookLive: '#22c55e',
 } as const;
 
 export type ColorName = keyof typeof Colors;

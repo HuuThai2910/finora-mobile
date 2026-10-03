@@ -1,4 +1,10 @@
-import type { InvestmentContract, PortfolioPosition, PortfolioSummary } from '@/types/invest';
+import type {
+  AutoInvestConfig,
+  AutoInvestMatch,
+  InvestmentContract,
+  PortfolioPosition,
+  PortfolioSummary,
+} from '@/types/invest';
 
 /**
  * Chuyển danh mục đầu tư từ contract của Investment Service sang model màn hình.
@@ -54,32 +60,36 @@ const toNumber = (value: string): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const formatDong = (value: number): string => new Intl.NumberFormat('vi-VN').format(value);
-
 function toPosition(dto: PortfolioPositionDto): PortfolioPosition {
-  const interest = toNumber(dto.interestReceived);
-  const repaid = toNumber(dto.principalRepaid);
-
   return {
-    loanId: `#${dto.loanId}`,
+    loanId: dto.loanId,
+    listingId: dto.listingId,
+    purpose: dto.purpose,
+    grade: dto.creditGrade?.trim().toUpperCase() || null,
+    // Cùng contract liên service với Market: 15.0000 nghĩa là 15%/năm.
+    annualRate: Number(toNumber(dto.annualInterestRate).toFixed(2)),
+    termMonths: dto.termMonths,
+    noteCount: dto.noteCount,
+    principal: toNumber(dto.principalAmount),
+    outstanding: toNumber(dto.outstandingPrincipal),
+    principalRepaid: toNumber(dto.principalRepaid),
+    interestReceived: toNumber(dto.interestReceived),
     sharePercent: Number(dto.sharePercent.toFixed(2)),
-    status: 'ACTIVE',
-    note: `${dto.noteCount} Note · đã nhận ${formatDong(repaid + interest)} đ`,
-    lastCashflow: interest > 0 ? interest : undefined,
   };
 }
 
 export function toPortfolioSummary(dto: PortfolioDto): PortfolioSummary {
   return {
-    // Vốn đang nằm trong các Note còn dư nợ; phần chờ giải ngân hiển thị riêng ở ghi chú.
     investedAmount: toNumber(dto.investedAmount),
-    // Lãi suất bình quân theo trọng số dư nợ do backend tính; frontend không tự tính lại.
-    irrPercent: Number(dto.weightedAverageRate.toFixed(2)),
-    // Tỷ lệ nợ xấu do Loan Service sở hữu, Investment chưa có dữ liệu này.
-    // Trả null để màn hình hiện dấu gạch thay vì "0%" — 0% là một khẳng định sai
-    // về chất lượng danh mục, còn dấu gạch nói đúng rằng chưa có số liệu.
-    nplPercent: null,
+    pendingAmount: toNumber(dto.pendingAmount),
+    principalRepaid: toNumber(dto.principalRepaid),
+    interestReceived: toNumber(dto.interestReceived),
+    totalReceived: toNumber(dto.totalReceived),
+    activeNoteCount: dto.activeNoteCount,
     positionCount: dto.positionCount,
+    // Lãi suất bình quân theo trọng số dư nợ do backend tính. Trước đây màn hình gọi nhầm là IRR —
+    // IRR cần cả dòng tiền theo thời gian, backend chưa tính.
+    averageRate: Number(dto.weightedAverageRate.toFixed(2)),
     positions: dto.positions.map(toPosition),
   };
 }
@@ -105,3 +115,43 @@ export function toInvestmentContract(dto: InvestorContractDto): InvestmentContra
     expiresAt: dto.expiresAt,
   };
 }
+
+/** Tiền và lãi suất đi dạng chuỗi để không mất chính xác khi parse JSON. */
+export interface AutoInvestConfigDto {
+  enabled: boolean;
+  grades: string[];
+  minAnnualRate: string;
+  maxTermMonths: number;
+  amountPerLoan: string;
+  enabledAt: string | null;
+}
+
+export interface AutoInvestMatchDto {
+  at: string;
+  listingId: number;
+  applicationNumber: string | null;
+  creditGrade: string | null;
+  annualInterestRate: string | null;
+  outcome: 'MATCHED' | 'SKIPPED';
+  reason: string | null;
+  amount: string | null;
+  orderReference: string | null;
+}
+
+export const toAutoInvestConfig = (dto: AutoInvestConfigDto): AutoInvestConfig => ({
+  enabled: dto.enabled,
+  grades: dto.grades,
+  minAnnualRate: Number(dto.minAnnualRate),
+  maxTermMonths: dto.maxTermMonths,
+  amountPerLoan: Number(dto.amountPerLoan),
+});
+
+export const toAutoInvestMatch = (dto: AutoInvestMatchDto): AutoInvestMatch => ({
+  at: dto.at,
+  loanId: dto.applicationNumber ?? `#${dto.listingId}`,
+  grade: dto.creditGrade,
+  annualRate: dto.annualInterestRate == null ? null : Number(dto.annualInterestRate),
+  matched: dto.outcome === 'MATCHED',
+  amount: dto.amount == null ? undefined : Number(dto.amount),
+  reason: dto.reason ?? undefined,
+});

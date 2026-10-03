@@ -1,89 +1,98 @@
-import { investmentFetch } from '@/lib/api';
+import { investmentFetch, investmentStreamRequest } from '@/lib/api';
 import { isMocked } from '@/lib/mockFlag';
 import * as secondaryMock from '@/lib/mocks/secondary';
-import type { NoteListing } from '@/types/invest';
-import { toNoteListing, type NoteListingDto, type PageDto } from './mapper';
+import type { BookOrder, BookPosition, BookSnapshot, BookSummary, PlaceOrderInput } from '@/types/orderBook';
+import {
+  toBookOrder,
+  toBookPosition,
+  toBookSnapshot,
+  toBookSummary,
+  toPricePercent,
+  type BookOrderDto,
+  type BookPositionDto,
+  type BookSnapshotDto,
+  type BookSummaryDto,
+  type PageDto,
+} from './mapper';
 
 /**
- * Chợ thứ cấp Notes do `finora-investment` phục vụ.
+ * Chợ Notes — sổ lệnh Ask/Bid của `finora-investment` (`/investments/order-books`).
  *
- * Backend đã có thật, nên miền `secondary` mặc định **không** nằm trong `EXPO_PUBLIC_MOCK_DOMAINS`.
- * Thêm tên miền vào biến đó là chuyển sang dữ liệu giả để demo khi chưa chạy được service.
+ * Backend đã có thật, nên miền `secondary` mặc định **không** nằm trong `EXPO_PUBLIC_MOCK_DOMAINS`;
+ * thêm tên miền vào biến đó là chuyển sang sổ lệnh giả để demo khi chưa chạy được service.
  *
- * Danh tính người bán và người mua lấy từ access token phía backend, nên tầng này không gửi mã
- * nhà đầu tư nào lên.
+ * Danh tính người đặt lệnh lấy từ access token phía backend, nên tầng này không gửi mã nhà đầu tư.
  */
+
+const BASE = '/investments/order-books';
 
 /** Trang đầu đủ dùng cho danh sách trên điện thoại; không tải không giới hạn. */
 const PAGE_SIZE = 20;
 
-/** Bảng tin: các Note đang được treo bán. */
-export const listSecondaryListings = async (): Promise<NoteListing[]> => {
-  if (isMocked('secondary')) return secondaryMock.listSecondaryListings();
-
-  const page = await investmentFetch<PageDto<NoteListingDto>>(
-    `/investments/secondary/listings?page=0&size=${PAGE_SIZE}`,
-  );
-  return page.content.map(toNoteListing);
+/** Các khoản vay còn Note lưu hành, kèm giá mua/bán tốt nhất. */
+export const listOrderBooks = async (signal?: AbortSignal): Promise<BookSummary[]> => {
+  if (isMocked('secondary')) return secondaryMock.listOrderBooks();
+  const page = await investmentFetch<PageDto<BookSummaryDto>>(`${BASE}?page=0&size=${PAGE_SIZE}`, { signal });
+  return page.content.map(toBookSummary);
 };
 
-/** Tin đăng bán của chính người đang đăng nhập. */
-export const listMyListings = async (): Promise<NoteListing[]> => {
-  if (isMocked('secondary')) return secondaryMock.listMyListings();
-
-  const page = await investmentFetch<PageDto<NoteListingDto>>(
-    `/investments/secondary/my-listings?page=0&size=${PAGE_SIZE}`,
-  );
-  return page.content.map(toNoteListing);
+export const getOrderBook = async (listingId: number, signal?: AbortSignal): Promise<BookSnapshot> => {
+  if (isMocked('secondary')) return secondaryMock.getOrderBook(listingId);
+  return toBookSnapshot(await investmentFetch<BookSnapshotDto>(`${BASE}/${listingId}`, { signal }));
 };
 
-/**
- * Treo một Note mình đang giữ lên bảng tin.
- *
- * Giá không được vượt dư nợ gốc còn lại — backend chặn, và màn hình cũng chặn trước để người bán
- * biết ngay thay vì đợi request quay về.
- */
-export const listNoteForSale = async (
-  noteNumber: string,
-  noteId: string,
-  askingPrice: number,
-): Promise<NoteListing> => {
-  if (isMocked('secondary')) return secondaryMock.listNoteForSale(noteNumber, askingPrice);
+/** Số Note còn đặt bán được, số đang nằm trong lệnh bán và lệnh còn hiệu lực của tôi. */
+export const getMyPosition = async (listingId: number, signal?: AbortSignal): Promise<BookPosition> => {
+  if (isMocked('secondary')) return secondaryMock.getMyPosition(listingId);
+  return toBookPosition(await investmentFetch<BookPositionDto>(`${BASE}/${listingId}/me`, { signal }));
+};
 
-  const dto = await investmentFetch<NoteListingDto>(
-    `/investments/secondary/notes/${noteId}/listings`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ askingPrice: askingPrice.toFixed(2) }),
-    },
+export const listMyOrders = async (activeOnly: boolean, signal?: AbortSignal): Promise<BookOrder[]> => {
+  if (isMocked('secondary')) return secondaryMock.listMyOrders(activeOnly);
+  const page = await investmentFetch<PageDto<BookOrderDto>>(
+    `${BASE}/orders/mine?active=${activeOnly}&page=0&size=${PAGE_SIZE}`,
+    { signal },
   );
-  return toNoteListing(dto);
+  return page.content.map(toBookOrder);
 };
 
 /**
- * Mua một Note đang treo bán.
+ * Đặt lệnh giới hạn.
  *
- * Không cần `Idempotency-Key`: mã tin đăng bán đã là khóa tự nhiên cho giao dịch này — một tin chỉ
- * bán được một lần — nên backend tự suy mã chống trùng lặp từ đó. Khác luồng đặt lệnh sơ cấp, nơi
- * cùng một người có thể đặt nhiều lệnh vào cùng khoản vay.
+ * `idempotencyKey` do nơi gọi giữ cho tới khi người dùng đổi nội dung lệnh: bấm lại sau lỗi mạng
+ * phải gửi cùng khóa để backend trả lệnh cũ chứ không giữ tiền lần hai.
  */
-export const buyNote = async (reference: string): Promise<NoteListing> => {
-  if (isMocked('secondary')) return secondaryMock.buyNote(reference);
-
-  const dto = await investmentFetch<NoteListingDto>(
-    `/investments/secondary/listings/${reference}/buy`,
-    { method: 'POST' },
-  );
-  return toNoteListing(dto);
+export const placeBookOrder = async (
+  listingId: number,
+  input: PlaceOrderInput,
+  idempotencyKey: string,
+): Promise<BookOrder> => {
+  if (isMocked('secondary')) return secondaryMock.placeOrder(listingId, input);
+  const dto = await investmentFetch<BookOrderDto>(`${BASE}/${listingId}/orders`, {
+    method: 'POST',
+    headers: { 'Idempotency-Key': idempotencyKey },
+    body: JSON.stringify({
+      side: input.side,
+      pricePercent: toPricePercent(input.price),
+      quantity: input.quantity,
+      acknowledgeDefault: input.acknowledgeDefault,
+    }),
+  });
+  return toBookOrder(dto);
 };
 
-/** Rút tin của mình khi chưa ai mua. */
-export const cancelListing = async (reference: string): Promise<NoteListing> => {
-  if (isMocked('secondary')) return secondaryMock.cancelListing(reference);
-
-  const dto = await investmentFetch<NoteListingDto>(
-    `/investments/secondary/listings/${reference}`,
-    { method: 'DELETE' },
-  );
-  return toNoteListing(dto);
+/** Huỷ phần chưa khớp của lệnh; phần đã khớp giữ nguyên. */
+export const cancelBookOrder = async (reference: string): Promise<BookOrder> => {
+  if (isMocked('secondary')) return secondaryMock.cancelOrder(reference);
+  return toBookOrder(await investmentFetch<BookOrderDto>(`${BASE}/orders/${reference}`, { method: 'DELETE' }));
 };
+
+/** Bản mock không có luồng đẩy; màn hình hỏi lại định kỳ thay thế. */
+export const isStreamAvailable = (): boolean => !isMocked('secondary');
+
+export const orderBookStreamRequest = (listingId: number) =>
+  investmentStreamRequest(`${BASE}/${listingId}/stream`);
+
+/** Ảnh chụp đẩy qua luồng có cùng dạng với `GET /{listingId}`. */
+export const parseStreamSnapshot = (data: string): BookSnapshot =>
+  toBookSnapshot(JSON.parse(data) as BookSnapshotDto);

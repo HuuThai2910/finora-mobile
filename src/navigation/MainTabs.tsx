@@ -26,9 +26,10 @@ import {
 } from '@/features/wallet';
 import { AutoInvestScreen, InvestContractScreen, PortfolioScreen } from '@/features/investment';
 import {
-  NoteListingDetailScreen,
+  MyOrdersScreen,
+  OrderBookScreen,
+  PlaceOrderScreen,
   SecondaryMarketScreen,
-  SellNoteScreen,
 } from '@/features/secondary-market';
 import { AccountInfoScreen, AccountScreen } from '@/features/account';
 import { EkycCaptureScreen, EkycResultScreen, EkycSessionProvider } from '@/features/ekyc';
@@ -80,8 +81,9 @@ function WalletTab() {
       <WalletStack.Screen name="AutoInvest" component={AutoInvestScreen} />
       <WalletStack.Screen name="InvestContract" component={InvestContractScreen} />
       <WalletStack.Screen name="SecondaryMarket" component={SecondaryMarketScreen} />
-      <WalletStack.Screen name="NoteListingDetail" component={NoteListingDetailScreen} />
-      <WalletStack.Screen name="SellNote" component={SellNoteScreen} />
+      <WalletStack.Screen name="OrderBook" component={OrderBookScreen} />
+      <WalletStack.Screen name="PlaceBookOrder" component={PlaceOrderScreen} />
+      <WalletStack.Screen name="MyBookOrders" component={MyOrdersScreen} />
     </WalletStack.Navigator>
   );
 }
@@ -113,10 +115,18 @@ const Tab = createBottomTabNavigator<TabParamList>();
  * Bốn tab đúng theo hàm `TABBAR` của mockup: Trang chủ · Sàn · Ví · Hồ sơ.
  * Mỗi màn được xếp vào tab mà mockup gán cho nó qua tham số `TABBAR(n)` — nhờ
  * vậy mở "Nạp tiền" từ nút tắt ở Trang chủ vẫn sáng tab Ví như bản thiết kế.
+ *
+ * `unmountOnBlur`: rời tab là gỡ cả stack của tab đó, nên quay lại tab luôn bắt
+ * đầu từ màn gốc thay vì đứng ở màn con lúc rời đi. Đổi lại, màn gốc tải lại dữ
+ * liệu mỗi lần quay về (trừ phần dùng cache RTK Query của loanApi), và việc đang
+ * làm dở trong tab — như ảnh eKYC đã chụp — bị bỏ khi chuyển tab.
  */
 export default function MainTabs() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }} tabBar={props => <TabBar {...props} />}>
+    <Tab.Navigator
+      screenOptions={{ headerShown: false, unmountOnBlur: true }}
+      tabBar={props => <TabBar {...props} />}
+    >
       <Tab.Screen name="Trang chủ" component={HomeTab} />
       <Tab.Screen name="Sàn" component={MarketTab} />
       <Tab.Screen name="Ví" component={WalletTab} />

@@ -28,6 +28,9 @@ export const getAutoInvest = (): Promise<AutoInvestConfig> => mockResponse('inve
 export const getAutoInvestMatches = (): Promise<AutoInvestMatch[]> =>
   mockResponse('invest', AUTO_INVEST_MATCHES);
 
+export const saveAutoInvest = (config: AutoInvestConfig): Promise<AutoInvestConfig> =>
+  mockResponse('invest', config);
+
 export const getInvestmentContract = (): Promise<InvestmentContract> =>
   mockResponse('signature', INVESTMENT_CONTRACT);
 

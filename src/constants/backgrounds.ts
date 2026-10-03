@@ -72,3 +72,14 @@ export const WALLET_HISTORY_WAVES: WaveBackground = {
   middleFrom: Colors.walletHistoryFill,
   middleTo: Colors.walletHistoryFill,
 };
+
+/**
+ * Nền chợ Notes: cùng ảnh `wallet-background.png` với "Lịch sử ví" — hai linh vật trao tay đồng
+ * xu, đúng hình ảnh nhà đầu tư chuyển nhượng Note cho nhau. Phóng 1,35 lần và canh phải để hai
+ * linh vật to hơn, chiếm nửa phải đầu màn, khác hẳn bố cục trải ngang của màn ví.
+ */
+export const NOTES_MARKET_WAVES: WaveBackground = {
+  ...WALLET_HISTORY_WAVES,
+  zoom: 1.35,
+  focusX: 1,
+};

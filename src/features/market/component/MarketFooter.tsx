@@ -8,13 +8,15 @@ import { MARKET_NOTE } from '../constant';
 type Props = {
   onProducts: () => void;
   onPackages: () => void;
+  /** Sang chợ Notes (tab Ví): mua lại Note của nhà đầu tư khác thay vì góp vốn khoản mới. */
+  onNotesMarket: () => void;
 };
 
 /**
  * Cuối màn sàn (mockup 26/09/2026): ghi chú về người vay ẩn danh và tiền phong
- * toả, rồi hai lối sang "Sản phẩm vay" và "Gói vay ưu đãi", mỗi lối một thẻ riêng.
+ * toả, rồi các lối sang "Chợ Notes", "Sản phẩm vay" và "Gói vay ưu đãi", mỗi lối một thẻ riêng.
  */
-export default function MarketFooter({ onProducts, onPackages }: Props) {
+export default function MarketFooter({ onProducts, onPackages, onNotesMarket }: Props) {
   return (
     <View style={styles.root}>
       <View style={styles.note}>
@@ -28,6 +30,7 @@ export default function MarketFooter({ onProducts, onPackages }: Props) {
       </View>
 
       <View style={styles.links}>
+        <LinkRow icon="layers" label="Chợ Notes" onPress={onNotesMarket} />
         <LinkRow icon="grid" label="Sản phẩm vay" onPress={onProducts} />
         <LinkRow icon="sparkles" label="Gói vay ưu đãi" onPress={onPackages} />
       </View>

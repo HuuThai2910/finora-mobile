@@ -1,22 +1,38 @@
 import { useRef, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PdfViewer, Skeleton } from '@/components/feedback';
+import { WaveBackdrop } from '@/components/phone';
+import { Icon } from '@/components/ui';
+import { CONTRACTS_WAVES } from '@/constants/backgrounds';
 import { Colors } from '@/constants/colors';
-import { IconSize, Radius, Spacing, Text_ } from '@/theme';
-import { PHeader, PItem, Screen } from '@/components/phone';
-import { Button, Icon, InfoNote, Tag } from '@/components/ui';
-import { ErrorState, LoadingScreen, PdfViewer } from '@/components/feedback';
-import { formatDong } from '@/utils/format';
+import { useAuthenticatedPdf } from '@/hooks/useAuthenticatedPdf';
 import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
-import { TRANSFER_LEGAL_NOTE } from '../constant';
+import { FontFamily, Radius, Spacing } from '@/theme';
+import { signContract } from '../api';
+import { CONTRACT_ART_BOTTOM, CONTRACT_NOTE, PORTFOLIO_MAX_WIDTH, PORTFOLIO_PADDING } from '../constant';
 import { useInvestmentContract } from '../hook/useInvestment';
 import { useInvestorSmartCa } from '../hook/useInvestorSmartCa';
-import { signContract } from '../api';
-import { useAuthenticatedPdf } from '@/hooks/useAuthenticatedPdf';
+import ContractSignSteps from './ContractSignSteps';
+import ContractSummaryCard from './ContractSummaryCard';
+import InvestHeader from './InvestHeader';
+import InvestStatusCard from './InvestStatusCard';
 
-/** Màn 29 — chi tiết hợp đồng đầu tư và ký số VNPT SmartCA. */
+/**
+ * Màn 29 — ký hợp đồng đầu tư (vẽ lại theo bộ mockup): nền hai linh vật cầm hợp đồng của màn "Hợp
+ * đồng của tôi", thẻ tóm tắt phần vốn, rồi hai bước đọc PDF và ký SmartCA.
+ *
+ * Luật ký giữ nguyên: chỉ ký được khi đã mở đúng bản PDF hiện hành và hợp đồng còn trong hạn chờ nhà
+ * đầu tư; thử lại cùng một lần ký giữ nguyên idempotency key, ký xong mới tạo key mới.
+ */
 export default function InvestContractScreen() {
   const nav = useNavigation();
+  const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
+  const width = Math.min(windowWidth, PORTFOLIO_MAX_WIDTH);
+  const [viewportHeight, setViewportHeight] = useState(0);
+
   const { data, loading, error, reload } = useInvestmentContract();
   const [submitting, setSubmitting] = useState(false);
   const [signError, setSignError] = useState<string | null>(null);
@@ -31,20 +47,17 @@ export default function InvestContractScreen() {
   const smartCa = useInvestorSmartCa(data, reload);
 
   const onSign = async () => {
+    if (!data) return;
     setSubmitting(true);
     setSignError(null);
     try {
-      if (!data) return;
       const result = await signContract(data, signKey.current);
       signKey.current = generateIdempotencyKey();
       reload();
       if (result.status === 'SIGNING') {
-        Alert.alert(
-          'Đã gửi yêu cầu SmartCA',
-          'Hãy mở ứng dụng VNPT SmartCA, xác nhận giao dịch rồi quay lại FINORA.',
-        );
+        Alert.alert('Đã gửi yêu cầu SmartCA', 'Hãy mở ứng dụng VNPT SmartCA, xác nhận giao dịch rồi quay lại FINORA.');
       } else {
-        Alert.alert('Đã xác nhận', 'Chữ ký của bạn đã được ghi nhận trên đúng PDF hợp đồng.', [
+        Alert.alert('Đã ký hợp đồng', 'Chữ ký của bạn đã được ghi nhận trên đúng bản PDF hợp đồng.', [
           { text: 'Xong', onPress: () => nav.goBack() },
         ]);
       }
@@ -55,167 +68,118 @@ export default function InvestContractScreen() {
     }
   };
 
-  if (loading) return <Screen><LoadingScreen cards={2} /></Screen>;
-  if (error) return <Screen><ErrorState message={error} onRetry={reload} /></Screen>;
-  if (!data) return null;
+  const renderBody = () => {
+    if (loading && !data) {
+      return (
+        <>
+          <Skeleton height={300} radius={Radius.md} />
+          <Skeleton height={220} radius={Radius.md} />
+        </>
+      );
+    }
+    if (error) {
+      return (
+        <InvestStatusCard
+          icon="alert"
+          danger
+          title={error}
+          hint="Kiểm tra kết nối mạng rồi thử lại."
+          action={{ label: 'Thử lại', onPress: reload }}
+        />
+      );
+    }
+    if (!data) {
+      return (
+        <InvestStatusCard
+          icon="file"
+          title="Chưa có hợp đồng cần ký"
+          hint="Hợp đồng xuất hiện ở đây khi một khoản vay bạn góp vốn đã gọi đủ vốn."
+          action={{ label: 'Quay lại', onPress: () => nav.goBack() }}
+        />
+      );
+    }
 
-  const providerIsMock = data.availableSignatureProvider === 'MOCK';
-  const signingWithSmartCa = data.status === 'SIGNING';
-  const openedCurrentPdf = openedPdfHash === data.pdfDocumentHash;
-  const signatureWindowOpen = data.contractStatus === 'PENDING_LENDER_SIGNATURES'
-    && new Date(data.expiresAt).getTime() > Date.now();
+    const windowOpen = data.contractStatus === 'PENDING_LENDER_SIGNATURES'
+      && new Date(data.expiresAt).getTime() > Date.now();
+    const openPdf = async () => {
+      if (await pdf.openPdf()) setOpenedPdfHash(data.pdfDocumentHash);
+    };
 
-  const openPdf = async () => {
-    if (await pdf.openPdf()) setOpenedPdfHash(data.pdfDocumentHash);
+    return (
+      <>
+        <ContractSummaryCard contract={data} />
+        <ContractSignSteps
+          pdfOpened={openedPdfHash === data.pdfDocumentHash}
+          openingPdf={pdf.opening}
+          onOpenPdf={() => void openPdf()}
+          providerIsMock={data.availableSignatureProvider === 'MOCK'}
+          signed={data.status === 'SIGNED'}
+          signing={data.status === 'SIGNING'}
+          windowOpen={windowOpen}
+          submitting={submitting}
+          checking={smartCa.checking}
+          onSign={() => void onSign()}
+          onCheck={() => void smartCa.check()}
+          error={signError ?? smartCa.error ?? pdf.error}
+        />
+        <View style={styles.note}>
+          <Icon name="info" size={20} color={Colors.authPrimary} />
+          <Text style={styles.noteText}>{CONTRACT_NOTE}</Text>
+        </View>
+        <PdfViewer
+          visible={pdf.previewUri !== null}
+          uri={pdf.previewUri}
+          title={`Hợp đồng ${data.reference}`}
+          onClose={pdf.closePreview}
+          onShare={pdf.sharePdf}
+          sharing={pdf.sharing}
+        />
+      </>
+    );
   };
 
   return (
-    <Screen>
-      <PHeader title="Chi tiết hợp đồng đầu tư" back />
-
-      <View style={styles.summary}>
-        <View style={styles.summaryHead}>
-          <Tag tone={data.status === 'SIGNED' ? 'green' : 'amber'} small>
-            {data.status === 'SIGNED'
-              ? 'Đã ký'
-              : signingWithSmartCa ? 'Đang xác nhận SmartCA' : 'Chờ ký'}
-          </Tag>
-          <Text style={styles.reference}>{data.reference}</Text>
-        </View>
-        <Text style={styles.purpose}>
-          Mục đích: <Text style={styles.purposeStrong}>{data.purpose}</Text>
-        </Text>
-      </View>
-
-      <PItem label="Vốn đầu tư" value={formatDong(data.amount)} />
-      <PItem label="Số notes" value={String(data.noteCount)} />
-      <PItem label="Kỳ hạn" value={`${data.termMonths} tháng`} />
-      <PItem label="Chữ ký nhà đầu tư còn thiếu" value={String(data.remainingLenderSignatures)} last />
-
-      <InfoNote tone="warn" style={styles.legal}>
-        {TRANSFER_LEGAL_NOTE}
-      </InfoNote>
-
-      <View style={styles.sign}>
-        <Text style={styles.signTitle}>PDF hợp đồng chung</Text>
-        <Text style={styles.appHint}>
-          Tất cả nhà đầu tư và người vay ký cùng một PDF/hash. Bạn cần đọc bản hiện hành trước khi xác nhận.
-        </Text>
-        <Button
-          label="Mở nội dung hợp đồng PDF"
-          icon="file"
-          onPress={openPdf}
-          loading={pdf.opening}
-          disabled={pdf.opening}
-          style={styles.action}
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={styles.scroll}
+      showsVerticalScrollIndicator={false}
+      onLayout={e => setViewportHeight(e.nativeEvent.layout.height)}
+      refreshControl={
+        <RefreshControl
+          refreshing={loading && !!data}
+          onRefresh={reload}
+          tintColor={Colors.authPrimary}
+          colors={[Colors.authPrimary]}
         />
-      </View>
-
-      <View style={styles.sign}>
-        <Text style={styles.signTitle} accessibilityRole="header">
-          {providerIsMock ? 'Xác nhận thử nghiệm' : 'Ký số VNPT SmartCA'}
-        </Text>
-
-        {!providerIsMock ? (
-          <View style={styles.appConfirm}>
-            <View style={styles.appIcon}>
-              <Icon name="phone" size={IconSize.xl} color={Colors.brand} />
-            </View>
-            <Text style={styles.appText}>
-              {signingWithSmartCa ? 'Đang chờ xác nhận trên SmartCA' : 'Xác nhận bằng VNPT SmartCA'}
-            </Text>
-            <Text style={styles.appHint}>
-              {signingWithSmartCa
-                ? 'Mở ứng dụng VNPT SmartCA, xác nhận giao dịch rồi quay lại FINORA để kiểm tra kết quả.'
-                : 'FINORA sẽ gửi giao dịch tới tài khoản SmartCA test đang được cấu hình.'}
-            </Text>
-          </View>
-        ) : (
-          <Text style={styles.appHint}>
-            Provider MOCK chỉ phục vụ phát triển và không thay thế chữ ký số hợp pháp.
-          </Text>
-        )}
-
-        {signError ? (
-          <Text style={styles.error} accessibilityLiveRegion="polite">
-            {signError}
-          </Text>
-        ) : null}
-
-        {smartCa.error ? (
-          <Text style={styles.error} accessibilityLiveRegion="polite">
-            {smartCa.error}
-          </Text>
-        ) : null}
-
-        {signingWithSmartCa ? (
-          <Button
-            label="Tôi đã xác nhận, kiểm tra kết quả"
-            icon="check"
-            onPress={smartCa.check}
-            loading={smartCa.checking}
-            disabled={smartCa.checking}
-            style={styles.action}
+      }
+    >
+      <View style={{ width, minHeight: viewportHeight }}>
+        <WaveBackdrop background={CONTRACTS_WAVES} width={width} />
+        <View style={styles.content}>
+          <InvestHeader
+            title="Ký hợp đồng đầu tư"
+            topInset={insets.top}
+            minHeight={CONTRACT_ART_BOTTOM * (width / CONTRACTS_WAVES.width)}
           />
-        ) : (
-          <Button
-            label={providerIsMock ? 'Xác nhận hợp đồng (mock)' : 'Gửi yêu cầu ký SmartCA'}
-            icon="pen"
-            onPress={onSign}
-            loading={submitting}
-            disabled={submitting || data.status === 'SIGNED'
-              || !signatureWindowOpen || !openedCurrentPdf}
-            style={styles.action}
-          />
-        )}
+          {renderBody()}
+        </View>
       </View>
-
-      {pdf.error ? <InfoNote tone="warn" style={styles.legal}>{pdf.error}</InfoNote> : null}
-      <PdfViewer
-        visible={pdf.previewUri !== null}
-        uri={pdf.previewUri}
-        title={`Hợp đồng ${data.reference}`}
-        onClose={pdf.closePreview}
-        onShare={pdf.sharePdf}
-        sharing={pdf.sharing}
-      />
-    </Screen>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  summary: {
-    backgroundColor: Colors.surfaceMuted,
-    borderRadius: Radius.lg,
-    padding: Spacing.xl,
-    marginBottom: Spacing.lg,
+  // Nền trơn của ảnh: phủ hai bên cột trên web rộng và lót lúc ảnh chưa nạp xong.
+  root: { flex: 1, backgroundColor: Colors.contractsFill },
+  scroll: { flexGrow: 1, alignItems: 'center' },
+  content: { gap: Spacing.xl, paddingHorizontal: PORTFOLIO_PADDING, paddingBottom: 40 },
+  note: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: Spacing.md,
+    padding: Spacing.lg,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.walletHistoryNote,
   },
-  summaryHead: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, flexWrap: 'wrap' },
-  reference: { ...Text_.caption, fontFamily: 'monospace', color: Colors.ink3 },
-  purpose: { ...Text_.body, color: Colors.ink },
-  purposeStrong: { ...Text_.bodyBold, color: Colors.ink },
-  legal: { marginTop: Spacing.xl },
-  sign: {
-    marginTop: Spacing.xxl,
-    borderWidth: 1,
-    borderColor: Colors.line,
-    borderRadius: Radius.xl,
-    padding: Spacing.xl,
-    backgroundColor: Colors.card,
-  },
-  signTitle: { ...Text_.title, color: Colors.ink },
-  appConfirm: { alignItems: 'center', gap: Spacing.md, marginBottom: Spacing.lg },
-  appIcon: {
-    width: 78,
-    height: 78,
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.brand50,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  appText: { ...Text_.bodyBold, color: Colors.ink },
-  appHint: { ...Text_.micro, color: Colors.ink3, textAlign: 'center' },
-  error: { ...Text_.micro, color: Colors.red, marginTop: Spacing.lg },
-  action: { marginTop: Spacing.xl },
+  noteText: { flex: 1, fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authMuted },
 });

@@ -47,12 +47,14 @@ export type WalletStackParamList = {
   Portfolio: undefined;
   AutoInvest: undefined;
   InvestContract: undefined;
-  /** Chợ thứ cấp: bảng tin Note đang bán, và tin của chính mình. */
+  /** Chợ Notes: danh sách khoản vay còn Note lưu hành, mỗi khoản một sổ lệnh Ask/Bid. */
   SecondaryMarket: undefined;
-  /** Chi tiết một tin đăng bán; `reference` là mã tin, không phải mã Note. */
-  NoteListingDetail: { reference: string };
-  /** Treo bán một Note đang giữ. */
-  SellNote: { noteNumber: string; noteId: string; outstandingPrincipal: number; defaulted: boolean };
+  /** Sổ lệnh của một đợt gọi vốn; `listingId` là mã đợt, không phải mã khoản vay. */
+  OrderBook: { listingId: number };
+  /** Đặt lệnh; `price` có khi người dùng chạm một mức giá trên thang (% dư nợ). */
+  PlaceBookOrder: { listingId: number; side: 'BID' | 'ASK'; price?: number };
+  /** Lệnh của tôi trên mọi sổ. */
+  MyBookOrders: undefined;
 };
 
 export type ProfileStackParamList = {

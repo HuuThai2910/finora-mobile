@@ -20,42 +20,77 @@ export interface MarketLoan {
   contractStatus?: string | null;
 }
 
-export type PositionStatus = 'ACTIVE' | 'WATCHLIST' | 'FUNDED' | 'CLOSED';
-
+/**
+ * Một vị thế trong danh mục: mọi Note của tôi trên cùng một khoản vay, gộp lại.
+ * Tiền là số VND chỉ để hiển thị — backend đã tính, màn hình không tính lại để hạch toán.
+ */
 export interface PortfolioPosition {
-  loanId: string;
+  loanId: number;
+  /** Đợt gọi vốn của khoản vay — mã sổ lệnh trên chợ Notes. */
+  listingId: number;
+  purpose: string | null;
+  /** Bảng hạng là cấu hình động bên AI nên để chuỗi; thiếu thì null. */
+  grade: string | null;
+  /** Đã ở dạng phần trăm: 15 nghĩa là 15%/năm. */
+  annualRate: number;
+  termMonths: number;
+  noteCount: number;
+  /** Mệnh giá ban đầu của các Note. */
+  principal: number;
+  /** Dư nợ gốc còn lại — phần vốn còn nằm trong khoản vay. */
+  outstanding: number;
+  principalRepaid: number;
+  interestReceived: number;
+  /** Phần của tôi trong tổng vốn khoản vay, %. */
   sharePercent: number;
-  status: PositionStatus;
-  /** Ghi chú dòng dưới, ví dụ "Kỳ 7 nhận +842.500 đ · 11/07". */
-  note?: string;
-  lastCashflow?: number;
 }
 
 export interface PortfolioSummary {
+  /** Vốn đang nằm trong các Note còn dư nợ. */
   investedAmount: number;
-  irrPercent: number;
-  /** Chưa có số liệu thì để `null`; màn hình hiện dấu gạch thay vì khẳng định 0%. */
-  nplPercent: number | null;
+  /** Vốn đã cam kết nhưng khoản vay chưa giải ngân, chưa thành Note. */
+  pendingAmount: number;
+  principalRepaid: number;
+  interestReceived: number;
+  /** Gốc đã thu hồi cộng lãi đã nhận. */
+  totalReceived: number;
+  activeNoteCount: number;
   positionCount: number;
+  /** Lãi suất bình quân theo dư nợ, %/năm — backend tính, không phải IRR. */
+  averageRate: number;
   positions: PortfolioPosition[];
 }
 
+/**
+ * Tiêu chí Auto-Invest. Hạng là chuỗi vì bảng hạng là cấu hình động bên AI
+ * (admin thêm/xoá được), không cố định A–E như `CreditGrade`.
+ */
 export interface AutoInvestConfig {
   enabled: boolean;
-  grades: CreditGrade[];
+  grades: string[];
   minAnnualRate: number;
   maxTermMonths: number;
   amountPerLoan: number;
-  maxPortfolioSharePercent: number;
 }
 
+/** Lý do Auto-Invest bỏ qua một khoản; mã do Investment Service trả về. */
+export type AutoInvestSkipReason =
+  | 'ALREADY_INVESTED'
+  | 'BELOW_MINIMUM'
+  | 'INSUFFICIENT_FUNDS'
+  | 'LISTING_FULL'
+  | 'LISTING_CLOSED'
+  | (string & {});
+
 export interface AutoInvestMatch {
+  /** ISO-8601. */
   at: string;
   loanId: string;
-  grade: CreditGrade;
-  annualRate: number;
+  grade: string | null;
+  annualRate: number | null;
   matched: boolean;
   amount?: number;
+  reason?: AutoInvestSkipReason;
 }
 
 export type SignatureMethod = 'PASSWORD_OTP' | 'APP_CONFIRM';
@@ -76,50 +111,4 @@ export interface InvestmentContract {
   availableSignatureMethod: 'CLICK_WRAP_MVP' | 'VNPT_SMART_CA';
   downloadPath: string;
   expiresAt: string;
-}
-
-export type NoteListingStatus = 'OPEN' | 'SOLD' | 'CANCELLED';
-
-/**
- * Một Note đang được treo bán trên chợ thứ cấp.
- *
- * `defaulted` phải hiển thị rõ ở cả màn đăng bán và màn xác nhận mua: bán Note thuộc khoản vay
- * đang nợ xấu là hợp lệ, nhưng người mua cần biết trước khi quyết định.
- */
-export interface NoteListing {
-  reference: string;
-  noteNumber: string;
-  loanId: string;
-  sellerId: string;
-
-  /** Giá người bán treo. Luôn không vượt dư nợ gốc — backend chặn. */
-  askingPrice: number;
-  outstandingPrincipal: number;
-
-  defaulted: boolean;
-  defaultedReason: string | null;
-
-  annualRate: number;
-  termMonths: number;
-  grade: CreditGrade | null;
-
-  /** Phí và tiền thực nhận nếu bán ở giá đang treo; backend tính, frontend chỉ hiển thị. */
-  estimatedFee: number;
-  estimatedProceeds: number;
-
-  status: NoteListingStatus;
-  buyerId: string | null;
-  soldPrice: number | null;
-  platformFee: number | null;
-  sellerProceeds: number | null;
-}
-
-/** Một Note trong danh mục, để chọn ra khi muốn treo bán. */
-export interface OwnedNote {
-  noteNumber: string;
-  loanId: string;
-  outstandingPrincipal: number;
-  annualRate: number;
-  termMonths: number;
-  status: 'ACTIVE' | 'CLOSED' | 'DEFAULTED';
 }

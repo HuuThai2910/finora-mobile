@@ -203,6 +203,23 @@ export const authFetchWithToken = <T>(path: string, init?: RequestInit): Promise
 export const investmentFetch = <T>(path: string, init?: RequestInit): Promise<T> =>
   request<T>(INVESTMENT_BASE_URL, path, { ...init, authenticated: true });
 
+/**
+ * URL đầy đủ và header xác thực cho một luồng SSE của Investment Service. Luồng không đi qua
+ * `fetch` (React Native không đọc được thân trả về dần dần qua `fetch`), nên tự gắn token ở đây.
+ */
+export const investmentStreamRequest = async (
+  path: string,
+): Promise<{ url: string; headers: Record<string, string> }> => {
+  const token = await getValidAccessToken();
+  return {
+    url: `${INVESTMENT_BASE_URL}${path}`,
+    headers: {
+      ...MOBILE_CLIENT_HEADERS,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  };
+};
+
 /** Gọi Payment Service bằng access token của người dùng hiện tại. */
 export const paymentFetch = <T>(path: string, init?: ApiRequestInit): Promise<T> =>
   request<T>(PAYMENT_BASE_URL, path, { ...init, authenticated: true });
