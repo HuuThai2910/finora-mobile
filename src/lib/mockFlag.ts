@@ -15,13 +15,14 @@ export type MockDomain =
   | 'wallet'
   | 'invest'
   | 'market'
+  /** Tóm tắt hoạt động trang chủ chưa có REST aggregate riêng. */
+  | 'home'
   | 'notification'
   | 'signature'
   | 'products'
   /**
-   * Vòng đời khoản vay sau khi nộp: tiến trình gọi vốn, lịch trả nợ, tất toán.
-   * Tách khỏi `products`/hồ sơ vay vì hai thứ đó đã có backend thật, còn phần
-   * này thì chưa.
+   * Tên miền tương thích cho fixture vòng đời khoản vay cũ. Feature
+   * `loan-servicing` hiện tại không đọc cờ này và luôn dùng Loan/Payment API thật.
    */
   | 'servicing'
   /**

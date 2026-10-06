@@ -14,4 +14,6 @@ export interface AppNotification {
   message: string;
   highlight?: string;
   unread: boolean;
+  occurredAt?: string;
+  externalPushRequired?: boolean;
 }

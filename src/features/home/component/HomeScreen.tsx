@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { useNavigation, type CompositeNavigationProp } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, type CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -47,6 +47,16 @@ export default function HomeScreen() {
   const summary = useHomeSummary();
   const applications = useMyApplications();
   const unread = useUnreadCount();
+  const hasFocused = useRef(false);
+
+  // Màn Home vẫn được giữ trong stack khi mở trung tâm thông báo. Tải lại badge
+  // ở những lần quay về sau để thao tác đánh dấu đã đọc được phản ánh ngay.
+  useFocusEffect(
+    useCallback(() => {
+      if (hasFocused.current) unread.reload();
+      else hasFocused.current = true;
+    }, [unread.reload]),
+  );
 
   // Nội dung cao ít nhất bằng khung cuộn, để trên máy màn cao lớp sóng đáy vẫn sát đáy màn.
   const [viewportHeight, setViewportHeight] = useState(0);
@@ -74,7 +84,7 @@ export default function HomeScreen() {
       case 'topUp':
         return nav.navigate('Ví', { screen: 'TopUp' });
       case 'payInstallment':
-        return nav.navigate('Ví', { screen: 'PayInstallment' });
+        return nav.navigate('Hồ sơ', { screen: 'LoanServicingList' });
     }
   };
 

@@ -24,6 +24,12 @@ export interface PortfolioPositionDto {
   interestReceived: string;
   sharePercent: number;
   status: string;
+  daysPastDue: number;
+  debtGroup: number;
+  overdueAmount: string;
+  servicingStatus: string;
+  maturityDate: string | null;
+  riskDataAsOf: string | null;
 }
 
 export interface PortfolioDto {
@@ -75,6 +81,12 @@ function toPosition(dto: PortfolioPositionDto): PortfolioPosition {
     principalRepaid: toNumber(dto.principalRepaid),
     interestReceived: toNumber(dto.interestReceived),
     sharePercent: Number(dto.sharePercent.toFixed(2)),
+    daysPastDue: dto.daysPastDue ?? 0,
+    debtGroup: dto.debtGroup ?? 1,
+    overdueAmount: toNumber(dto.overdueAmount),
+    servicingStatus: dto.servicingStatus ?? 'ACTIVE',
+    maturityDate: dto.maturityDate,
+    riskDataAsOf: dto.riskDataAsOf,
   };
 }
 

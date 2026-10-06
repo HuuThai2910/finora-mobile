@@ -244,16 +244,19 @@ export const PORTFOLIO: PortfolioSummary = {
       loanId: 3041, listingId: 31, purpose: 'Mở rộng cửa hàng tạp hoá', grade: 'A', annualRate: 13.5,
       termMonths: 12, noteCount: 20, principal: 20_000_000, outstanding: 16_400_000,
       principalRepaid: 3_600_000, interestReceived: 812_000, sharePercent: 20,
+      daysPastDue: 0, debtGroup: 1, overdueAmount: 0, servicingStatus: 'ACTIVE', maturityDate: null, riskDataAsOf: null,
     },
     {
       loanId: 2044, listingId: 24, purpose: 'Học phí cao học', grade: 'B', annualRate: 15,
       termMonths: 9, noteCount: 20, principal: 20_000_000, outstanding: 20_000_000,
       principalRepaid: 0, interestReceived: 472_500, sharePercent: 10,
+      daysPastDue: 12, debtGroup: 2, overdueAmount: 1_250_000, servicingStatus: 'ACTIVE', maturityDate: null, riskDataAsOf: '2026-10-04T00:00:00Z',
     },
     {
       loanId: 1877, listingId: 18, purpose: 'Sửa chữa nhà', grade: 'D', annualRate: 18,
       termMonths: 6, noteCount: 10, principal: 10_000_000, outstanding: 10_000_000,
       principalRepaid: 0, interestReceived: 0, sharePercent: 25,
+      daysPastDue: 0, debtGroup: 1, overdueAmount: 0, servicingStatus: 'ACTIVE', maturityDate: null, riskDataAsOf: null,
     },
   ],
 };

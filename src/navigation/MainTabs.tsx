@@ -33,6 +33,15 @@ import {
 } from '@/features/secondary-market';
 import { AccountInfoScreen, AccountScreen } from '@/features/account';
 import { EkycCaptureScreen, EkycResultScreen, EkycSessionProvider } from '@/features/ekyc';
+import {
+  EarlySettlementScreen,
+  LoanPaymentScreen,
+  LoanServicingDetailScreen,
+  LoanServicingListScreen,
+  PartialPrepaymentScreen,
+  RescheduleLoanScreen,
+  ServicingScheduleScreen,
+} from '@/features/loan-servicing';
 import type {
   HomeStackParamList,
   MarketStackParamList,
@@ -104,6 +113,13 @@ function ProfileTab() {
       <ProfileStack.Screen name="MyContracts" component={MyContractsScreen} />
       <ProfileStack.Screen name="ContractDetail" component={ContractDetailScreen} />
       <ProfileStack.Screen name="RepaymentSchedule" component={RepaymentScheduleScreen} />
+      <ProfileStack.Screen name="LoanServicingList" component={LoanServicingListScreen} />
+      <ProfileStack.Screen name="LoanServicingDetail" component={LoanServicingDetailScreen} />
+      <ProfileStack.Screen name="ServicingSchedule" component={ServicingScheduleScreen} />
+      <ProfileStack.Screen name="LoanPayment" component={LoanPaymentScreen} />
+      <ProfileStack.Screen name="PartialPrepayment" component={PartialPrepaymentScreen} />
+      <ProfileStack.Screen name="EarlySettlement" component={EarlySettlementScreen} />
+      <ProfileStack.Screen name="RescheduleLoan" component={RescheduleLoanScreen} />
       </ProfileStack.Navigator>
     </EkycSessionProvider>
   );

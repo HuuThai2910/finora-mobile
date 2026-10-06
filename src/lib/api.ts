@@ -224,6 +224,10 @@ export const investmentStreamRequest = async (
 export const paymentFetch = <T>(path: string, init?: ApiRequestInit): Promise<T> =>
   request<T>(PAYMENT_BASE_URL, path, { ...init, authenticated: true });
 
+/** Notification Service đi qua Gateway để dùng cùng access token Keycloak. */
+export const notificationFetch = <T>(path: string, init?: ApiRequestInit): Promise<T> =>
+  request<T>(AUTH_BASE_URL, path, { ...init, authenticated: true });
+
 type ParsedError = { code: string; message: string | null; traceId: string | null };
 
 /**

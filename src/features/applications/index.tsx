@@ -5,6 +5,7 @@ export { default as ApplicationDetailScreen } from './screens/ApplicationDetailS
 export { default as MyContractsScreen } from './screens/MyContractsScreen';
 export { default as ContractDetailScreen } from './screens/ContractDetailScreen';
 export { default as RepaymentScheduleScreen } from './screens/RepaymentScheduleScreen';
+export { default as SchedulePeriodRow } from './components/SchedulePeriodRow';
 export { useMyApplications } from './hook/useApplications';
 export { APPLICATION_STATUS } from './constant';
 export { applicationJourneyStatus } from './mappers/statusMeta';

@@ -43,6 +43,13 @@ export interface PortfolioPosition {
   interestReceived: number;
   /** Phần của tôi trong tổng vốn khoản vay, %. */
   sharePercent: number;
+  /** Projection vận hành từ Loan; không thay đổi điều khoản Note đã phát hành. */
+  daysPastDue: number;
+  debtGroup: number;
+  overdueAmount: number;
+  servicingStatus: string;
+  maturityDate: string | null;
+  riskDataAsOf: string | null;
 }
 
 export interface PortfolioSummary {

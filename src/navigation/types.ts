@@ -79,6 +79,13 @@ export type ProfileStackParamList = {
    * nhận cả mảng kỳ trả qua params.
    */
   RepaymentSchedule: { source: 'application' | 'contract'; number: string };
+  LoanServicingList: undefined;
+  LoanServicingDetail: { loanNumber: string };
+  ServicingSchedule: { loanNumber: string };
+  LoanPayment: { loanNumber: string };
+  PartialPrepayment: { loanNumber: string };
+  EarlySettlement: { loanNumber: string };
+  RescheduleLoan: { loanNumber: string };
 };
 
 export type TabParamList = {

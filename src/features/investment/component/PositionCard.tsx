@@ -64,6 +64,16 @@ export default function PositionCard({ position: p, onSell }: Props) {
           {`${p.noteCount} Note, ${formatPercentValue(p.sharePercent)} khoản vay`}
         </Text>
       </View>
+
+      {p.daysPastDue > 0 ? (
+        <View style={[styles.risk, p.debtGroup >= 3 && styles.riskHigh]}>
+          <Icon name="alert" size={18} color={p.debtGroup >= 3 ? Colors.red : Colors.tagAmberText} />
+          <View style={styles.riskTextBlock}>
+            <Text style={styles.riskTitle}>{`Quá hạn ${p.daysPastDue} ngày · Nhóm nợ ${p.debtGroup}`}</Text>
+            <Text style={styles.riskDetail}>{`Số tiền quá hạn ${formatDong(p.overdueAmount)}`}</Text>
+          </View>
+        </View>
+      ) : null}
       <View
         style={styles.track}
         accessibilityRole="progressbar"
@@ -137,6 +147,19 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   fill: { height: BAR_HEIGHT, borderRadius: BAR_HEIGHT / 2, backgroundColor: Colors.authPrimary },
+  risk: {
+    marginTop: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: Radius.sm,
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    alignItems: 'flex-start',
+    backgroundColor: Colors.amberBg,
+  },
+  riskHigh: { backgroundColor: Colors.redBg },
+  riskTextBlock: { flex: 1 },
+  riskTitle: { fontFamily: FontFamily.semibold, fontSize: 13, color: Colors.authInk },
+  riskDetail: { marginTop: 2, fontFamily: FontFamily.regular, fontSize: 12, color: Colors.authMuted },
   figures: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.lg },
   figure: { flex: 1, minWidth: 0, paddingHorizontal: 12, paddingVertical: 8, borderRadius: Radius.sm, backgroundColor: Colors.scheduleTile },
   figureLabel: { fontFamily: FontFamily.regular, fontSize: 12, lineHeight: 17, color: Colors.authMuted },

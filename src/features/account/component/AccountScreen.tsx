@@ -18,7 +18,6 @@ import {
   type UpcomingSetting,
 } from '../constant';
 import { useMyProfile } from '../hook/useAccount';
-import { useScheduleShortcut } from '../hook/useScheduleShortcut';
 import ProfileBackdrop from './ProfileBackdrop';
 import ProfileHeader from './ProfileHeader';
 import ProfileShortcuts, { type ProfileShortcut } from './ProfileShortcuts';
@@ -43,14 +42,9 @@ export default function AccountScreen() {
   const width = Math.min(windowWidth, PROFILE_MAX_WIDTH);
   const { signOut } = useAuth();
   const profile = useMyProfile();
-  const schedule = useScheduleShortcut();
 
   const openInfo = () => nav.navigate('AccountInfo');
   const startEkyc = () => nav.navigate('EkycCapture', { side: 'front' });
-  const openSchedule = () =>
-    schedule.kind === 'contract'
-      ? nav.navigate('RepaymentSchedule', { source: 'contract', number: schedule.contractNumber })
-      : nav.navigate('MyContracts');
 
   const onLogout = () =>
     Alert.alert(LOGOUT_CONFIRM_TITLE, LOGOUT_CONFIRM_BODY, [
@@ -73,13 +67,10 @@ export default function AccountScreen() {
     },
     {
       icon: 'calendar',
-      title: 'Lịch trả nợ',
-      subtitle: 'Theo dõi lịch trả nợ',
-      onPress: openSchedule,
-      hint:
-        schedule.kind === 'contract'
-          ? `Mở lịch trả nợ của hợp đồng ${schedule.contractNumber}`
-          : 'Mở danh sách hợp đồng để chọn khoản vay',
+      title: 'Khoản vay',
+      subtitle: 'Trả nợ và cơ cấu',
+      onPress: () => nav.navigate('LoanServicingList'),
+      hint: 'Mở danh sách khoản vay đã giải ngân',
     },
   ];
 
