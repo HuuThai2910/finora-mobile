@@ -1,4 +1,5 @@
 import { apiFetch, paymentFetch } from '@/lib/api';
+import { PIN_TOKEN_HEADER } from '@/features/pin';
 import type { LoanApplication, PageResponse } from '@/types/loan';
 import type {
   CreateRescheduleInput,
@@ -23,13 +24,18 @@ export const getServicingSchedule = (loanNumber: string, signal?: AbortSignal): 
 export const getLoanApplication = (applicationNumber: string, signal?: AbortSignal): Promise<LoanApplication> =>
   apiFetch<LoanApplication>(`/loan-applications/${encodeURIComponent(applicationNumber)}`, { signal });
 
+/**
+ * Ba lệnh trừ ví trả nợ dưới đây cần token PIN phạm vi `REPAYMENT` lấy ngay trước khi gửi;
+ * hai lời gọi lập báo giá thì không, vì chưa đụng tới tiền.
+ */
 export const createScheduledRepayment = (
   loanApplicationId: number,
   amount: number,
   idempotencyKey: string,
+  pinToken: string,
 ): Promise<RepaymentResult> => paymentFetch<RepaymentResult>('/repayments', {
   method: 'POST',
-  headers: { 'Idempotency-Key': idempotencyKey },
+  headers: { 'Idempotency-Key': idempotencyKey, [PIN_TOKEN_HEADER]: pinToken },
   body: JSON.stringify({ loanApplicationId, amount }),
   timeoutMs: 30_000,
 });
@@ -48,9 +54,10 @@ export const createPartialPrepaymentQuote = (
 export const confirmPartialPrepayment = (
   quoteId: string,
   idempotencyKey: string,
+  pinToken: string,
 ): Promise<RepaymentResult> => paymentFetch<RepaymentResult>('/repayments/partial-prepayment', {
   method: 'POST',
-  headers: { 'Idempotency-Key': idempotencyKey },
+  headers: { 'Idempotency-Key': idempotencyKey, [PIN_TOKEN_HEADER]: pinToken },
   body: JSON.stringify({ quoteId }),
   timeoutMs: 30_000,
 });
@@ -63,9 +70,10 @@ export const createEarlySettlementQuote = (loanApplicationId: number): Promise<E
 export const confirmEarlySettlement = (
   quoteId: string,
   idempotencyKey: string,
+  pinToken: string,
 ): Promise<RepaymentResult> => paymentFetch<RepaymentResult>('/repayments/early-settlement', {
   method: 'POST',
-  headers: { 'Idempotency-Key': idempotencyKey },
+  headers: { 'Idempotency-Key': idempotencyKey, [PIN_TOKEN_HEADER]: pinToken },
   body: JSON.stringify({ quoteId }),
   timeoutMs: 30_000,
 });

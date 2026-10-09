@@ -2,7 +2,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { TabBar } from '@/components/phone';
 import { HomeScreen, NotificationsScreen } from '@/features/home';
-import { LoanDetailScreen, MarketScreen } from '@/features/market';
+import { BorrowerProfileScreen, LoanDetailScreen, MarketScreen } from '@/features/market';
 import {
   PackageDetailScreen,
   ProductDetailScreen,
@@ -68,6 +68,7 @@ function MarketTab() {
     <MarketStack.Navigator screenOptions={stackOptions}>
       <MarketStack.Screen name="Market" component={MarketScreen} />
       <MarketStack.Screen name="LoanDetail" component={LoanDetailScreen} />
+      <MarketStack.Screen name="BorrowerProfile" component={BorrowerProfileScreen} />
       <MarketStack.Screen name="Products" component={ProductListScreen} />
       <MarketStack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <MarketStack.Screen name="Schedule" component={ScheduleScreen} />

@@ -74,6 +74,24 @@ export const WALLET_HISTORY_WAVES: WaveBackground = {
 };
 
 /**
+ * Nền màn "Thông báo" (894×1759, Hải tạo ngày 26/09/2026): robot cầm hộp quà, đồng
+ * xu, nhãn % và đồi sóng nằm trọn trong 560 hàng đầu; từ hàng 1400 là lớp sóng đáy
+ * có mây và lá. Giữa hai đường cắt ảnh chỉ nhạt dần nên thay bằng dải màu. Phóng
+ * đúng bề rộng cột để robot nằm gọn nửa phải, chừa góc trái cho tiêu đề.
+ */
+export const NOTIFICATIONS_WAVES: WaveBackground = {
+  source: require('@/assets/notifications-background.png'),
+  width: 894,
+  height: 1759,
+  topEnd: 560,
+  bottomStart: 1400,
+  zoom: 1,
+  focusX: 0.5,
+  middleFrom: Colors.notificationsFillTop,
+  middleTo: Colors.notificationsFillBottom,
+};
+
+/**
  * Nền chợ Notes: cùng ảnh `wallet-background.png` với "Lịch sử ví" — hai linh vật trao tay đồng
  * xu, đúng hình ảnh nhà đầu tư chuyển nhượng Note cho nhau. Phóng 1,35 lần và canh phải để hai
  * linh vật to hơn, chiếm nửa phải đầu màn, khác hẳn bố cục trải ngang của màn ví.

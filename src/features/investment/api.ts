@@ -1,6 +1,7 @@
 import { isMocked } from '@/lib/mockFlag';
 import * as investMock from '@/lib/mocks/invest';
 import { apiFetch, investmentFetch } from '@/lib/api';
+import { PIN_TOKEN_HEADER } from '@/features/pin';
 import type {
   AutoInvestConfig,
   AutoInvestMatch,
@@ -39,11 +40,18 @@ export const getAutoInvestMatches = async (signal?: AbortSignal): Promise<AutoIn
   return dtos.map(toAutoInvestMatch);
 };
 
-/** Lưu toàn bộ tiêu chí; bật lại sau khi tắt thì xuống cuối hàng chờ khớp lệnh. */
-export const saveAutoInvest = async (config: AutoInvestConfig): Promise<AutoInvestConfig> => {
+/**
+ * Lưu toàn bộ tiêu chí; bật lại sau khi tắt thì xuống cuối hàng chờ khớp lệnh.
+ * Cần token PIN phạm vi `AUTO_INVEST` vì cấu hình này tự giữ tiền trong ví khi khớp.
+ */
+export const saveAutoInvest = async (
+  config: AutoInvestConfig,
+  pinToken: string,
+): Promise<AutoInvestConfig> => {
   if (isMocked('invest')) return investMock.saveAutoInvest(config);
   const dto = await investmentFetch<AutoInvestConfigDto>('/investments/auto-invest', {
     method: 'PUT',
+    headers: { [PIN_TOKEN_HEADER]: pinToken },
     body: JSON.stringify(config),
   });
   return toAutoInvestConfig(dto);
@@ -64,10 +72,14 @@ export const getInvestmentContract = async (signal?: AbortSignal): Promise<Inves
   return selected ? toInvestmentContract(selected) : null;
 };
 
-/** Retry cùng một ý định phải truyền lại đúng idempotency key do screen đang giữ. */
+/**
+ * Retry cùng một ý định phải truyền lại đúng idempotency key do screen đang giữ.
+ * `pinToken` (phạm vi `SIGN_CONTRACT`) thì luôn mới cho từng lần bấm ký.
+ */
 export const signContract = async (
   contract: InvestmentContract,
   idempotencyKey: string,
+  pinToken: string,
 ): Promise<InvestmentContract> => {
   if (isMocked('signature')) {
     await investMock.signContract();
@@ -77,7 +89,7 @@ export const signContract = async (
     `/investor/loan-contracts/${contract.reference}/sign`,
     {
       method: 'POST',
-      headers: { 'Idempotency-Key': idempotencyKey },
+      headers: { 'Idempotency-Key': idempotencyKey, [PIN_TOKEN_HEADER]: pinToken },
       body: JSON.stringify({
         version: contract.version,
         documentHash: contract.documentHash,

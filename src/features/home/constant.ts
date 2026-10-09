@@ -3,29 +3,81 @@ import type { NotificationKind } from '@/types/notification';
 import type { IconName } from '@/constants/icons';
 
 /**
- * Mockup dùng emoji mở đầu mỗi dòng thông báo. Ở đây thay bằng icon vector cùng
- * bộ Lucide để giữ một ngôn ngữ hình ảnh thống nhất và hiển thị đồng nhất trên
- * mọi thiết bị.
+ * Hình đứng trước tên nhóm ở đầu thẻ thông báo. Mỗi hình vẽ đúng việc đã xảy ra
+ * với tiền hoặc khoản vay, không dùng hình chung chung (dấu tích, tia chớp cho mọi
+ * thứ): nhìn hình là đoán được tin trước khi đọc chữ.
  */
 export const NOTIFICATION_ICON: Record<NotificationKind, IconName> = {
-  cashflow: 'coins',
-  disbursement: 'check',
+  /** Tiền trả nợ đã về các Note, khoản vay tất toán. */
+  cashflow: 'handCoins',
+  /** Vốn đã chuyển cho người vay. */
+  disbursement: 'banknoteArrowUp',
+  /** Auto-Invest tự rót vốn theo tiêu chí. */
   autoinvest: 'zap',
-  reminder: 'clock',
-  chain: 'chain',
-  security: 'shield',
-  credit: 'chart',
+  /** Lịch trả nợ được cơ cấu, kỳ sắp đến hạn. */
+  reminder: 'calendarClock',
+  /** Mã băm hợp đồng đã ghi lên sổ cái để đối chiếu. */
+  chain: 'fileCheck',
+  /** Đăng nhập lạ, thay đổi bảo mật tài khoản. */
+  security: 'shieldAlert',
+  /** Điểm tín dụng thay đổi, khoản vay hết quá hạn. */
+  credit: 'gauge',
+  /** Khoản vay đang quá hạn hoặc chạm mốc nợ xấu. */
+  risk: 'clockAlert',
 };
 
+/** Tên nhóm ở đầu mỗi thẻ thông báo, ngay sau hình của nhóm. */
 export const NOTIFICATION_LABEL: Record<NotificationKind, string> = {
   cashflow: 'Dòng tiền',
   disbursement: 'Giải ngân',
   autoinvest: 'Auto-Invest',
-  reminder: 'Nhắc lịch',
+  reminder: 'Lịch trả nợ',
   chain: 'Sổ cái',
   security: 'Bảo mật',
   credit: 'Tín dụng',
+  risk: 'Rủi ro',
 };
+
+/**
+ * Mức chú ý của từng nhóm tin, quyết định màu hình đầu thẻ: `money` xanh lá (kèm số
+ * tiền xanh lá trong câu), `info` xanh của app, `danger` đỏ cả hình lẫn tên nhóm.
+ * Mọi tin cảnh báo (lịch trả nợ đổi, quá hạn, đăng nhập lạ) dùng chung một màu đỏ —
+ * Hải không muốn thêm bậc cam ở giữa. Chữ tên nhóm luôn đi kèm nên màu không phải tín
+ * hiệu duy nhất.
+ */
+export type NotificationTone = 'money' | 'info' | 'danger';
+
+export const NOTIFICATION_TONE: Record<NotificationKind, NotificationTone> = {
+  cashflow: 'money',
+  disbursement: 'info',
+  autoinvest: 'info',
+  reminder: 'danger',
+  chain: 'info',
+  security: 'danger',
+  credit: 'info',
+  risk: 'danger',
+};
+
+/* ---------------- Màn "Thông báo" (09/10/2026) ---------------- */
+
+/** Trên web và máy tính bảng, giữ cột nội dung cỡ điện thoại như các màn danh sách khác. */
+export const NOTIFICATIONS_MAX_WIDTH = 480;
+
+/** Lề hai bên, cùng bộ màn "Lịch sử ví" và "Hợp đồng của tôi". */
+export const NOTIFICATIONS_PADDING = 16;
+
+/**
+ * Các mốc của hình minh hoạ trong `notifications-background.png` (pixel ảnh gốc,
+ * đo bằng PIL). Ảnh đặt sát mép trên màn, không lùi theo vùng an toàn.
+ */
+export const NOTIFICATIONS_ART = {
+  /** Đỉnh ăng-ten robot: hàng tiêu đề nằm trọn phía trên mốc này. */
+  top: 277,
+  /** Chân robot, hộp quà và chồng xu: danh sách thông báo bắt đầu từ đây. */
+  bottom: 488,
+  /** Mép trái cụm lá + nhãn % cạnh robot: dòng phụ dưới tiêu đề không vượt quá mốc này. */
+  left: 434,
+} as const;
 
 /** Mascot robot cầm đồng xu trên thẻ ví (ảnh Hải tạo, đã cắt sát hình). */
 export const WALLET_MASCOT: ImageSourcePropType = require('@/assets/mascot-coin.png');

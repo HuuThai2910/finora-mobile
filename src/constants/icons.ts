@@ -476,6 +476,69 @@ export const ICONS = {
     { t: 'path', d: 'M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8' },
     { t: 'path', d: 'M12 17.5v-11' },
   ],
+  // Bàn phím nhập mã PIN: phím xoá số vừa nhập. Nét chuẩn của Lucide (delete).
+  delete: [
+    {
+      t: 'path',
+      d: 'M10 5a2 2 0 0 0-1.344.519l-6.328 5.74a1 1 0 0 0 0 1.481l6.328 5.741A2 2 0 0 0 10 19h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z',
+    },
+    { t: 'path', d: 'm12 9 6 6' },
+    { t: 'path', d: 'm18 9-6 6' },
+  ],
+  // Màn "Thông báo" (10/10/2026): mỗi nhóm tin một hình nói đúng việc đã xảy ra —
+  // tay nhận xu (tiền trả nợ về Note), tờ tiền có mũi tên lên (vốn đã giải ngân),
+  // lịch có đồng hồ (lịch trả nợ đổi), hồ sơ có dấu tích (hợp đồng đã neo sổ cái),
+  // đồng hồ đo (điểm tín dụng), đồng hồ báo động (quá hạn). Chép nguyên từ lucide-static 1.48.0.
+  handCoins: [
+    { t: 'path', d: 'M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17' },
+    {
+      t: 'path',
+      d: 'm7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9',
+    },
+    { t: 'path', d: 'm2 16 6 6' },
+    { t: 'circle', cx: 16, cy: 9, r: 2.9 },
+    { t: 'circle', cx: 6, cy: 5, r: 3 },
+  ],
+  banknoteArrowUp: [
+    { t: 'path', d: 'M12 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5' },
+    { t: 'path', d: 'M18 12h.01' },
+    { t: 'path', d: 'M19 22v-6' },
+    { t: 'path', d: 'm22 19-3-3-3 3' },
+    { t: 'path', d: 'M6 12h.01' },
+    { t: 'circle', cx: 12, cy: 12, r: 2 },
+  ],
+  calendarClock: [
+    { t: 'path', d: 'M16 14v2.2l1.6 1' },
+    { t: 'path', d: 'M16 2v3' },
+    { t: 'path', d: 'M21 7.338V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h2.338' },
+    { t: 'path', d: 'M3 9h5.859' },
+    { t: 'path', d: 'M8 2v3' },
+    { t: 'circle', cx: 16, cy: 16, r: 6 },
+  ],
+  fileCheck: [
+    {
+      t: 'path',
+      d: 'M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z',
+    },
+    { t: 'path', d: 'M14 2v5a1 1 0 0 0 1 1h5' },
+    { t: 'path', d: 'm9 15 2 2 4-4' },
+  ],
+  gauge: [
+    { t: 'path', d: 'm12 14 4-4' },
+    { t: 'path', d: 'M3.34 19a10 10 0 1 1 17.32 0' },
+  ],
+  clockAlert: [
+    { t: 'path', d: 'M12 6v6l4 2' },
+    { t: 'path', d: 'M20 12v5' },
+    { t: 'path', d: 'M20 21h.01' },
+    { t: 'path', d: 'M21.25 8.2A10 10 0 1 0 16 21.16' },
+  ],
+  // Nút "Đánh dấu tất cả đã đọc" ở đầu màn Thông báo: hai dấu tích, hình quen thuộc
+  // của thao tác đọc hết. Chép nguyên từ lucide-static 1.48.0 (check-check).
+  checkCheck: [
+    { t: 'path', d: 'M18 6 7 17l-5-5' },
+    { t: 'path', d: 'm22 10-7.5 7.5L13 16' },
+  ],
 } satisfies Record<string, IconShape[]>;
 
 export type IconName = keyof typeof ICONS;

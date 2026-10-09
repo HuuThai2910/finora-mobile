@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { generateIdempotencyKey } from '@/lib/api';
+import { usePinGuard } from '@/features/pin';
 import type { LoanContractDetail } from '@/types/contract';
 import { useDeclineContractMutation, useSignContractMutation } from '../api/applicationApi';
 import type { DeclineReasonCode } from '../constant';
@@ -23,6 +24,9 @@ export type ContractConsentState = {
  * bấm sau là *cùng một ý định*, không tạo ra hai lần ký.
  * `version`, hash văn bản legacy và hash PDF đều lấy nguyên từ Contract đang
  * hiển thị để consent gắn đúng artifact server mà người dùng vừa đọc.
+ *
+ * Ký là thao tác nhạy cảm: hỏi mã PIN ngay trước lời gọi ký. Người dùng đóng bảng PIN thì
+ * dừng lặng lẽ (không báo lỗi, giữ nguyên key). Từ chối hợp đồng không cần PIN.
  */
 export function useContractConsent(contract: LoanContractDetail): ContractConsentState {
   const [signContract, signState] = useSignContractMutation();
@@ -30,12 +34,15 @@ export function useContractConsent(contract: LoanContractDetail): ContractConsen
   const [error, setError] = useState<ActionError | null>(null);
   const signKey = useRef(generateIdempotencyKey());
   const declineKey = useRef(generateIdempotencyKey());
+  const { requirePin } = usePinGuard();
 
   const busy = signState.isLoading || declineState.isLoading;
 
   const sign = async (): Promise<boolean> => {
     if (busy) return false;
     setError(null);
+    const pinToken = await requirePin('SIGN_CONTRACT');
+    if (!pinToken) return false;
     try {
       await signContract({
         contractNumber: contract.contractNumber,
@@ -44,6 +51,7 @@ export function useContractConsent(contract: LoanContractDetail): ContractConsen
         pdfDocumentHash: contract.pdfDocument?.contentHash,
         idempotencyKey: signKey.current,
         signatureMethod: contract.availableSignatureMethod,
+        pinToken,
       }).unwrap();
       signKey.current = generateIdempotencyKey();
       return true;

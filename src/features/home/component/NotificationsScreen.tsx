@@ -1,76 +1,109 @@
 import { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { WaveBackdrop } from '@/components/phone';
+import { NOTIFICATIONS_WAVES } from '@/constants/backgrounds';
 import { Colors } from '@/constants/colors';
-import { Text_ } from '@/theme';
-import { PHeader, PItem, Screen } from '@/components/phone';
-import { Tag } from '@/components/ui';
-import { EmptyState, ErrorState, LoadingScreen } from '@/components/feedback';
-import { toUserMessage } from '@/lib/api';
-import { NOTIFICATION_ICON, NOTIFICATION_LABEL } from '../constant';
-import { useNotifications } from '../hook/useHome';
-import { markNotificationRead } from '../api';
+import { FontFamily, Spacing } from '@/theme';
+import { NOTIFICATIONS_MAX_WIDTH, NOTIFICATIONS_PADDING } from '../constant';
+import { useNotificationFeed } from '../hook/useNotificationFeed';
+import NotificationActionError from './NotificationActionError';
+import NotificationCard from './NotificationCard';
+import NotificationListSkeleton from './NotificationListSkeleton';
+import NotificationListStatus from './NotificationListStatus';
+import NotificationsHeader from './NotificationsHeader';
 
-/** Màn 9 — trung tâm thông báo. */
+/** Chừa đủ chỗ dưới thẻ cuối để lớp sóng đáy (mây, lá) lộ ra như trang chủ. */
+const BOTTOM_SPACE = 96;
+
+/**
+ * Màn 9 — trung tâm thông báo, cùng bộ với "Lịch sử ví" và "Hợp đồng của tôi":
+ * nền minh hoạ robot hộp quà, tin nhóm theo ngày, mỗi tin một thẻ; tin chưa đọc
+ * có chấm đỏ. Tối đa 50 tin nên vẽ bằng ScrollView để nền cuộn cùng nội dung.
+ */
 export default function NotificationsScreen() {
-  const { data, loading, error, reload } = useNotifications();
-  const unread = data?.filter(n => n.unread).length ?? 0;
-  const [markingId, setMarkingId] = useState<string | null>(null);
-  const [mutationError, setMutationError] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
+  const width = Math.min(windowWidth, NOTIFICATIONS_MAX_WIDTH);
+  // Nội dung cao ít nhất bằng khung cuộn để lớp sóng đáy nằm sát đáy màn.
+  const [viewportHeight, setViewportHeight] = useState(0);
 
-  const markAsRead = async (id: string) => {
-    if (markingId) return;
-    setMarkingId(id);
-    setMutationError(null);
-    try {
-      await markNotificationRead(id);
-      reload();
-    } catch (e: unknown) {
-      setMutationError(toUserMessage(e));
-    } finally {
-      setMarkingId(null);
+  const feed = useNotificationFeed();
+
+  const renderBody = () => {
+    if (feed.phase === 'loading') return <NotificationListSkeleton />;
+    if (feed.phase === 'error') {
+      return (
+        <NotificationListStatus
+          kind="error"
+          message={feed.error ?? 'Không tải được thông báo.'}
+          onRetry={feed.refresh}
+        />
+      );
     }
+    if (feed.counts.all === 0) return <NotificationListStatus kind="empty" />;
+    return feed.groups.map(group => (
+      <View key={group.key} style={styles.group}>
+        <Text style={styles.day} accessibilityRole="header" maxFontSizeMultiplier={1.4}>
+          {group.title}
+        </Text>
+        {group.items.map(item => (
+          <NotificationCard key={item.id} item={item} onMarkRead={feed.markRead} />
+        ))}
+      </View>
+    ));
   };
 
   return (
-    <Screen onRefresh={reload} refreshing={loading && !!data}>
-      <PHeader
-        title="Thông báo"
-        back
-        right={unread > 0 ? <Tag tone="red" small>{`${unread} mới`}</Tag> : undefined}
-      />
-
-      {mutationError ? <Text style={styles.error}>{mutationError}</Text> : null}
-
-      {loading && !data ? (
-        <LoadingScreen cards={2} />
-      ) : error ? (
-        <ErrorState message={error} onRetry={reload} />
-      ) : !data?.length ? (
-        <EmptyState icon="bell" title="Chưa có thông báo" hint="Tin mới sẽ hiện ở đây." />
-      ) : (
-        data.map((n, i) => (
-          <PItem
-            key={n.id}
-            icon={NOTIFICATION_ICON[n.kind]}
-            label={
-              <Text style={[styles.message, n.unread && styles.unread]}>
-                {n.message}
-                {n.highlight ? <Text style={styles.highlight}> {n.highlight}</Text> : null}
-              </Text>
-            }
-            sub={NOTIFICATION_LABEL[n.kind]}
-            onPress={n.unread && !markingId ? () => void markAsRead(n.id) : undefined}
-            last={i === data.length - 1}
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={styles.scroll}
+      showsVerticalScrollIndicator={false}
+      onLayout={e => setViewportHeight(e.nativeEvent.layout.height)}
+      refreshControl={
+        <RefreshControl
+          // Lần tải đầu đã có khung giả; vòng xoay chỉ dành cho kéo làm mới.
+          refreshing={feed.refreshing}
+          onRefresh={feed.refresh}
+          // iOS đọc `tintColor`, Android đọc `colors`.
+          tintColor={Colors.authPrimary}
+          colors={[Colors.authPrimary]}
+        />
+      }
+    >
+      <View style={{ width, minHeight: viewportHeight }}>
+        <WaveBackdrop background={NOTIFICATIONS_WAVES} width={width} />
+        <View style={styles.content}>
+          <NotificationsHeader
+            width={width}
+            topInset={insets.top}
+            loading={feed.phase === 'loading'}
+            counts={feed.phase === 'ready' ? feed.counts : null}
+            markingAll={feed.markingAll}
+            onMarkAllRead={feed.markAllRead}
           />
-        ))
-      )}
-    </Screen>
+          <View style={styles.list}>
+            {feed.actionError ? <NotificationActionError message={feed.actionError} /> : null}
+            {renderBody()}
+          </View>
+        </View>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  message: { ...Text_.body, color: Colors.ink2 },
-  unread: { color: Colors.ink },
-  highlight: { ...Text_.bodyBold, color: Colors.emerald },
-  error: { ...Text_.body, color: Colors.red, marginBottom: 12 },
+  // Nền trơn của ảnh: phủ hai bên cột trên web rộng và lót lúc ảnh chưa nạp xong.
+  root: { flex: 1, backgroundColor: Colors.notificationsFillTop },
+  scroll: { flexGrow: 1, alignItems: 'center' },
+  content: { paddingHorizontal: NOTIFICATIONS_PADDING, paddingBottom: BOTTOM_SPACE },
+  list: { gap: Spacing.xl },
+  group: { gap: Spacing.md },
+  day: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 14,
+    lineHeight: 20,
+    color: Colors.authMuted,
+    marginBottom: Spacing.xs,
+  },
 });

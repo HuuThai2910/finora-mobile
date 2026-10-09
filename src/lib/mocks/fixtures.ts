@@ -19,6 +19,8 @@ import type {
 import type {
   AutoInvestConfig,
   AutoInvestMatch,
+  BorrowerProfile,
+  BorrowerRuleResult,
   InvestmentContract,
   MarketLoan,
   PortfolioSummary,
@@ -169,64 +171,173 @@ export const HOME_CHAIN_REF = {
 
 /* ---------------- Sàn khoản vay ---------------- */
 
+/** Hạn gọi vốn tính từ lúc mở app, để khoản vay mẫu luôn còn đang mở khi demo. */
+const daysFromNow = (days: number): string => new Date(Date.now() + days * 86_400_000).toISOString();
+
+/**
+ * Tham số sàn lấy theo giá trị khởi tạo của Investment (mệnh giá 1 triệu, tối thiểu một Note);
+ * phần đã gọi luôn là bội số mệnh giá như dữ liệu thật.
+ */
+const NOTE_TERMS = { noteDenomination: 1_000_000, minInvestmentAmount: 1_000_000, status: 'OPEN' } as const;
+
 export const MARKET_LOANS: MarketLoan[] = [
   {
     id: 'LN-2041',
+    applicationNumber: 'LA-MOCK-2041',
     amount: 60_000_000,
+    committedAmount: 47_000_000,
+    remainingAmount: 13_000_000,
     annualRate: 16.5,
     termMonths: 18,
+    repaymentMethod: 'EQUAL_PRINCIPAL',
     purpose: 'Bổ sung vốn kinh doanh tạp hóa',
     region: 'Hà Nội',
     grade: 'A',
     score: 82,
     fundedPercent: 78,
-    borrowerHistory: '1 khoản tất toán đúng hạn',
-    estimatedMonthlyReturn: 320_000,
-    estimatedTotalReturn: 5_760_000,
+    ...NOTE_TERMS,
+    fundingClosesAt: daysFromNow(9),
   },
   {
     id: 'LN-2043',
+    applicationNumber: 'LA-MOCK-2043',
     amount: 35_000_000,
+    committedAmount: 16_000_000,
+    remainingAmount: 19_000_000,
     annualRate: 18.0,
     termMonths: 12,
+    repaymentMethod: 'ANNUITY',
     purpose: 'Sửa chữa xe tải chở hàng',
     region: 'Đồng Nai',
     grade: 'B',
     score: 71,
-    fundedPercent: 45,
-    borrowerHistory: 'Khoản vay đầu tiên',
-    estimatedMonthlyReturn: 455_000,
-    estimatedTotalReturn: 5_460_000,
+    fundedPercent: 46,
+    ...NOTE_TERMS,
+    fundingClosesAt: daysFromNow(5),
   },
   {
     id: 'LN-2044',
+    applicationNumber: 'LA-MOCK-2044',
     amount: 90_000_000,
+    committedAmount: 83_000_000,
+    remainingAmount: 7_000_000,
     annualRate: 15.0,
     termMonths: 24,
+    repaymentMethod: 'EQUAL_PRINCIPAL',
     purpose: 'Mở rộng xưởng may gia công',
     region: 'TP.HCM',
     grade: 'A',
     score: 88,
     fundedPercent: 92,
-    borrowerHistory: '2 khoản tất toán đúng hạn',
-    estimatedMonthlyReturn: 240_000,
-    estimatedTotalReturn: 5_780_000,
+    ...NOTE_TERMS,
+    fundingClosesAt: daysFromNow(2),
   },
   {
     id: 'LN-2046',
+    applicationNumber: 'LA-MOCK-2046',
     amount: 25_000_000,
+    committedAmount: 3_000_000,
+    remainingAmount: 22_000_000,
     annualRate: 19.0,
     termMonths: 9,
+    repaymentMethod: 'ANNUITY',
     purpose: 'Nhập hàng bán Tết',
     region: 'Cần Thơ',
     grade: 'C',
     score: 58,
     fundedPercent: 12,
-    borrowerHistory: 'Khoản vay đầu tiên',
-    estimatedMonthlyReturn: 590_000,
-    estimatedTotalReturn: 5_310_000,
+    ...NOTE_TERMS,
+    fundingClosesAt: daysFromNow(12),
   },
 ];
+
+/* ---------------- Hồ sơ người vay của khoản vay trên sàn (Loan Service) ---------------- */
+
+/** Mô tả năm luật của chính sách tín dụng hiện hành, chép từ `finora-ai/config/product_config.json`. */
+const RULE_TEXT = {
+  burden: 'Tiền trả hàng tháng trên thu nhập tháng — càng thấp càng tốt',
+  dti: 'Tỷ lệ nợ trên thu nhập hiện có (DTI) — càng thấp càng tốt',
+  seeking: 'Số lần bị tra cứu CIC 6 tháng — tìm vốn dồn dập là dấu hiệu khát tiền',
+  cic: 'Điểm tín dụng CIC — lịch sử trả nợ tại các tổ chức tín dụng',
+  home: 'Tình trạng nhà ở — đại diện cho tài sản tích lũy và độ ổn định cư trú',
+};
+
+/**
+ * Bảng luật mẫu: mỗi luật tối đa 20 điểm, tổng điểm bằng `score` của khoản vay trên sàn. CIC `null`
+ * là thiếu dữ liệu (AI cho điểm trung tính 8) để xem được dòng "thiếu dữ liệu".
+ */
+const mockRules = (
+  values: { burden: number; dti: number; inquiries: number; cic: number | null; home: string },
+  points: [number, number, number, number, number],
+): BorrowerRuleResult[] => [
+  { code: 'CAPACITY_INSTALLMENT_BURDEN', description: RULE_TEXT.burden, field: 'ty_le_tra_no_thang', value: values.burden, points: points[0], maxPoints: 20, weight: 1, missingData: false },
+  { code: 'CAPACITY_EXISTING_DEBT', description: RULE_TEXT.dti, field: 'dti', value: values.dti, points: points[1], maxPoints: 20, weight: 1, missingData: false },
+  { code: 'CHARACTER_CREDIT_SEEKING', description: RULE_TEXT.seeking, field: 'so_lan_tra_cuu', value: values.inquiries, points: points[2], maxPoints: 20, weight: 1, missingData: false },
+  { code: 'CHARACTER_CIC_HISTORY', description: RULE_TEXT.cic, field: 'cic_score', value: values.cic, points: points[3], maxPoints: 20, weight: 1, missingData: values.cic === null },
+  { code: 'CAPITAL_RESIDENCE_STABILITY', description: RULE_TEXT.home, field: 'home_ownership', value: values.home, points: points[4], maxPoints: 20, weight: 1, missingData: false },
+];
+
+const NO_FINORA_HISTORY = { hasHistory: false, completedLoans: 0, delinquenciesLast2Years: 0, defaultedLoans: 0 };
+
+/** Theo `applicationNumber` của `MARKET_LOANS`; LA-MOCK-2046 dùng hồ sơ giả lập để xem ghi chú tương ứng. */
+export const BORROWER_PROFILES: Record<string, BorrowerProfile> = {
+  'LA-MOCK-2041': {
+    applicationNumber: 'LA-MOCK-2041',
+    loan: {
+      purposeLabel: 'Vốn kinh doanh nhỏ', purposeDetail: 'Nhập thêm hàng cho tiệm tạp hóa trước mùa cao điểm',
+      requestedAmount: 60_000_000, termMonths: 18, repaymentMethod: 'EQUAL_PRINCIPAL', finalAnnualRate: 16.5,
+      firstInstallment: 4_158_333, maximumInstallment: 4_158_333, totalRepayment: 67_837_500,
+      expectedDisbursementDate: daysFromNow(14).slice(0, 10),
+    },
+    capacity: { monthlyIncome: 45_000_000, monthlyDebt: 3_600_000, dtiPercent: 8, employmentMonths: 84, selfDeclared: true, capturedAt: daysFromNow(-6) },
+    background: { age: 38, kycStatus: 'VERIFIED', mockProfile: false, homeOwnership: 'MORTGAGE', educationLevel: 'COLLEGE' },
+    creditHistory: { hasHistory: true, completedLoans: 1, delinquenciesLast2Years: 0, defaultedLoans: 0 },
+    assessment: { evaluationScore: 86.4, grade: 'A', pdPercent: 11.8, ruleScore: 82, decisionSource: 'AI_POLICY', scoredAt: daysFromNow(-6) },
+    rules: mockRules({ burden: 0.0924, dti: 8, inquiries: 2, cic: 752, home: 'MORTGAGE' }, [20, 20, 6, 20, 16]),
+  },
+  'LA-MOCK-2043': {
+    applicationNumber: 'LA-MOCK-2043',
+    loan: {
+      purposeLabel: 'Mua hoặc sửa chữa xe', purposeDetail: 'Sửa chữa xe tải chở hàng',
+      requestedAmount: 35_000_000, termMonths: 12, repaymentMethod: 'ANNUITY', finalAnnualRate: 18,
+      firstInstallment: 3_208_800, maximumInstallment: 3_208_800, totalRepayment: 38_505_600,
+      expectedDisbursementDate: daysFromNow(10).slice(0, 10),
+    },
+    capacity: { monthlyIncome: 18_000_000, monthlyDebt: 1_600_000, dtiPercent: 8.89, employmentMonths: 30, selfDeclared: true, capturedAt: daysFromNow(-4) },
+    background: { age: 29, kycStatus: 'VERIFIED', mockProfile: false, homeOwnership: 'RENT', educationLevel: 'HIGH_SCHOOL' },
+    creditHistory: NO_FINORA_HISTORY,
+    assessment: { evaluationScore: 74.1, grade: 'B', pdPercent: 22.4, ruleScore: 71, decisionSource: 'ADMIN', scoredAt: daysFromNow(-4) },
+    rules: mockRules({ burden: 0.1783, dti: 8.89, inquiries: 0, cic: null, home: 'RENT' }, [15, 20, 20, 8, 8]),
+  },
+  'LA-MOCK-2044': {
+    applicationNumber: 'LA-MOCK-2044',
+    loan: {
+      purposeLabel: 'Vốn kinh doanh nhỏ', purposeDetail: 'Mở rộng xưởng may gia công: mua thêm 6 máy may công nghiệp',
+      requestedAmount: 90_000_000, termMonths: 24, repaymentMethod: 'EQUAL_PRINCIPAL', finalAnnualRate: 15,
+      firstInstallment: 4_875_000, maximumInstallment: 4_875_000, totalRepayment: 104_062_500,
+      expectedDisbursementDate: daysFromNow(7).slice(0, 10),
+    },
+    capacity: { monthlyIncome: 65_000_000, monthlyDebt: 3_900_000, dtiPercent: 6, employmentMonths: 120, selfDeclared: true, capturedAt: daysFromNow(-9) },
+    background: { age: 41, kycStatus: 'VERIFIED', mockProfile: false, homeOwnership: 'OWN', educationLevel: 'UNIVERSITY' },
+    creditHistory: { hasHistory: true, completedLoans: 2, delinquenciesLast2Years: 0, defaultedLoans: 0 },
+    assessment: { evaluationScore: 88.2, grade: 'A', pdPercent: 9.6, ruleScore: 88, decisionSource: 'AI_POLICY', scoredAt: daysFromNow(-9) },
+    rules: mockRules({ burden: 0.075, dti: 6, inquiries: 1, cic: 715, home: 'OWN' }, [20, 20, 13, 15, 20]),
+  },
+  'LA-MOCK-2046': {
+    applicationNumber: 'LA-MOCK-2046',
+    loan: {
+      purposeLabel: 'Vốn kinh doanh nhỏ', purposeDetail: 'Nhập hàng bán Tết',
+      requestedAmount: 25_000_000, termMonths: 9, repaymentMethod: 'ANNUITY', finalAnnualRate: 19,
+      firstInstallment: 3_002_400, maximumInstallment: 3_002_400, totalRepayment: 27_021_600,
+      expectedDisbursementDate: daysFromNow(16).slice(0, 10),
+    },
+    capacity: { monthlyIncome: 11_000_000, monthlyDebt: 2_900_000, dtiPercent: 26.36, employmentMonths: 14, selfDeclared: true, capturedAt: daysFromNow(-2) },
+    background: { age: 30, kycStatus: 'VERIFIED', mockProfile: true, homeOwnership: 'MORTGAGE', educationLevel: null },
+    creditHistory: NO_FINORA_HISTORY,
+    assessment: { evaluationScore: 58.7, grade: 'C', pdPercent: 33.9, ruleScore: 58, decisionSource: 'ADMIN', scoredAt: daysFromNow(-2) },
+    rules: mockRules({ burden: 0.2729, dti: 26.36, inquiries: 3, cic: 742, home: 'MORTGAGE' }, [8, 8, 6, 20, 16]),
+  },
+};
 
 /* ---------------- Danh mục đầu tư ---------------- */
 
@@ -357,14 +468,82 @@ export const LOAN_CONTRACT: LoanContract = {
 
 /* ---------------- Thông báo ---------------- */
 
+/** Lùi `minutes` phút từ lúc mở app: tin "vừa xong" luôn nằm trong quá khứ, kể cả lúc nửa đêm. */
+const minutesAgo = (minutes: number): string => new Date(Date.now() - minutes * 60_000).toISOString();
+
+/**
+ * Tin mẫu rải trong hôm nay, hôm qua và vài ngày trước để màn Thông báo đủ các
+ * nhóm ngày. Tin dòng tiền, cơ cấu và quá hạn viết theo mẫu câu của
+ * finora-notification; giải ngân, Auto-Invest, sổ cái, bảo mật chưa có backend
+ * phát tin nên câu chữ chỉ là minh hoạ.
+ */
 export const NOTIFICATIONS: AppNotification[] = [
-  { id: 'N-1', kind: 'cashflow', message: 'Nhận phân bổ từ LN-1975', highlight: '+842.500 đ', unread: true },
-  { id: 'N-2', kind: 'disbursement', message: 'LN-2039 giải ngân thành công — bạn góp 8%', unread: true },
-  { id: 'N-3', kind: 'autoinvest', message: 'Auto-Invest khớp LN-2044 (4 tr)', unread: true },
-  { id: 'N-4', kind: 'reminder', message: 'Nhắc: kỳ 5 đến hạn sau 35 ngày', unread: false },
-  { id: 'N-5', kind: 'chain', message: 'Hợp đồng LN-1980 đã neo Proof of Existence', unread: false },
-  { id: 'N-6', kind: 'security', message: 'Đăng nhập mới từ thiết bị lạ — xác minh?', unread: false },
-  { id: 'N-7', kind: 'credit', message: 'Điểm tín dụng tăng lên B+ sau kỳ trả đúng hạn', unread: false },
+  {
+    id: 'N-1',
+    kind: 'cashflow',
+    title: 'Đã nhận khoản trả nợ',
+    message: 'LN-1975 vừa phân bổ 842.500 đ vào các Note của bạn.',
+    highlight: '842.500 đ',
+    unread: true,
+    occurredAt: minutesAgo(18),
+  },
+  {
+    id: 'N-2',
+    kind: 'disbursement',
+    title: 'Khoản vay đã giải ngân',
+    message: 'LN-2039 giải ngân thành công, bạn góp 8% vốn.',
+    unread: true,
+    occurredAt: minutesAgo(95),
+  },
+  {
+    id: 'N-3',
+    kind: 'autoinvest',
+    title: 'Auto-Invest đã khớp lệnh',
+    message: 'Đã rót 4.000.000 đ vào LN-2044 theo tiêu chí bạn đặt.',
+    highlight: '4.000.000 đ',
+    unread: true,
+    occurredAt: demoTime(1, 20, 41),
+  },
+  {
+    id: 'N-4',
+    kind: 'reminder',
+    title: 'Lịch trả nợ đã được cơ cấu',
+    message: 'LN-1980 có ngày đáo hạn mới 15/04/2027.',
+    unread: false,
+    occurredAt: demoTime(1, 9, 5),
+  },
+  {
+    id: 'N-5',
+    kind: 'risk',
+    title: 'Khoản vay đang quá hạn',
+    message: 'LN-1990 đang quá hạn 12 ngày.',
+    unread: false,
+    occurredAt: demoTime(3, 8, 30),
+  },
+  {
+    id: 'N-6',
+    kind: 'chain',
+    title: 'Hợp đồng đã neo lên sổ cái',
+    message: 'Mã băm hợp đồng LN-1980 đã được ghi lên blockchain để đối chiếu.',
+    unread: false,
+    occurredAt: demoTime(4, 14, 2),
+  },
+  {
+    id: 'N-7',
+    kind: 'security',
+    title: 'Đăng nhập trên thiết bị mới',
+    message: 'Nếu không phải bạn, hãy đổi mật khẩu ngay.',
+    unread: false,
+    occurredAt: demoTime(6, 22, 15),
+  },
+  {
+    id: 'N-8',
+    kind: 'credit',
+    title: 'Điểm tín dụng được cập nhật',
+    message: 'Bạn trả đúng hạn kỳ 4, điểm tín dụng tăng lên B+.',
+    unread: false,
+    occurredAt: demoTime(9, 10, 0),
+  },
 ];
 
 /* ---------------- Gói vay VENTO ---------------- */

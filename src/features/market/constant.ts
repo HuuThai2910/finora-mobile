@@ -1,5 +1,8 @@
 import type { ImageSourcePropType } from 'react-native';
 import type { CreditGrade, TagTone } from '@/components/ui';
+import { Colors } from '@/constants/colors';
+import type { IconName } from '@/constants/icons';
+import type { FundingState, InvestBlock } from './investRules';
 
 /**
  * Mockup tô tag theo hạng: A xanh lá, B xanh dương, C/D hổ phách.
@@ -41,4 +44,44 @@ export const MARKET_HERO: {
   height: 724,
   cropLeft: 700,
   groundRow: 614,
+};
+
+/* ---------- Màn chi tiết khoản vay: xem và góp vốn (cùng bộ với sổ lệnh chợ Notes) ---------- */
+
+/** Robot cầm đồng xu (toàn thân, 480×510) — góc phải thẻ đầu màn, như thẻ giá của sổ lệnh. */
+export const LOAN_HERO_MASCOT: ImageSourcePropType = require('@/assets/mascot-coin.png');
+
+/** Robot nửa người cầm đồng xu (480×459, nền trong) — góc thẻ "Tạm tính", như form đặt lệnh. */
+export const ESTIMATE_MASCOT: ImageSourcePropType = require('@/assets/mascot-coin-bust.png');
+
+/** Số tiền điền sẵn khi mở màn (giữ mức của màn cũ), tự kẹp vào khoảng đặt được của từng khoản. */
+export const DEFAULT_INVEST_AMOUNT = 5_000_000;
+
+export const INVEST_NOTE =
+  'Tiền được giữ tạm trong ví ngay khi đặt lệnh và chỉ chuyển đi khi khoản vay gọi đủ 100% vốn và các bên ký hợp đồng. Note bắt đầu sinh lãi khi khoản vay giải ngân.';
+
+/** Viên trạng thái ở đầu màn: chấm màu luôn đi kèm chữ. */
+export const FUNDING_STATE_BADGE: Record<FundingState, { label: string; dot: string }> = {
+  OPEN: { label: 'Đang gọi vốn', dot: Colors.authPrimary },
+  EXPIRED: { label: 'Hết hạn gọi vốn', dot: Colors.amber },
+  FULLY_FUNDED: { label: 'Đã đủ vốn', dot: Colors.bookLive },
+  CLOSED: { label: 'Đã đóng', dot: Colors.dotIdle },
+  CANCELLED: { label: 'Đã huỷ', dot: Colors.bookAsk },
+  UNKNOWN: { label: 'Chưa mở', dot: Colors.dotIdle },
+};
+
+const PICK_ANOTHER = 'Chọn khoản vay khác đang gọi vốn trên sàn.';
+
+/** Thay chỗ ô nhập số tiền khi khoản vay không nhận lệnh mới nữa. */
+export const INVEST_BLOCK_COPY: Record<InvestBlock, { icon: IconName; title: string; hint: string }> = {
+  EXPIRED: { icon: 'clock', title: 'Đã hết hạn gọi vốn', hint: `Khoản vay này không nhận thêm lệnh mới. ${PICK_ANOTHER}` },
+  FULLY_FUNDED: { icon: 'circleCheck', title: 'Khoản vay đã gọi đủ vốn', hint: `Không còn phần vốn nào để góp. ${PICK_ANOTHER}` },
+  CLOSED: { icon: 'lock', title: 'Khoản vay đã đóng gọi vốn', hint: `Khoản vay này không nhận thêm lệnh mới. ${PICK_ANOTHER}` },
+  CANCELLED: { icon: 'circleX', title: 'Đợt gọi vốn đã bị huỷ', hint: `Khoản vay này không nhận thêm lệnh mới. ${PICK_ANOTHER}` },
+  UNKNOWN: { icon: 'info', title: 'Khoản vay chưa mở nhận vốn', hint: `Khoản vay này chưa nhận lệnh góp vốn. ${PICK_ANOTHER}` },
+  BELOW_MINIMUM: {
+    icon: 'info',
+    title: 'Còn thiếu dưới mức tối thiểu',
+    hint: `Khoản vay chỉ còn thiếu ít hơn mức đầu tư tối thiểu của một lệnh nên không đặt thêm được. ${PICK_ANOTHER}`,
+  },
 };

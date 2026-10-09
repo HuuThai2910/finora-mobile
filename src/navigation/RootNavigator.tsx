@@ -3,6 +3,7 @@ import { Colors } from '@/constants/colors';
 import { Screen } from '@/components/phone';
 import { LoadingScreen } from '@/components/feedback';
 import { useAuth } from '@/providers/AuthProvider';
+import { PinProvider } from '@/features/pin';
 import AuthNavigator from './AuthNavigator';
 import MainTabs from './MainTabs';
 
@@ -26,6 +27,9 @@ const navTheme: Theme = {
  *
  * Lúc mở app phải chờ khôi phục phiên cũ xong mới quyết định, nếu không người
  * dùng đã đăng nhập vẫn thấy màn đăng nhập nhấp nháy một nhịp.
+ *
+ * Bảng nhập mã PIN chỉ sống trong phiên đăng nhập: đăng xuất gỡ `PinProvider`, lượt
+ * nhập PIN còn dở bị huỷ cùng phiên.
  */
 export default function RootNavigator() {
   const { session, restoring } = useAuth();
@@ -40,7 +44,13 @@ export default function RootNavigator() {
 
   return (
     <NavigationContainer theme={navTheme}>
-      {session ? <MainTabs /> : <AuthNavigator />}
+      {session ? (
+        <PinProvider>
+          <MainTabs />
+        </PinProvider>
+      ) : (
+        <AuthNavigator />
+      )}
     </NavigationContainer>
   );
 }

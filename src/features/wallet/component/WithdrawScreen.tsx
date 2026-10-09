@@ -8,6 +8,7 @@ import { Button, Field, InfoNote, SectionLabel, Tag } from '@/components/ui';
 import { ErrorState, LoadingScreen } from '@/components/feedback';
 import { formatDong } from '@/utils/format';
 import { toUserMessage } from '@/lib/api';
+import { usePinGuard } from '@/features/pin';
 import { AML_NOTE } from '../constant';
 import { useBalance, useLinkedAccount, useWithdrawQuote } from '../hook/useWallet';
 import { withdraw } from '../api';
@@ -22,6 +23,7 @@ export default function WithdrawScreen() {
   const [amount, setAmount] = useState('3.000.000');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const { requirePin } = usePinGuard();
 
   const loading = balance.loading || account.loading || quote.loading;
   const loadError = balance.error ?? account.error ?? quote.error;
@@ -34,6 +36,7 @@ export default function WithdrawScreen() {
   const parsed = Number(amount.replace(/\D/g, ''));
 
   const onSubmit = async () => {
+    if (submitting) return;
     if (!parsed) {
       setError('Nhập số tiền cần rút.');
       return;
@@ -45,6 +48,10 @@ export default function WithdrawScreen() {
     setError(null);
     setSubmitting(true);
     try {
+      // Rút tiền chưa có endpoint thật (`withdraw` vẫn là mock) nên token PIN chưa gửi đi đâu,
+      // nhưng vẫn bắt nhập PIN để luồng người dùng giống hệt khi nối API thật.
+      const pinToken = await requirePin('WITHDRAW');
+      if (!pinToken) return;
       await withdraw();
       Alert.alert('Đã gửi lệnh rút', 'Tiền về tài khoản trong khoảng 30 giây.', [
         { text: 'Xong', onPress: () => nav.goBack() },

@@ -10,6 +10,7 @@ import type { ProfileStackParamList } from '@/navigation/types';
 import { Spacing, Text_, tabularNums } from '@/theme';
 import { formatDong, formatLocalDate } from '@/utils/format';
 import { useBalance } from '@/features/wallet';
+import { usePinGuard } from '@/features/pin';
 import { createScheduledRepayment } from '../api/servicingApi';
 import FinancialRows from '../components/FinancialRows';
 import RepaymentResultCard from '../components/RepaymentResultCard';
@@ -29,6 +30,7 @@ export default function LoanPaymentScreen() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RepaymentResult | null>(null);
   const trackedResult = useRepaymentTracking(result);
+  const { requirePin } = usePinGuard();
 
   if ((state.loading && !state.data) || (balance.loading && !balance.data)) return <Screen><PHeader title="Thanh toán khoản vay" back /><LoadingScreen cards={3} /></Screen>;
   if (state.error || !state.data) return <Screen><PHeader title="Thanh toán khoản vay" back /><ErrorState message={state.error ?? 'Không tải được khoản vay.'} onRetry={state.reload} /></Screen>;
@@ -43,7 +45,10 @@ export default function LoanPaymentScreen() {
     if (submitting || result) return;
     setSubmitting(true); setError(null);
     try {
-      setResult(await createScheduledRepayment(data.applicationId, amount, key));
+      // Đóng bảng PIN là thôi thanh toán, không báo lỗi.
+      const pinToken = await requirePin('REPAYMENT');
+      if (!pinToken) return;
+      setResult(await createScheduledRepayment(data.applicationId, amount, key, pinToken));
       balance.reload();
     } catch (reason) { setError(toUserMessage(reason)); }
     finally { setSubmitting(false); }

@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { useAsync } from '@/hooks/useAsync';
 import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
+import { usePinGuard } from '@/features/pin';
 import type { BookOrder, PlaceOrderInput } from '@/types/orderBook';
 import { cancelBookOrder, getMyPosition, listMyOrders, listOrderBooks, placeBookOrder } from '../api';
 
@@ -19,11 +20,15 @@ export const useMyOrders = (activeOnly: boolean) =>
  *
  * Khóa chỉ đổi khi nội dung lệnh đổi: gửi lại y nguyên sau lỗi mạng dùng khóa cũ nên backend trả
  * về lệnh đã đặt thay vì giữ tiền lần hai; sửa giá hay số Note là một lệnh mới, cần khóa mới.
+ *
+ * Mỗi lần gửi hỏi mã PIN ngay trước lời gọi mạng; người dùng đóng bảng PIN thì trả `null`
+ * mà không đặt lỗi, giữ nguyên khóa cho lần bấm sau.
  */
 export function usePlaceOrder(listingId: number) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const intent = useRef<{ fingerprint: string; key: string } | null>(null);
+  const { requirePin } = usePinGuard();
 
   const submit = useCallback(
     async (input: PlaceOrderInput): Promise<BookOrder | null> => {
@@ -31,10 +36,13 @@ export function usePlaceOrder(listingId: number) {
       if (intent.current?.fingerprint !== fingerprint) {
         intent.current = { fingerprint, key: generateIdempotencyKey() };
       }
+      const { key } = intent.current;
       setSubmitting(true);
       setError(null);
       try {
-        const order = await placeBookOrder(listingId, input, intent.current.key);
+        const pinToken = await requirePin('ORDER');
+        if (!pinToken) return null;
+        const order = await placeBookOrder(listingId, input, key, pinToken);
         // Đã thành: lần bấm sau — kể cả cùng nội dung — là một lệnh mới, cần khóa mới.
         intent.current = null;
         return order;
@@ -45,7 +53,7 @@ export function usePlaceOrder(listingId: number) {
         setSubmitting(false);
       }
     },
-    [listingId],
+    [listingId, requirePin],
   );
 
   return { submit, submitting, error, clearError: () => setError(null) };

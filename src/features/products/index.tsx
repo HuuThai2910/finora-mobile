@@ -21,3 +21,6 @@ export {
   LOAN_STEP_ILLUSTRATION,
   LOAN_STEP_MAX_WIDTH,
 } from './constant';
+// Thẻ một kỳ của lịch trả: lịch của khoản vay đang trả (feature loan-servicing) dùng lại
+// để hai màn lịch trả cùng một dáng thẻ, chỉ thêm nhãn "Kỳ tới".
+export { default as SchedulePeriodCard } from './components/SchedulePeriodCard';

@@ -259,6 +259,13 @@ export const Colors = {
   bookChipBorder: 'rgba(255,255,255,0.32)',
   /** Chấm "Trực tiếp" khi đang nhận đẩy qua SSE. */
   bookLive: '#22c55e',
+
+  // Màn "Thông báo" (09/10/2026). Thẻ, chip, chữ, ô icon dùng lại nhóm auth*/tint*/red*/amber*
+  // ở trên; hai màu dưới đây đo bằng PIL từ `notifications-background.png` (894×1759).
+  /** Hàng 560, nơi cảnh robot + đồi sóng đã hết (lệch ≤ 8/255 theo chiều ngang). */
+  notificationsFillTop: '#ecf5fe',
+  /** Hàng 1400, ngay trên lớp sóng đáy; giữa hai hàng ảnh chỉ là nền nhạt dần xuống. */
+  notificationsFillBottom: '#e3f0fe',
 } as const;
 
 export type ColorName = keyof typeof Colors;

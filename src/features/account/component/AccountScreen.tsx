@@ -18,6 +18,7 @@ import {
   type UpcomingSetting,
 } from '../constant';
 import { useMyProfile } from '../hook/useAccount';
+import { usePinSetting } from '../hook/usePinSetting';
 import ProfileBackdrop from './ProfileBackdrop';
 import ProfileHeader from './ProfileHeader';
 import ProfileShortcuts, { type ProfileShortcut } from './ProfileShortcuts';
@@ -42,6 +43,7 @@ export default function AccountScreen() {
   const width = Math.min(windowWidth, PROFILE_MAX_WIDTH);
   const { signOut } = useAuth();
   const profile = useMyProfile();
+  const pin = usePinSetting();
 
   const openInfo = () => nav.navigate('AccountInfo');
   const startEkyc = () => nav.navigate('EkycCapture', { side: 'front' });
@@ -79,6 +81,10 @@ export default function AccountScreen() {
 
   // Lần tải đầu đã có khung giả; vòng xoay kéo-làm-mới chỉ hiện khi tải lại.
   const refreshing = profile.loading && p !== null;
+  const reload = () => {
+    profile.reload();
+    pin.reload();
+  };
 
   let body: React.ReactNode;
   if (profile.error) {
@@ -88,7 +94,7 @@ export default function AccountScreen() {
   } else {
     body = (
       <>
-        <ProfileHeader profile={p} width={width} onOpenInfo={openInfo} onStartEkyc={startEkyc} />
+        <ProfileHeader profile={p} width={width} onStartEkyc={startEkyc} />
 
         <View style={styles.shortcuts}>
           <ProfileShortcuts items={shortcuts} />
@@ -114,7 +120,15 @@ export default function AccountScreen() {
             />
           </SettingsCard>
 
-          <UpcomingGroup icon="shieldCheck" title="Bảo mật & Liên kết" items={SECURITY_SETTINGS} />
+          <UpcomingGroup icon="shieldCheck" title="Bảo mật & Liên kết" items={SECURITY_SETTINGS}>
+            <SettingsRow
+              icon="lock"
+              title={pin.title}
+              subtitle={pin.subtitle}
+              onPress={() => void pin.open()}
+              accessibilityHint="Mở bảng nhập mã PIN giao dịch"
+            />
+          </UpcomingGroup>
           <UpcomingGroup icon="bell" title="Thông báo & Cài đặt" items={NOTIFICATION_SETTINGS} />
 
           <SettingsCard>
@@ -131,7 +145,7 @@ export default function AccountScreen() {
       contentContainerStyle={styles.scroll}
       showsVerticalScrollIndicator={false}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={profile.reload} tintColor={Colors.authPrimary} />
+        <RefreshControl refreshing={refreshing} onRefresh={reload} tintColor={Colors.authPrimary} />
       }
     >
       <View style={{ width }}>
@@ -142,19 +156,26 @@ export default function AccountScreen() {
   );
 }
 
-type UpcomingGroupProps = { icon: IconName; title: string; items: readonly UpcomingSetting[] };
+type UpcomingGroupProps = {
+  icon: IconName;
+  title: string;
+  items: readonly UpcomingSetting[];
+  /** Dòng đã có chức năng thật, đứng trước các mục "Sắp có" (như mã PIN giao dịch). */
+  children?: React.ReactNode;
+};
 
-/** Nhóm cài đặt mà mọi mục đều chưa có chức năng thật (xem `SECURITY_SETTINGS`). */
-function UpcomingGroup({ icon, title, items }: UpcomingGroupProps) {
+/** Nhóm cài đặt có các mục chưa có chức năng thật (xem `SECURITY_SETTINGS`). */
+function UpcomingGroup({ icon, title, items, children }: UpcomingGroupProps) {
   return (
     <SettingsCard icon={icon} title={title}>
+      {children}
       {items.map((item, index) => (
         <SettingsRow
           key={item.title}
           icon={item.icon}
           title={item.title}
           subtitle={COMING_SOON}
-          divider={index > 0}
+          divider={index > 0 || !!children}
         />
       ))}
     </SettingsCard>

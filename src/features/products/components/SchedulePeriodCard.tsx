@@ -23,6 +23,8 @@ type Props = {
   expanded: boolean;
   /** Nhận số kỳ để màn giữ một hàm cố định cho cả danh sách (thẻ được memo). */
   onToggle: (period: number) => void;
+  /** Nhãn nhỏ cạnh "Kỳ n", như "Kỳ tới" ở lịch của khoản vay đang trả; bỏ trống thì không vẽ. */
+  tag?: string;
 };
 
 /**
@@ -33,7 +35,7 @@ type Props = {
  * Mockup đặt chip ngày cùng hàng với "Kỳ 1"; với cỡ chữ đọc được trên máy thật
  * thì ba thứ không vừa một hàng ở 360–393pt, nên chip nằm hàng thứ hai.
  */
-function SchedulePeriodCard({ period, expanded, onToggle }: Props) {
+function SchedulePeriodCard({ period, expanded, onToggle, tag }: Props) {
   const view = toSchedulePeriodView(period);
 
   return (
@@ -45,7 +47,7 @@ function SchedulePeriodCard({ period, expanded, onToggle }: Props) {
         // react-native-web bỏ qua `accessibilityState`, chỉ đọc thuộc tính aria-*;
         // thiếu dòng này thì bản web không báo được thẻ đang mở hay đóng.
         aria-expanded={expanded}
-        accessibilityLabel={`${view.title}, ${view.spokenRange}, phải trả ${view.totalDue}`}
+        accessibilityLabel={`${view.title}${tag ? `, ${tag}` : ''}, ${view.spokenRange}, phải trả ${view.totalDue}`}
         accessibilityHint={
           expanded ? 'Thu gọn chi tiết của kỳ' : 'Mở để xem tiền gốc, tiền lãi, phí và dư nợ sau kỳ'
         }
@@ -53,6 +55,13 @@ function SchedulePeriodCard({ period, expanded, onToggle }: Props) {
       >
         <View style={styles.titleRow}>
           <Text style={styles.title}>{view.title}</Text>
+          {tag ? (
+            <View style={styles.tag}>
+              <Text style={styles.tagText} maxFontSizeMultiplier={1.4}>
+                {tag}
+              </Text>
+            </View>
+          ) : null}
           <Text style={styles.amount}>{view.totalDue}</Text>
           <Icon name={expanded ? 'chevronUp' : 'chevronDown'} size={IconSize.xs} color={Colors.ink3} />
         </View>
@@ -107,6 +116,19 @@ const styles = StyleSheet.create({
     fontSize: FontSize.title,
     lineHeight: lh(FontSize.title, LineHeight.heading),
     color: Colors.authInk,
+  },
+  // Cùng cặp nền/chữ với viên trạng thái "đang xử lý" ở các màn khác (đạt tương phản AA).
+  tag: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 2,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.blueBg,
+  },
+  tagText: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 11,
+    lineHeight: 16,
+    color: Colors.tagBlueText,
   },
   // Đẩy số tiền về sát mũi tên; tiền dài hoặc chữ phóng to thì xuống dòng trong phần còn lại.
   amount: {

@@ -1,133 +1,248 @@
-import { useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
-import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import { StyleSheet, Text, View } from 'react-native';
+import {
+  useNavigation,
+  useRoute,
+  type CompositeNavigationProp,
+  type RouteProp,
+} from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Skeleton } from '@/components/feedback';
 import { Colors } from '@/constants/colors';
-import { Spacing, Text_ } from '@/theme';
-import { PHeader, PItem, Screen } from '@/components/phone';
-import { Button, Field, ProgressBar, ScoreRing, Tag } from '@/components/ui';
-import { ErrorState, LoadingScreen } from '@/components/feedback';
-import { formatDong, formatVND } from '@/utils/format';
-import { toUserMessage } from '@/lib/api';
-import type { MarketStackParamList } from '@/navigation/types';
+import type { IconName } from '@/constants/icons';
+import { REPAYMENT_METHOD_LABEL } from '@/features/products';
+import type { MarketStackParamList, TabParamList } from '@/navigation/types';
+import { useAuth } from '@/providers/AuthProvider';
+import { FontFamily, Radius, Spacing } from '@/theme';
+import type { InvestOrderResult, MarketLoan } from '@/types/invest';
+import { formatDong } from '@/utils/format';
+import { INVEST_BLOCK_COPY } from '../constant';
+import { useInvestForm } from '../hook/useInvestForm';
 import { useMarketLoan } from '../hook/useMarket';
-import { generateIdempotencyKey, invest } from '../api';
+import { fundingState, investBlock } from '../investRules';
+import BorrowerSummaryCard from './BorrowerSummaryCard';
+import FundingProgressCard from './FundingProgressCard';
+import InvestAmountField from './InvestAmountField';
+import InvestBar from './InvestBar';
+import InvestEstimateCard from './InvestEstimateCard';
+import LoanDetailFrame from './LoanDetailFrame';
+import LoanHeroCard from './LoanHeroCard';
+import LoanStatusCard from './LoanStatusCard';
+import LoanTermsCard from './LoanTermsCard';
 
-/** Màn 19 — chi tiết khoản vay trên sàn (người vay ẩn danh). */
+type Nav = CompositeNavigationProp<
+  NativeStackNavigationProp<MarketStackParamList, 'LoanDetail'>,
+  BottomTabNavigationProp<TabParamList>
+>;
+type Route = RouteProp<MarketStackParamList, 'LoanDetail'>;
+
+const titleOf = (listingId: string) => `Khoản vay #${listingId}`;
+
+/**
+ * Màn 19 — chi tiết khoản vay trên sàn và góp vốn, vẽ lại cùng bộ với sổ lệnh chợ Notes: nền sóng
+ * trang chủ, thẻ đầu có robot, tiến độ gọi vốn, thông tin khoản vay, ô số tiền theo đúng luật
+ * backend, số tạm tính và nút đặt lệnh ghim đáy. Đặt lệnh xong thì thay nội dung bằng kết quả.
+ */
 export default function LoanDetailScreen() {
-  const nav = useNavigation();
-  const route = useRoute<RouteProp<MarketStackParamList, 'LoanDetail'>>();
-  const { data, loading, error, reload } = useMarketLoan(route.params.loanId);
+  const { loanId } = useRoute<Route>().params;
+  const loan = useMarketLoan(loanId);
 
-  const [amount, setAmount] = useState('5.000.000');
-  const [submitting, setSubmitting] = useState(false);
-  const [investError, setInvestError] = useState<string | null>(null);
-
-  /**
-   * Khóa idempotency giữ nguyên trong suốt một ý định đặt lệnh, kể cả khi người dùng bấm
-   * lại sau lỗi mạng — nhờ vậy backend nhận ra đây vẫn là lệnh cũ và không giữ tiền lần hai.
-   * Chỉ sinh khóa mới sau khi lệnh đã đặt thành công.
-   */
-  const [idempotencyKey, setIdempotencyKey] = useState(generateIdempotencyKey);
-
-  const parsed = Number(amount.replace(/\D/g, ''));
-
-  const onInvest = async () => {
-    if (!parsed) {
-      setInvestError('Nhập số tiền muốn đầu tư.');
-      return;
-    }
-    if (!data) return;
-
-    setInvestError(null);
-    setSubmitting(true);
-    try {
-      await invest(data.id, parsed, idempotencyKey);
-      setIdempotencyKey(generateIdempotencyKey());
-      Alert.alert(
-        'Đã đặt lệnh',
-        'Tiền được phong tỏa trong ví và chỉ chuyển đi khi khoản vay gọi đủ 100% vốn.',
-        [{ text: 'Xong', onPress: () => nav.goBack() }],
-      );
-    } catch (e) {
-      setInvestError(toUserMessage(e));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (loading) return <Screen><LoadingScreen cards={2} /></Screen>;
-  if (error) return <Screen><ErrorState message={error} onRetry={reload} /></Screen>;
-  if (!data) return null;
-
+  // Có lỗi thì báo lỗi kèm thử lại, kể cả khi còn bản cũ: không để đặt lệnh trên số liệu đã cũ.
+  if (loan.data && !loan.error) {
+    return <LoanInvest loan={loan.data} refreshing={loan.loading} onRefresh={loan.reload} />;
+  }
   return (
-    <Screen>
-      <PHeader
-        title={`Khoản vay #${data.id}`}
-        back
-        right={
-          data.fundedPercent >= 100
-            ? <Tag tone="green" small>Đã đủ vốn</Tag>
-            : <Tag tone="blue" small>Đang gọi vốn</Tag>
-        }
-      />
-
-      <View style={styles.hero}>
-        <ScoreRing grade={data.grade} size={69} />
-        <View style={styles.heroText}>
-          <Text style={styles.amount}>{formatVND(data.amount)}</Text>
-          <Text style={styles.purpose}>
-            {data.purpose} · {data.region}
-          </Text>
+    <LoanDetailFrame title={titleOf(loanId)}>
+      {loan.error ? (
+        <LoanStatusCard
+          icon="alert"
+          danger
+          title={loan.error}
+          message="Kiểm tra kết nối mạng rồi thử lại."
+          primary={{ label: 'Thử lại', onPress: loan.reload }}
+        />
+      ) : (
+        <View style={styles.skeleton} accessibilityLabel="Đang tải khoản vay">
+          <Skeleton height={176} radius={16} />
+          <Skeleton height={150} radius={Radius.md} />
+          <Skeleton height={124} radius={Radius.md} />
         </View>
-      </View>
-
-      <PItem label="Lãi suất" value={`${data.annualRate}%/năm giảm dần`} />
-      <PItem label="Kỳ hạn" value={`${data.termMonths} tháng`} />
-      <PItem label="Lịch sử người vay" value={data.borrowerHistory} last />
-
-      <View style={styles.progressHead}>
-        <Text style={styles.progressLabel}>Tiến độ gọi vốn</Text>
-        <Text style={styles.progressValue}>{data.fundedPercent}%</Text>
-      </View>
-      <ProgressBar percent={data.fundedPercent} label="Tiến độ gọi vốn" />
-
-      <Field
-        label="Số tiền đầu tư"
-        value={amount}
-        onChangeText={setAmount}
-        keyboardType="number-pad"
-        error={investError ?? undefined}
-        style={styles.field}
-      />
-
-      <Button
-        label="Đầu tư — phong tỏa ví"
-        variant="emerald"
-        onPress={onInvest}
-        loading={submitting}
-      />
-
-      <Text style={styles.estimate}>
-        Nhận ~{formatDong(data.estimatedMonthlyReturn)}/tháng · tổng ~
-        {formatVND(data.estimatedTotalReturn)} sau {data.termMonths} tháng
-      </Text>
-    </Screen>
+      )}
+    </LoanDetailFrame>
   );
 }
 
+type InvestProps = { loan: MarketLoan; refreshing: boolean; onRefresh: () => void };
+
+function LoanInvest({ loan, refreshing, onRefresh }: InvestProps) {
+  const nav = useNavigation<Nav>();
+  const { session } = useAuth();
+  const form = useInvestForm(loan);
+  const state = fundingState(loan);
+  // Loan chỉ trả hồ sơ người vay cho tài khoản nhà đầu tư; vai trò khác không gọi để khỏi nhận 403.
+  const applicationNumber = session?.profile.role === 'INVESTOR' ? loan.applicationNumber : null;
+  const block = investBlock(state, form.bounds);
+  const title = titleOf(loan.id);
+  const toMarket = () => nav.navigate('Market');
+
+  if (form.result) {
+    const actions: Record<ResultAction, { label: string; onPress: () => void }> = {
+      portfolio: { label: 'Xem danh mục đầu tư', onPress: () => nav.navigate('Ví', { screen: 'Portfolio' }) },
+      topUp: { label: 'Nạp tiền vào ví', onPress: () => nav.navigate('Ví', { screen: 'TopUp' }) },
+      // Đặt lại trên số liệu mới: phần còn thiếu có thể đã đổi trong lúc lệnh bị từ chối.
+      retry: { label: 'Chọn số tiền khác', onPress: () => { form.clearResult(); onRefresh(); } },
+      market: { label: 'Về sàn khoản vay', onPress: toMarket },
+    };
+    const view = describeResult(form.result, loan.id);
+    return (
+      <LoanDetailFrame title={title}>
+        <LoanStatusCard
+          icon={view.icon}
+          danger={view.danger}
+          title={view.title}
+          message={view.message}
+          primary={actions[view.primary]}
+          secondary={actions[view.secondary]}
+        />
+      </LoanDetailFrame>
+    );
+  }
+
+  const repaymentLabel = REPAYMENT_METHOD_LABEL[loan.repaymentMethod] ?? loan.repaymentMethod;
+  const footer = block ? null : (
+    <InvestBar
+      label={form.error ? 'Đầu tư' : `Đầu tư ${formatDong(form.amount)}`}
+      onPress={() => void form.submit()}
+      disabled={form.error !== null}
+      loading={form.submitting}
+    />
+  );
+
+  return (
+    <LoanDetailFrame title={title} state={state} refresh={{ refreshing, onRefresh }} footer={footer}>
+      <LoanHeroCard loan={loan} />
+      <FundingProgressCard loan={loan} state={state} />
+      <LoanTermsCard loan={loan} />
+      {applicationNumber ? (
+        <BorrowerSummaryCard
+          applicationNumber={applicationNumber}
+          onOpen={() => nav.navigate('BorrowerProfile', { applicationNumber })}
+        />
+      ) : null}
+      {block ? (
+        <LoanStatusCard
+          icon={INVEST_BLOCK_COPY[block].icon}
+          title={INVEST_BLOCK_COPY[block].title}
+          message={INVEST_BLOCK_COPY[block].hint}
+          primary={{ label: 'Về sàn khoản vay', onPress: toMarket }}
+        />
+      ) : (
+        <>
+          <InvestAmountField
+            amount={form.amount}
+            bounds={form.bounds}
+            error={form.error}
+            picks={form.picks}
+            onChange={form.change}
+          />
+          <InvestEstimateCard
+            amount={form.amount}
+            estimate={form.estimate}
+            annualRate={loan.annualRate}
+            termMonths={loan.termMonths}
+            repaymentLabel={repaymentLabel}
+          />
+          {form.submitError ? (
+            <Text style={styles.submitError} accessibilityRole="alert" accessibilityLiveRegion="polite">
+              {form.submitError}
+            </Text>
+          ) : null}
+        </>
+      )}
+    </LoanDetailFrame>
+  );
+}
+
+type ResultAction = 'portfolio' | 'topUp' | 'retry' | 'market';
+
+type ResultView = {
+  /** Bỏ trống thì thẻ hiện robot chào. */
+  icon?: IconName;
+  danger?: boolean;
+  title: string;
+  message: string;
+  primary: ResultAction;
+  secondary: ResultAction;
+};
+
+/**
+ * Một câu nói đúng điều vừa xảy ra với lệnh. Backend trả 201 cả khi ví không giữ được tiền, nên
+ * phải đọc `status`; thiếu số dư thì mời nạp tiền như gợi ý của `OrderResponse`.
+ */
+function describeResult(order: InvestOrderResult, listingId: string): ResultView {
+  const amount = formatDong(order.amount);
+  switch (order.status) {
+    case 'COMMITTED':
+      return {
+        title: 'Đã đặt lệnh đầu tư',
+        message: `${amount} đang được giữ tạm trong ví cho khoản vay #${listingId}. Khi khoản vay gọi đủ vốn, bạn ký hợp đồng đầu tư để khoản vay được giải ngân.`,
+        primary: 'portfolio',
+        secondary: 'market',
+      };
+    case 'PENDING_FUNDS':
+      return {
+        icon: 'clock',
+        title: 'Lệnh đang chờ ví xác nhận',
+        message: 'Hệ thống đã ghi nhận lệnh nhưng ví chưa xác nhận giữ tiền. Kiểm tra lại trong danh mục đầu tư sau ít phút.',
+        primary: 'portfolio',
+        secondary: 'market',
+      };
+    case 'REJECTED':
+      return order.rejectedReasonCode === 'PAYMENT_INSUFFICIENT_BALANCE'
+        ? {
+            icon: 'wallet',
+            danger: true,
+            title: 'Ví chưa đủ số dư',
+            message: `Số dư khả dụng không đủ để giữ ${amount} cho lệnh này nên lệnh chưa được đặt. Nạp thêm tiền rồi đặt lại.`,
+            primary: 'topUp',
+            secondary: 'retry',
+          }
+        : {
+            icon: 'alert',
+            danger: true,
+            title: 'Lệnh chưa được đặt',
+            message: order.rejectedReasonDetail ?? 'Hệ thống không giữ được tiền cho lệnh này.',
+            primary: 'retry',
+            secondary: 'market',
+          };
+    case 'CANCELLED':
+      return {
+        icon: 'circleX',
+        title: 'Lệnh đã được huỷ',
+        message: 'Lệnh này đã được huỷ trước đó, tiền giữ tạm đã trả về ví.',
+        primary: 'retry',
+        secondary: 'market',
+      };
+    default:
+      return {
+        icon: 'info',
+        title: 'Đã gửi lệnh',
+        message: 'Mở danh mục đầu tư để xem trạng thái mới nhất của lệnh.',
+        primary: 'portfolio',
+        secondary: 'market',
+      };
+  }
+}
+
 const styles = StyleSheet.create({
-  hero: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xl, marginBottom: Spacing.xl },
-  heroText: { flexShrink: 1, gap: 2 },
-  amount: { ...Text_.display, color: Colors.ink },
-  purpose: { ...Text_.micro, color: Colors.ink3 },
-  progressHead: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.md,
+  skeleton: { gap: Spacing.xl },
+  submitError: {
+    padding: Spacing.lg,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.redBg,
+    fontFamily: FontFamily.medium,
+    fontSize: 13,
+    lineHeight: 19,
+    color: Colors.tagRedText,
   },
-  progressLabel: { ...Text_.micro, color: Colors.ink3 },
-  progressValue: { ...Text_.microBold, color: Colors.ink },
-  field: { marginTop: Spacing.xxl },
-  estimate: { ...Text_.micro, color: Colors.ink3, textAlign: 'center', marginTop: Spacing.xl },
 });

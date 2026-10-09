@@ -7,6 +7,9 @@ import { FontFamily, MIN_TOUCH, Spacing } from '@/theme';
 import { WALLET_HISTORY_ART, WALLET_HISTORY_PADDING } from '../constant';
 
 type Props = {
+  title: string;
+  /** Biểu tượng tải sao kê ở góc phải, chỉ màn "Lịch sử ví" có. */
+  statementIcon?: boolean;
   /** Bề rộng cột nội dung (đã giới hạn trên web); ảnh nền phóng theo bề rộng này. */
   width: number;
   topInset: number;
@@ -27,11 +30,11 @@ const GROUND_GAP = Spacing.xs;
 const hiddenFromReader = { 'aria-hidden': true } as const;
 
 /**
- * Đầu màn "Lịch sử ví": nút quay lại (khi có chỗ để về) cùng tiêu đề ở góc trái,
- * biểu tượng tải sao kê ở góc phải, hai linh vật (thuộc ảnh nền) phía dưới bên
- * phải. Khối này cao tới chân linh vật để thẻ tài khoản nằm ngay dưới hình.
+ * Đầu các màn ví trên nền `WALLET_HISTORY_WAVES` ("Lịch sử ví", "Nạp tiền vào ví"): nút quay lại
+ * (khi có chỗ để về) cùng tiêu đề ở góc trái, hai linh vật (thuộc ảnh nền) phía dưới bên phải. Khối
+ * này cao tới chân linh vật để thẻ đầu tiên nằm ngay dưới hình.
  */
-export default function WalletHistoryHeader({ width, topInset }: Props) {
+export default function WalletHeader({ title, statementIcon = false, width, topInset }: Props) {
   const nav = useNavigation();
   // Lịch sử ví là màn gốc của tab Ví; quay lại vẫn được nhờ lịch sử tab.
   const canGoBack = nav.canGoBack();
@@ -68,13 +71,15 @@ export default function WalletHistoryHeader({ width, topInset }: Props) {
           accessibilityRole="header"
           maxFontSizeMultiplier={1.6}
         >
-          Lịch sử ví
+          {title}
         </Text>
         {/* Chưa có API xuất sao kê: giữ biểu tượng như mockup nhưng không làm nút,
             tránh một nút bấm không làm gì. */}
-        <View style={styles.download} {...hiddenFromReader}>
-          <Icon name="download" size={24} color={Colors.authInk} />
-        </View>
+        {statementIcon ? (
+          <View style={styles.download} {...hiddenFromReader}>
+            <Icon name="download" size={24} color={Colors.authInk} />
+          </View>
+        ) : null}
       </View>
     </View>
   );

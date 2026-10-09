@@ -1,4 +1,5 @@
 import { loanApi } from '@/lib/api/loanApi';
+import { PIN_TOKEN_HEADER } from '@/features/pin';
 import type {
   CreateLoanApplicationRequest,
   LoanApplication,
@@ -122,11 +123,13 @@ const applicationApi = loanApi.injectEndpoints({
       pdfDocumentHash?: string;
       idempotencyKey: string;
       signatureMethod: 'CLICK_WRAP_MVP' | 'VNPT_SMART_CA';
+      /** Token xác nhận PIN phạm vi `SIGN_CONTRACT`; chỉ đi trong header, không vào thân request. */
+      pinToken: string;
     }>({
-      query: ({ contractNumber, idempotencyKey, ...body }) => ({
+      query: ({ contractNumber, idempotencyKey, pinToken, ...body }) => ({
         url: `/loan-contracts/${contractNumber}/sign`,
         method: 'POST',
-        headers: { 'Idempotency-Key': idempotencyKey },
+        headers: { 'Idempotency-Key': idempotencyKey, [PIN_TOKEN_HEADER]: pinToken },
         body,
       }),
       invalidatesTags: (_result, _error, { contractNumber }) => [

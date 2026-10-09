@@ -31,6 +31,8 @@ export type HomeStackParamList = {
 export type MarketStackParamList = {
   Market: undefined;
   LoanDetail: { loanId: string };
+  /** Hồ sơ người vay ẩn danh của một khoản vay trên sàn, theo mã hồ sơ vay của Loan. */
+  BorrowerProfile: { applicationNumber: string };
   Products: undefined;
   ProductDetail: { productId: number };
   Schedule: { productId: number; amount: number; termMonths: number; expectedDisbursementDate: string };

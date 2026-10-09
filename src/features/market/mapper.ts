@@ -1,5 +1,11 @@
 import type { CreditGrade } from '@/components/ui/ScoreRing';
-import type { MarketLoan } from '@/types/invest';
+import type {
+  InvestOrderResult,
+  InvestOrderStatus,
+  MarketListingStatus,
+  MarketLoan,
+} from '@/types/invest';
+import { formatDong } from '@/utils/format';
 
 /**
  * Chuyển contract của Investment Service sang model mà màn hình đang dùng.
@@ -28,7 +34,9 @@ export interface MarketListingDto {
   status: string;
   contractNumber: string | null;
   contractStatus: string | null;
-  fundingClosesAt: string;
+  fundingClosesAt: string | null;
+  /** Mã hồ sơ vay của Loan; bản backend cũ chưa trả field này. */
+  applicationNumber?: string | null;
 }
 
 export interface PageDto<T> {
@@ -40,7 +48,21 @@ export interface PageDto<T> {
   last: boolean;
 }
 
+/** `OrderResponse` của `POST /investments/listings/{id}/orders`. */
+export interface InvestOrderDto {
+  orderReference: string;
+  listingId: number;
+  amount: string;
+  status: string;
+  paymentHoldReference: string | null;
+  rejectedReasonCode: string | null;
+  rejectedReasonDetail: string | null;
+  createdAt: string;
+}
+
 const VALID_GRADES: readonly CreditGrade[] = ['A', 'B', 'C', 'D', 'E'];
+const LISTING_STATUSES: readonly MarketListingStatus[] = ['OPEN', 'FULLY_FUNDED', 'CLOSED', 'CANCELLED'];
+const ORDER_STATUSES: readonly InvestOrderStatus[] = ['PENDING_FUNDS', 'COMMITTED', 'REJECTED', 'CANCELLED'];
 
 /** Hạng lạ từ backend không được làm vỡ giao diện; rơi về 'C' để vẫn hiển thị được. */
 const toGrade = (value: string): CreditGrade => {
@@ -48,51 +70,57 @@ const toGrade = (value: string): CreditGrade => {
   return VALID_GRADES.find(grade => grade === upper) ?? 'C';
 };
 
+/** Trạng thái backend thêm mới (DRAFT hay loại sau này) không được coi là đang mở nhận vốn. */
+const toEnum = <T extends string>(allowed: readonly T[], value: string | null | undefined): T | 'UNKNOWN' =>
+  allowed.find(item => item === value) ?? 'UNKNOWN';
+
 const toNumber = (value: string): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-/**
- * Ước tính dòng tiền nhận về trên một triệu đồng vốn.
- *
- * Chỉ là con số tham khảo cho người dùng hình dung, tính đơn giản theo lãi suất danh nghĩa.
- * Số tiền chính thức do lịch trả nợ bên Loan/Fineract quyết định — frontend không được
- * dùng con số này để hạch toán.
- */
-const estimateReturns = (principal: number, annualRate: number, termMonths: number) => {
-  const totalInterest = principal * annualRate * (termMonths / 12);
-  return {
-    estimatedMonthlyReturn: termMonths > 0 ? Math.round((principal + totalInterest) / termMonths) : 0,
-    estimatedTotalReturn: Math.round(totalInterest),
-  };
-};
-
 export function toMarketLoan(dto: MarketListingDto): MarketLoan {
-  const amount = toNumber(dto.targetAmount);
-  // Contract liên service dùng điểm phần trăm: 15.0000 nghĩa là 15%/năm.
-  const rate = toNumber(dto.annualInterestRate);
-  const { estimatedMonthlyReturn, estimatedTotalReturn } =
-    estimateReturns(amount, rate / 100, dto.termMonths);
-
   return {
     id: String(dto.listingId),
-    amount,
-    annualRate: Number(rate.toFixed(2)),
+    amount: toNumber(dto.targetAmount),
+    committedAmount: toNumber(dto.committedAmount),
+    remainingAmount: toNumber(dto.remainingAmount),
+    // Contract liên service dùng điểm phần trăm: 15.0000 nghĩa là 15%/năm. Giữ đủ chữ số lẻ
+    // để số tạm tính đúng mức đã công bố; chỗ hiển thị tự làm tròn.
+    annualRate: toNumber(dto.annualInterestRate),
     termMonths: dto.termMonths,
+    repaymentMethod: dto.repaymentMethod,
     purpose: dto.purpose,
     region: dto.region,
     grade: toGrade(dto.creditGrade),
     score: dto.creditScore,
     fundedPercent: Math.round(dto.fundedPercent),
-    // Người vay luôn ẩn danh trên sàn nên không có lịch sử cá nhân; hiển thị phần vốn
-    // còn thiếu là thông tin hữu ích hơn cho quyết định đầu tư.
-    borrowerHistory: `Còn thiếu ${new Intl.NumberFormat('vi-VN').format(
-      toNumber(dto.remainingAmount),
-    )} đ`,
-    estimatedMonthlyReturn,
-    estimatedTotalReturn,
+    noteDenomination: toNumber(dto.noteDenomination),
+    minInvestmentAmount: toNumber(dto.minInvestmentAmount),
+    status: toEnum(LISTING_STATUSES, dto.status),
+    fundingClosesAt: dto.fundingClosesAt,
     contractNumber: dto.contractNumber,
     contractStatus: dto.contractStatus,
+    applicationNumber: dto.applicationNumber ?? null,
+  };
+}
+
+/**
+ * Câu báo lỗi của Investment ghi số tiền thô ("Khoản vay chỉ còn nhận thêm 6000000.00 đồng");
+ * đổi tại chỗ thành "6.000.000 đ" như mọi số tiền khác trên app, phần chữ giữ nguyên. Khoảng
+ * trắng trước "đ" không ngắt để chữ "đ" không rơi một mình xuống dòng.
+ */
+export const readableAmounts = (message: string): string =>
+  message.replace(/(\d+)(?:\.(\d+))?\s*đồng/g, (_match, whole: string, fraction?: string) =>
+    formatDong(Number(fraction && Number(fraction) > 0 ? `${whole}.${fraction}` : whole)).replace(' ', ' '),
+  );
+
+export function toInvestOrderResult(dto: InvestOrderDto): InvestOrderResult {
+  return {
+    orderReference: dto.orderReference,
+    amount: toNumber(dto.amount),
+    status: toEnum(ORDER_STATUSES, dto.status),
+    rejectedReasonCode: dto.rejectedReasonCode,
+    rejectedReasonDetail: dto.rejectedReasonDetail ? readableAmounts(dto.rejectedReasonDetail) : null,
   };
 }

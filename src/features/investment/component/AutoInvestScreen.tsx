@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/feedback';
 import { Icon } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import { toUserMessage } from '@/lib/api';
+import { usePinGuard } from '@/features/pin';
 import { FontFamily, Radius, Spacing } from '@/theme';
 import type { AutoInvestConfig } from '@/types/invest';
 import { saveAutoInvest } from '../api';
@@ -34,6 +35,7 @@ export default function AutoInvestScreen() {
   const [draftErrors, setDraftErrors] = useState<DraftErrors>({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const { requirePin } = usePinGuard();
 
   useEffect(() => {
     if (config.data) setSaved(config.data);
@@ -44,11 +46,14 @@ export default function AutoInvestScreen() {
     matches.reload();
   };
 
+  /** Mọi lần lưu (bật/tắt hay sửa tiêu chí) đều hỏi PIN; đóng bảng PIN là không lưu, giữ bản nháp. */
   const persist = async (next: AutoInvestConfig): Promise<boolean> => {
     setSaving(true);
     setSaveError(null);
     try {
-      setSaved(await saveAutoInvest(next));
+      const pinToken = await requirePin('AUTO_INVEST');
+      if (!pinToken) return false;
+      setSaved(await saveAutoInvest(next, pinToken));
       return true;
     } catch (e) {
       setSaveError(toUserMessage(e));

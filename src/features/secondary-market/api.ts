@@ -1,4 +1,5 @@
 import { investmentFetch, investmentStreamRequest } from '@/lib/api';
+import { PIN_TOKEN_HEADER } from '@/features/pin';
 import { isMocked } from '@/lib/mockFlag';
 import * as secondaryMock from '@/lib/mocks/secondary';
 import type { BookOrder, BookPosition, BookSnapshot, BookSummary, PlaceOrderInput } from '@/types/orderBook';
@@ -61,16 +62,18 @@ export const listMyOrders = async (activeOnly: boolean, signal?: AbortSignal): P
  *
  * `idempotencyKey` do nơi gọi giữ cho tới khi người dùng đổi nội dung lệnh: bấm lại sau lỗi mạng
  * phải gửi cùng khóa để backend trả lệnh cũ chứ không giữ tiền lần hai.
+ * `pinToken` (phạm vi `ORDER`) thì luôn lấy mới cho từng lần gửi. Huỷ lệnh không cần PIN.
  */
 export const placeBookOrder = async (
   listingId: number,
   input: PlaceOrderInput,
   idempotencyKey: string,
+  pinToken: string,
 ): Promise<BookOrder> => {
   if (isMocked('secondary')) return secondaryMock.placeOrder(listingId, input);
   const dto = await investmentFetch<BookOrderDto>(`${BASE}/${listingId}/orders`, {
     method: 'POST',
-    headers: { 'Idempotency-Key': idempotencyKey },
+    headers: { 'Idempotency-Key': idempotencyKey, [PIN_TOKEN_HEADER]: pinToken },
     body: JSON.stringify({
       side: input.side,
       pricePercent: toPricePercent(input.price),

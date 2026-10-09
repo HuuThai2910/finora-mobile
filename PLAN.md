@@ -22,6 +22,7 @@ DRAFT -> APPROVED -> IN_PROGRESS -> READY_FOR_REVIEW -> ACCEPTED
 | MOBILE-LOAN-002 | Gọi vốn, một hợp đồng nhiều bên và hai lượt ký | LN-009–LN-010 | `READY_FOR_REVIEW` | [Plan](plans/MOBILE-LOAN-002-funding-multi-party-contract.md) |
 | MOBILE-LOAN-003 | Giải ngân, repayment, overdue, prepayment, settlement, restructuring | LN-011–LN-017 | `READY_FOR_REVIEW` — UI người vay đã build thành công ngày 2026-10-04 | [Plan](plans/MOBILE-LOAN-003-servicing-repayment.md) |
 | MOBILE-INVESTOR-001 | Risk projection trên danh mục + thông báo servicing thật | Investment/Notification P5-B04 | `READY_FOR_REVIEW` — portfolio hiển thị DPD/nhóm nợ; notification list/count/read nối Gateway ngày 2026-10-04 | [Contract chung](../finora-platform/docs/integrations/CIC-RISK-NOTIFICATION.md) |
+| MOBILE-INVESTOR-002 | Hồ sơ người vay (ẩn danh, không SHAP): thẻ tóm tắt trên màn khoản vay + màn "Hồ sơ người vay" | Loan `GET /investor/loan-applications/{n}/borrower-profile`; Investment trả `applicationNumber` | `READY_FOR_REVIEW` — Hải chốt ngày 2026-10-10: ẩn danh, đủ chỉ số | [Spec](../finora-platform/docs/superpowers/specs/2026-10-10-investor-borrower-profile-design.md) |
 
 ## Quy tắc đồng bộ về sau
 

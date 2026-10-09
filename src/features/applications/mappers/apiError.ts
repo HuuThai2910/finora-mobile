@@ -72,6 +72,12 @@ export function toActionError(error: unknown): ActionError {
     };
   }
 
+  // 403 `PIN_REQUIRED`/`PIN_TOKEN_INVALID` (token PIN hết 3 phút hoặc sai phạm vi) không phải
+  // lỗi phiên: hiện nguyên lời backend để người dùng biết chỉ cần bấm ký lại và nhập PIN.
+  if (error.status === 403 && body.code?.startsWith('PIN_') && body.message) {
+    return { message: body.message, retryable: true, stale: false };
+  }
+
   if (error.status === 401 || error.status === 403) {
     return {
       message: 'Phiên đăng nhập không còn hợp lệ hoặc bạn không có quyền thực hiện thao tác này.',

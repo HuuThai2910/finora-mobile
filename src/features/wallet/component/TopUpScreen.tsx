@@ -1,181 +1,171 @@
 import { useState } from 'react';
-import { Alert, Linking, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { WaveBackdrop } from '@/components/phone';
+import { WALLET_HISTORY_WAVES } from '@/constants/backgrounds';
 import { Colors } from '@/constants/colors';
-import { IconSize, Spacing, Text_ } from '@/theme';
-import { PHeader, PItem, Screen } from '@/components/phone';
-import { Button, Field, Icon, InfoNote, SectionLabel, Tag } from '@/components/ui';
-import { formatDong } from '@/utils/format';
-import { toUserMessage } from '@/lib/api';
 import type { WalletStackParamList } from '@/navigation/types';
+import { Spacing } from '@/theme';
 import type { TopUpOrder } from '@/types/wallet';
-import { completeMockTopUp, createTopUp, getTopUp } from '../api';
-import QrPlaceholder from './QrPlaceholder';
+import { TOPUP_PAYMENT_NOTE, WALLET_HISTORY_MAX_WIDTH, WALLET_HISTORY_PADDING } from '../constant';
+import { useCountdown } from '../hook/useCountdown';
+import { useTopUp } from '../hook/useTopUp';
+import { useBalance } from '../hook/useWallet';
+import { providerLabel, topUpDetailRows, topUpOutcome, topUpStatusView } from '../mappers/topUp';
+import TopUpDetailsCard from './TopUpDetailsCard';
+import TopUpForm from './TopUpForm';
+import TopUpOutcomeCard from './TopUpOutcomeCard';
+import TopUpPaymentCard from './TopUpPaymentCard';
+import WalletAccountCard from './WalletAccountCard';
+import WalletButton from './WalletButton';
+import WalletHeader from './WalletHeader';
+import WalletNote from './WalletNote';
 
-const MINIMUM = 10_000;
-const MAXIMUM = 100_000_000;
 type Nav = NativeStackNavigationProp<WalletStackParamList, 'TopUp'>;
 
+/**
+ * Màn nạp tiền vào ví, cùng bộ với "Lịch sử ví": nền hai linh vật trao đồng xu, thẻ tài khoản ví,
+ * rồi tới việc của màn. Một màn đi qua ba bước: nhập số tiền → thanh toán lệnh vừa tạo (mã QR, đếm
+ * lùi hạn thanh toán) → kết quả. Trạng thái lệnh luôn lấy từ Payment Service, app không tự suy ra.
+ */
 export default function TopUpScreen() {
-  const navigation = useNavigation<Nav>();
-  const [amountText, setAmountText] = useState('1.000.000');
-  const [order, setOrder] = useState<TopUpOrder | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const amount = Number(amountText.replace(/\D/g, ''));
-  const returnToWallet = () => navigation.popToTop();
+  const nav = useNavigation<Nav>();
+  const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
+  const width = Math.min(windowWidth, WALLET_HISTORY_MAX_WIDTH);
+  // Nội dung cao ít nhất bằng khung cuộn để nền trơn phủ tới đáy màn.
+  const [viewportHeight, setViewportHeight] = useState(0);
 
-  const onAmountChange = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 9);
-    setAmountText(digits ? new Intl.NumberFormat('vi-VN').format(Number(digits)) : '');
-    setError(null);
+  const balance = useBalance();
+  const topUp = useTopUp();
+  const { order, busy, error } = topUp;
+  const phase = order ? topUpStatusView(order.status).phase : null;
+  const secondsLeft = useCountdown(order?.expiresAt ?? null, phase === 'pending');
+
+  const backToWallet = () => {
+    // Mở từ nút "Nạp" ở trang chủ thì stack Ví chỉ có mỗi màn này, popToTop không có chỗ để về.
+    if (nav.getState().routes[0]?.name === 'WalletHistory') nav.popToTop();
+    else nav.replace('WalletHistory');
   };
 
-  const start = async () => {
-    if (!Number.isInteger(amount) || amount < MINIMUM || amount > MAXIMUM) {
-      setError('Nhập số tiền từ 10.000 đ đến 100.000.000 đ.');
-      return;
-    }
-    setSubmitting(true);
-    setError(null);
-    try {
-      setOrder(await createTopUp(amount));
-    } catch (e) {
-      setError(toUserMessage(e));
-    } finally {
-      setSubmitting(false);
-    }
+  // Tạo lệnh mới sau khi đã nạp xong: tải lại số dư để thẻ tài khoản không hiện số cũ.
+  const startOver = () => {
+    topUp.reset();
+    balance.reload();
   };
 
-  const refresh = async () => {
-    if (!order) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      const latest = await getTopUp(order.topUpId);
-      setOrder(latest);
-      if (latest.status === 'COMPLETED') {
-        Alert.alert('Nạp tiền thành công', `${formatDong(latest.amount)} đã được cộng vào ví FINORA.`);
-      }
-    } catch (e) {
-      setError(toUserMessage(e));
-    } finally {
-      setSubmitting(false);
-    }
+  const renderPending = (current: TopUpOrder) => {
+    // Quá hạn thanh toán (theo `expiresAt` của backend) thì cất nút trả tiền, đưa "Tạo giao dịch
+    // mới" lên làm nút chính; vẫn giữ "Kiểm tra trạng thái" cho trường hợp đã trả trước hạn.
+    const expired = secondsLeft === 0;
+    return (
+      <>
+        <TopUpPaymentCard order={current} secondsLeft={secondsLeft} />
+        <View style={styles.actions}>
+          {expired ? <WalletButton label="Tạo giao dịch mới" onPress={startOver} /> : null}
+          {!expired && current.status === 'AWAITING_PAYMENT' && current.checkoutUrl ? (
+            <WalletButton
+              label={`Mở ${providerLabel(current.provider)} để thanh toán`}
+              icon="arrowUpRight"
+              onPress={() => void topUp.openProvider()}
+              disabled={busy !== null}
+            />
+          ) : null}
+          {!expired && current.mockCompletionAvailable ? (
+            <WalletButton
+              label="Giả lập thanh toán thành công"
+              onPress={topUp.completeMock}
+              loading={busy === 'complete'}
+              disabled={busy !== null}
+            />
+          ) : null}
+          <WalletButton
+            label="Kiểm tra trạng thái"
+            variant="outline"
+            icon="refreshCw"
+            onPress={topUp.refresh}
+            loading={busy === 'refresh'}
+            disabled={busy !== null}
+          />
+        </View>
+        {error ? <WalletNote tone="danger" text={error} /> : null}
+        <TopUpDetailsCard rows={topUpDetailRows(current, false)} />
+        <WalletNote text={TOPUP_PAYMENT_NOTE} />
+      </>
+    );
   };
 
-  const completeMock = async () => {
-    if (!order) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      const completed = await completeMockTopUp(order.topUpId);
-      setOrder(completed);
-      Alert.alert('Nạp tiền thành công', `${formatDong(completed.amount)} đã được cộng vào ví FINORA.`, [
-        { text: 'Về ví', onPress: returnToWallet },
-      ]);
-    } catch (e) {
-      setError(toUserMessage(e));
-    } finally {
-      setSubmitting(false);
-    }
+  const renderOutcome = (current: TopUpOrder, outcomePhase: 'completed' | 'failed' | 'reconcile') => {
+    const { title, detail } = topUpOutcome(current);
+    const toWallet = { label: 'Về ví', onPress: backToWallet };
+    const actions = {
+      completed: { primary: toWallet, secondary: { label: 'Nạp thêm', onPress: startOver } },
+      failed: { primary: { label: 'Tạo giao dịch mới', onPress: startOver }, secondary: toWallet },
+      reconcile: {
+        primary: { label: 'Kiểm tra lại', onPress: topUp.refresh, loading: busy === 'refresh' },
+        secondary: toWallet,
+      },
+    }[outcomePhase];
+    return (
+      <>
+        <TopUpOutcomeCard phase={outcomePhase} title={title} detail={detail} {...actions} />
+        {error ? <WalletNote tone="danger" text={error} /> : null}
+        <TopUpDetailsCard rows={topUpDetailRows(current, true)} />
+      </>
+    );
   };
 
-  const openProvider = async () => {
-    if (!order?.checkoutUrl) return;
-    if (!(await Linking.canOpenURL(order.checkoutUrl))) {
-      setError('Thiết bị không mở được liên kết thanh toán ZaloPay.');
-      return;
+  const renderBody = () => {
+    if (!order || !phase) {
+      return (
+        <>
+          <WalletAccountCard
+            available={balance.data?.available ?? null}
+            held={balance.data?.held ?? null}
+            loading={balance.loading}
+            error={balance.error}
+            onRetry={balance.reload}
+          />
+          <TopUpForm
+            onSubmit={amount => void topUp.create(amount)}
+            submitting={busy === 'create'}
+            submitError={error}
+          />
+        </>
+      );
     }
-    await Linking.openURL(order.checkoutUrl);
+    return phase === 'pending' ? renderPending(order) : renderOutcome(order, phase);
   };
 
   return (
-    <Screen>
-      <PHeader
-        title="Nạp tiền vào ví"
-        back
-        right={<Icon name="wallet" size={IconSize.sm} color={Colors.ink2} />}
-      />
-
-      {!order ? (
-        <>
-          <Field
-            label="Số tiền nạp"
-            value={amountText}
-            onChangeText={onAmountChange}
-            keyboardType="number-pad"
-            helper="Từ 10.000 đ đến 100.000.000 đ mỗi giao dịch."
-            error={error ?? undefined}
-            required
-          />
-          <Button label="Tạo giao dịch nạp tiền" onPress={start} loading={submitting} />
-          <InfoNote style={styles.note}>
-            Bản demo dùng Payment Service và sổ cái thật. Khi cấu hình ZaloPay sandbox, bước tiếp theo
-            sẽ mở trang thanh toán; không phát sinh tiền thật.
-          </InfoNote>
-        </>
-      ) : (
-        <>
-          <View style={styles.heading}>
-            <View style={styles.headingText}>
-              <Text style={styles.amount}>{formatDong(order.amount)}</Text>
-              <Text style={styles.provider}>Qua {order.provider}</Text>
-            </View>
-            <Tag tone={order.status === 'COMPLETED' ? 'green' : 'amber'} small>
-              {statusLabel(order.status)}
-            </Tag>
+    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView
+        style={styles.root}
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
+        onLayout={e => setViewportHeight(e.nativeEvent.layout.height)}
+      >
+        <View style={{ width, minHeight: viewportHeight }}>
+          <WaveBackdrop background={WALLET_HISTORY_WAVES} width={width} />
+          <View style={styles.content}>
+            <WalletHeader title="Nạp tiền vào ví" width={width} topInset={insets.top} />
+            <View style={styles.body}>{renderBody()}</View>
           </View>
-
-          {order.qrPayload ? <QrPlaceholder payload={order.qrPayload} /> : null}
-
-          <SectionLabel>Thông tin giao dịch</SectionLabel>
-          <PItem label="Mã FINORA" value={order.topUpId} />
-          <PItem label="Mã đối tác" value={order.providerOrderId} />
-          <PItem label="Trạng thái" value={statusLabel(order.status)} last />
-
-          {order.status === 'AWAITING_PAYMENT' && order.checkoutUrl ? (
-            <Button label="Mở ZaloPay để thanh toán" onPress={openProvider} style={styles.action} />
-          ) : null}
-
-          {order.mockCompletionAvailable ? (
-            <Button label="Giả lập thanh toán thành công" onPress={completeMock} loading={submitting} style={styles.action} />
-          ) : null}
-
-          {order.status !== 'COMPLETED' ? (
-            <Button label="Kiểm tra trạng thái" variant="outline" onPress={refresh} loading={submitting} style={styles.secondary} />
-          ) : (
-            <Button label="Về ví" onPress={returnToWallet} style={styles.action} />
-          )}
-
-          {error ? <InfoNote tone="warn" style={styles.note}>{error}</InfoNote> : null}
-          <InfoNote style={styles.note}>
-            Chỉ callback có chữ ký hợp lệ của ZaloPay hoặc nút giả lập khi chạy MOCK mới cộng tiền vào số dư.
-          </InfoNote>
-        </>
-      )}
-    </Screen>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
-function statusLabel(status: TopUpOrder['status']): string {
-  switch (status) {
-    case 'PROVIDER_PENDING': return 'Đang tạo giao dịch';
-    case 'AWAITING_PAYMENT': return 'Chờ thanh toán';
-    case 'COMPLETED': return 'Đã nạp tiền';
-    case 'FAILED': return 'Thất bại';
-    case 'EXPIRED': return 'Đã hết hạn';
-    case 'RECONCILIATION_REQUIRED': return 'Đang đối soát';
-  }
-}
-
 const styles = StyleSheet.create({
-  heading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: Spacing.lg },
-  headingText: { flexShrink: 1 },
-  amount: { ...Text_.h2, color: Colors.ink },
-  provider: { ...Text_.micro, color: Colors.ink3, marginTop: Spacing.xs },
-  action: { marginTop: Spacing.xl },
-  secondary: { marginTop: Spacing.md },
-  note: { marginTop: Spacing.xl },
+  // Nền trơn của ảnh: phủ hai bên cột trên web rộng và lót lúc ảnh chưa nạp xong.
+  root: { flex: 1, backgroundColor: Colors.walletHistoryFill },
+  scroll: { flexGrow: 1, alignItems: 'center' },
+  content: { paddingHorizontal: WALLET_HISTORY_PADDING, paddingBottom: Spacing.page },
+  body: { gap: Spacing.xl },
+  actions: { gap: Spacing.md },
 });

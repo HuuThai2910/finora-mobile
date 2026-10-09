@@ -10,6 +10,7 @@ import type { ProfileStackParamList } from '@/navigation/types';
 import { Spacing, Text_ } from '@/theme';
 import { formatDateTime, formatPercentValue } from '@/utils/format';
 import { useBalance } from '@/features/wallet';
+import { usePinGuard } from '@/features/pin';
 import { confirmEarlySettlement, createEarlySettlementQuote } from '../api/servicingApi';
 import FinancialRows from '../components/FinancialRows';
 import RepaymentResultCard from '../components/RepaymentResultCard';
@@ -28,6 +29,7 @@ export default function EarlySettlementScreen() {
   const [quote, setQuote] = useState<EarlySettlementQuote | null>(null);
   const [result, setResult] = useState<RepaymentResult | null>(null);
   const trackedResult = useRepaymentTracking(result);
+  const { requirePin } = usePinGuard();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,7 +48,13 @@ export default function EarlySettlementScreen() {
   const confirm = async () => {
     if (!quote || busy || insufficient || quote.status !== 'ACTIVE') return;
     setBusy(true); setError(null);
-    try { setResult(await confirmEarlySettlement(quote.quoteId, key)); balance.reload(); }
+    try {
+      // Đóng bảng PIN là thôi xác nhận, không báo lỗi; báo giá vẫn giữ để bấm lại.
+      const pinToken = await requirePin('REPAYMENT');
+      if (!pinToken) return;
+      setResult(await confirmEarlySettlement(quote.quoteId, key, pinToken));
+      balance.reload();
+    }
     catch (reason) { setError(toUserMessage(reason)); }
     finally { setBusy(false); }
   };

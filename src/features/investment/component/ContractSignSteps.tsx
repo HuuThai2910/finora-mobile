@@ -44,7 +44,7 @@ export default function ContractSignSteps(props: Props) {
 
   return (
     <View style={styles.card}>
-      <Step index={1} state={readState} title="Đọc hợp đồng PDF" hint="Mọi bên ký trên cùng một bản. Bạn cần mở bản hiện hành trước khi ký.">
+      <Step index={1} state={readState} hasNext title="Đọc hợp đồng PDF" hint="Mọi bên ký trên cùng một bản. Bạn cần mở bản hiện hành trước khi ký.">
         <InvestButton
           label={pdfOpened ? 'Mở lại hợp đồng' : 'Mở hợp đồng'}
           icon="file"
@@ -53,8 +53,6 @@ export default function ContractSignSteps(props: Props) {
           loading={openingPdf}
         />
       </Step>
-
-      <View style={styles.connector} />
 
       <Step index={2} state={signState} title={providerIsMock ? 'Xác nhận hợp đồng' : 'Ký số VNPT SmartCA'} hint={signHint}>
         {signed ? null : signing ? (
@@ -80,22 +78,25 @@ export default function ContractSignSteps(props: Props) {
   );
 }
 
-function Step({ index, state, title, hint, children }: { index: number; state: StepState; title: string; hint: string; children: React.ReactNode }) {
+function Step({ index, state, hasNext = false, title, hint, children }: { index: number; state: StepState; hasNext?: boolean; title: string; hint: string; children: React.ReactNode }) {
   const done = state === 'done';
   const todo = state === 'todo';
   return (
     <View style={styles.step} accessible={false}>
-      <View
-        style={[styles.badge, done ? styles.badgeDone : todo ? styles.badgeTodo : styles.badgeActive]}
-        accessibilityLabel={`Bước ${index}${done ? ', đã xong' : ''}`}
-      >
-        {done ? (
-          <Icon name="check" size={16} color={Colors.onDark} strokeWidth={3} />
-        ) : (
-          <Text style={[styles.badgeText, todo && styles.badgeTextTodo]}>{index}</Text>
-        )}
+      <View style={styles.rail}>
+        <View
+          style={[styles.badge, done ? styles.badgeDone : todo ? styles.badgeTodo : styles.badgeActive]}
+          accessibilityLabel={`Bước ${index}${done ? ', đã xong' : ''}`}
+        >
+          {done ? (
+            <Icon name="check" size={16} color={Colors.onDark} strokeWidth={3} />
+          ) : (
+            <Text style={[styles.badgeText, todo && styles.badgeTextTodo]}>{index}</Text>
+          )}
+        </View>
+        {hasNext ? <View style={styles.connector} /> : null}
       </View>
-      <View style={styles.stepBody}>
+      <View style={[styles.stepBody, hasNext && styles.stepBodyWithNext]}>
         <Text style={[styles.stepTitle, todo && styles.stepTitleTodo]} maxFontSizeMultiplier={1.4}>{title}</Text>
         <Text style={styles.stepHint} maxFontSizeMultiplier={1.4}>{hint}</Text>
         {children ? <View style={styles.stepAction}>{children}</View> : null}
@@ -120,9 +121,12 @@ const styles = StyleSheet.create({
   badgeTodo: { backgroundColor: Colors.surfaceMuted, borderWidth: 1, borderColor: Colors.authBorder },
   badgeText: { fontFamily: FontFamily.bold, fontSize: 14, color: Colors.onDark },
   badgeTextTodo: { color: Colors.authMuted },
-  // Đường nối dọc giữa hai bước, thẳng hàng tâm hai huy hiệu số.
-  connector: { width: 2, height: 18, marginLeft: BADGE / 2 - 1, marginVertical: 4, backgroundColor: Colors.authBorder },
+  rail: { width: BADGE, alignItems: 'center' },
+  // Đường nối nằm trong cột huy hiệu và giãn theo chiều cao nội dung bước, nên luôn chạy liền từ
+  // huy hiệu này tới huy hiệu bước sau dù mô tả hay nút bên phải cao bao nhiêu.
+  connector: { flex: 1, width: 2, backgroundColor: Colors.authBorder },
   stepBody: { flex: 1, minWidth: 0, gap: 4 },
+  stepBodyWithNext: { paddingBottom: Spacing.xxxl },
   stepTitle: { fontFamily: FontFamily.bold, fontSize: 16, lineHeight: 23, color: Colors.authInk },
   stepTitleTodo: { color: Colors.authMuted },
   stepHint: { fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authMuted },

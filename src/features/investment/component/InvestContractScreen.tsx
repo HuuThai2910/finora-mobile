@@ -9,6 +9,7 @@ import { CONTRACTS_WAVES } from '@/constants/backgrounds';
 import { Colors } from '@/constants/colors';
 import { useAuthenticatedPdf } from '@/hooks/useAuthenticatedPdf';
 import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
+import { usePinGuard } from '@/features/pin';
 import { FontFamily, Radius, Spacing } from '@/theme';
 import { signContract } from '../api';
 import { CONTRACT_ART_BOTTOM, CONTRACT_NOTE, PORTFOLIO_MAX_WIDTH, PORTFOLIO_PADDING } from '../constant';
@@ -45,13 +46,17 @@ export default function InvestContractScreen() {
     downloadPath: data?.downloadPath ?? '/investor/loan-contracts/unavailable/document',
   });
   const smartCa = useInvestorSmartCa(data, reload);
+  const { requirePin } = usePinGuard();
 
   const onSign = async () => {
-    if (!data) return;
+    if (!data || submitting) return;
     setSubmitting(true);
     setSignError(null);
     try {
-      const result = await signContract(data, signKey.current);
+      // Hỏi PIN sau khi đã bấm ký; đóng bảng PIN là thôi ký, không báo lỗi.
+      const pinToken = await requirePin('SIGN_CONTRACT');
+      if (!pinToken) return;
+      const result = await signContract(data, signKey.current, pinToken);
       signKey.current = generateIdempotencyKey();
       reload();
       if (result.status === 'SIGNING') {

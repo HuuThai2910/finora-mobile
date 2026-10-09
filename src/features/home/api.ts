@@ -4,23 +4,7 @@ import { HOME_CHAIN_REF, HOME_RECENT } from '@/lib/mocks/fixtures';
 import { mockResponse } from '@/lib/mocks/delay';
 import { ApiError, notificationFetch } from '@/lib/api';
 import type { AppNotification } from '@/types/notification';
-
-type NotificationDto = {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  externalPushRequired: boolean;
-  unread: boolean;
-  occurredAt: string;
-};
-
-const kindOf = (type: string): AppNotification['kind'] => {
-  if (type.includes('REPAYMENT') || type.includes('SETTLEMENT')) return 'cashflow';
-  if (type.includes('DELINQUENCY') || type.includes('BAD_DEBT')) return 'credit';
-  if (type.includes('RESCHEDULED')) return 'reminder';
-  return 'credit';
-};
+import { toAppNotification, type NotificationDto } from './mappers/notificationDto';
 
 const notImplemented = (what: string): never => {
   throw new ApiError(501, `${what} chưa có endpoint thật`, 'NOT_IMPLEMENTED');
@@ -29,14 +13,7 @@ const notImplemented = (what: string): never => {
 export const listNotifications = async (): Promise<AppNotification[]> => {
   if (isMocked('notification')) return notificationMock.list();
   const rows = await notificationFetch<NotificationDto[]>('/notifications?limit=50');
-  return rows.map(row => ({
-    id: row.id,
-    kind: kindOf(row.type),
-    message: `${row.title}. ${row.message}`,
-    unread: row.unread,
-    occurredAt: row.occurredAt,
-    externalPushRequired: row.externalPushRequired,
-  }));
+  return rows.map(toAppNotification);
 };
 
 export const getUnreadCount = async (): Promise<number> => {
@@ -45,8 +22,12 @@ export const getUnreadCount = async (): Promise<number> => {
   return result.count;
 };
 
+/**
+ * Backend chưa có API "đọc hết": màn Thông báo gọi hàm này cho từng tin chưa đọc
+ * (tối đa 50 tin, đúng giới hạn của danh sách).
+ */
 export const markNotificationRead = async (id: string): Promise<void> => {
-  if (isMocked('notification')) return;
+  if (isMocked('notification')) return notificationMock.markRead(id);
   await notificationFetch<void>(`/notifications/${id}/read`, { method: 'POST' });
 };
 

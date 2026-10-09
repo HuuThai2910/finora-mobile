@@ -1,8 +1,8 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import type { UserProfile } from '@/types/auth';
 import { Colors } from '@/constants/colors';
 import { FontFamily, FontSize, LineHeight, Spacing, lh } from '@/theme';
-import { Icon, Tag } from '@/components/ui';
+import { Tag } from '@/components/ui';
 import { PROFILE_MASCOT } from '../constant';
 import KycBadge from './KycBadge';
 
@@ -10,7 +10,6 @@ type Props = {
   profile: UserProfile;
   /** Bề rộng cột nội dung — mascot co lại trên máy hẹp để tên còn chỗ. */
   width: number;
-  onOpenInfo: () => void;
   onStartEkyc: () => void;
 };
 
@@ -23,11 +22,12 @@ const mascotWidth = (column: number) => Math.min(114, Math.max(96, Math.round(co
 
 /**
  * Đầu màn Hồ sơ, nằm thẳng trên nền sóng (không có thẻ): ảnh đại diện chữ, tên,
- * nhãn định danh, lối vào thông tin cá nhân và mascot bên phải.
+ * nhãn định danh và mascot bên phải. Lối vào thông tin cá nhân nằm ở nhóm
+ * "Tài khoản" bên dưới.
  *
  * Không có nút đổi ảnh đại diện như mockup vì app chưa có chức năng đó.
  */
-export default function ProfileHeader({ profile, width, onOpenInfo, onStartEkyc }: Props) {
+export default function ProfileHeader({ profile, width, onStartEkyc }: Props) {
   const name = profile.fullName?.trim();
   const verified = profile.kycStatus === 'KYC_VERIFIED';
   const mascot = mascotWidth(width);
@@ -62,18 +62,6 @@ export default function ProfileHeader({ profile, width, onOpenInfo, onStartEkyc 
               <Tag tone="blue" small>{`Điểm ${profile.creditGrade}+ · ${profile.creditScore}`}</Tag>
             ) : null}
           </View>
-
-          <Pressable
-            onPress={onOpenInfo}
-            // Dòng chữ chỉ cao 18pt; nới vùng chạm theo chiều dọc cho đủ 44pt.
-            hitSlop={{ top: 13, bottom: 13 }}
-            accessibilityRole="button"
-            accessibilityLabel="Xem thông tin cá nhân"
-            style={({ pressed }) => [styles.link, pressed && styles.pressed]}
-          >
-            <Text style={styles.linkText}>Xem thông tin cá nhân</Text>
-            <Icon name="chevronRight" size={13} color={Colors.authMuted} strokeWidth={2.2} />
-          </Pressable>
         </View>
       </View>
 
@@ -110,15 +98,6 @@ const styles = StyleSheet.create({
   },
   upper: { textTransform: 'uppercase' },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginTop: 5 },
-  link: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: Spacing.xxs,
-    marginTop: Spacing.sm,
-  },
-  pressed: { opacity: 0.6 },
-  linkText: { fontFamily: FontFamily.regular, fontSize: 12.5, lineHeight: 18, color: Colors.authMuted },
   // Lấn vào lề phải như mockup (tai robot cách mép màn ~4pt) để nhường chỗ cho
   // tên; mép trái chừa một khe để chữ không dính vào tia sáng của mascot.
   mascot: { marginLeft: Spacing.sm, marginRight: -Spacing.lg },
