@@ -17,7 +17,13 @@ export type BookOrderStatus =
   /** Trạng thái backend thêm sau này: hiện nhãn trung tính thay vì làm vỡ màn. */
   | 'UNKNOWN';
 
-export type CancelReason = 'USER' | 'SELF_TRADE_PREVENTED' | 'NOTE_UNAVAILABLE' | 'UNKNOWN';
+export type CancelReason =
+  | 'USER'
+  | 'SELF_TRADE_PREVENTED'
+  | 'NOTE_UNAVAILABLE'
+  | 'DEFAULT_NOT_ACKNOWLEDGED'
+  | 'BOOK_CLOSED'
+  | 'UNKNOWN';
 
 /** Một dòng trong danh sách sổ lệnh. */
 export interface BookSummary {

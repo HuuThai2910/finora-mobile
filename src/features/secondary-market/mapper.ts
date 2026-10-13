@@ -101,7 +101,13 @@ const STATUSES: readonly BookOrderStatus[] = [
   'CANCELLED',
   'REJECTED',
 ];
-const CANCEL_REASONS: readonly CancelReason[] = ['USER', 'SELF_TRADE_PREVENTED', 'NOTE_UNAVAILABLE'];
+const CANCEL_REASONS: readonly CancelReason[] = [
+  'USER',
+  'SELF_TRADE_PREVENTED',
+  'NOTE_UNAVAILABLE',
+  'DEFAULT_NOT_ACKNOWLEDGED',
+  'BOOK_CLOSED',
+];
 
 /** Hạng lạ hoặc thiếu không được làm vỡ giao diện; trả null để màn tự ẩn viên hạng. */
 const toGrade = (value: string | null): CreditGrade | null => {

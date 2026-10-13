@@ -69,6 +69,15 @@ export function applicationJourneyStatus(
       next: null,
     };
   }
+  if (applicationStatus === 'APPROVED' && fundingStatus === 'EXPIRED') {
+    return {
+      tone: 'gray',
+      label: 'Gọi vốn không thành công',
+      icon: 'clock',
+      meaning: 'Hết thời hạn gọi vốn mà khoản vay chưa đủ vốn từ nhà đầu tư nên FINORA không lập hợp đồng.',
+      next: null,
+    };
+  }
   if (applicationStatus === 'APPROVED' && fundingStatus === 'REQUESTED') {
     return {
       tone: 'blue',

@@ -18,9 +18,13 @@ export type InvestBounds = {
 
 export function investBounds(loan: MarketLoan): InvestBounds {
   const step = loan.noteDenomination > 0 ? loan.noteDenomination : 1;
+  const minimum = Math.ceil(Math.max(loan.minInvestmentAmount, step) / step) * step;
+  const max = Math.floor(loan.remainingAmount / step) * step;
   return {
-    min: Math.ceil(Math.max(loan.minInvestmentAmount, step) / step) * step,
-    max: Math.floor(loan.remainingAmount / step) * step,
+    // Phần còn thiếu nhỏ hơn mức tối thiểu: backend nhận lệnh lấp đúng phần đó, để khoản vay
+    // không kẹt lại một khoản lẻ không ai mua được.
+    min: max > 0 && max < minimum ? max : minimum,
+    max,
     step,
   };
 }

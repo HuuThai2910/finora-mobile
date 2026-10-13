@@ -51,6 +51,8 @@ export const CANCEL_REASON_LABEL: Record<CancelReason, string> = {
   USER: 'Bạn đã huỷ phần chưa khớp.',
   SELF_TRADE_PREVENTED: 'Lệnh chạm vào lệnh của chính bạn nên phần còn lại bị huỷ.',
   NOTE_UNAVAILABLE: 'Note trong lệnh không còn giao được nên phần còn lại bị huỷ.',
+  DEFAULT_NOT_ACKNOWLEDGED: 'Khoản vay chuyển nợ xấu sau khi bạn đặt lệnh nên lệnh mua bị huỷ; đặt lại nếu vẫn muốn mua.',
+  BOOK_CLOSED: 'Khoản vay đã tất toán, không còn Note để giao dịch nên lệnh bị huỷ.',
   UNKNOWN: 'Phần chưa khớp đã bị huỷ.',
 };
 

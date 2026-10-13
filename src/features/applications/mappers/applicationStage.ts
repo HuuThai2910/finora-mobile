@@ -53,7 +53,8 @@ export function applicationStage(
   if (applicationStatus === 'APPROVED' && contractStatus) {
     return CONTRACT_STAGE[contractStatus] ?? 'other';
   }
-  if (applicationStatus === 'APPROVED' && (termsStatus === 'DECLINED' || termsStatus === 'EXPIRED')) {
+  if (applicationStatus === 'APPROVED'
+      && (termsStatus === 'DECLINED' || termsStatus === 'EXPIRED' || fundingStatus === 'EXPIRED')) {
     return 'stopped';
   }
   if (applicationStatus === 'APPROVED'

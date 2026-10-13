@@ -173,7 +173,7 @@ export interface LoanApplication {
   updatedAt: string;
 }
 
-export type LoanFundingStatus = 'REQUESTED' | 'FULLY_FUNDED';
+export type LoanFundingStatus = 'REQUESTED' | 'FULLY_FUNDED' | 'EXPIRED';
 
 export interface LoanFunding {
   status: LoanFundingStatus;
@@ -183,6 +183,8 @@ export interface LoanFunding {
   investmentListingId: number | null;
   fundedAmount: number | null;
   fullyFundedAt: string | null;
+  /** Có khi `status = EXPIRED`: đợt gọi vốn hết hạn mà chưa đủ vốn. */
+  expiredAt?: string | null;
 }
 
 export interface ConfirmLoanTermsRequest {
