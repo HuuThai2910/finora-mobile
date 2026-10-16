@@ -6,6 +6,7 @@ import type {
   AutoInvestConfig,
   AutoInvestMatch,
   InvestmentContract,
+  InvestorRescheduleConsent,
   PortfolioSummary,
 } from '@/types/invest';
 import {
@@ -111,3 +112,30 @@ export const refreshContractSignature = async (
   );
   return toInvestmentContract(refreshed);
 };
+
+/** Danh sách đề nghị cơ cấu mà tài khoản nhà đầu tư hiện tại có quyền biểu quyết. */
+type ConsentPage = { content: InvestorRescheduleConsent[] };
+
+export const getRescheduleConsents = async (signal?: AbortSignal): Promise<InvestorRescheduleConsent[]> => {
+  if (isMocked('invest')) return [];
+  const page = await investmentFetch<ConsentPage>('/investments/reschedule-consents?page=0&size=100', { signal });
+  return page.content;
+};
+
+/**
+ * Đồng ý hoặc từ chối đề nghị cơ cấu. Cùng một lần bấm phải giữ nguyên idempotency key
+ * để việc retry không tạo ra hai quyết định.
+ */
+export const decideRescheduleConsent = async (
+  requestId: string,
+  approve: boolean,
+  idempotencyKey: string,
+  comment?: string,
+): Promise<InvestorRescheduleConsent> => investmentFetch<InvestorRescheduleConsent>(
+  `/investments/reschedule-consents/${requestId}/${approve ? 'approve' : 'reject'}`,
+  {
+    method: 'POST',
+    headers: { 'Idempotency-Key': idempotencyKey },
+    body: JSON.stringify({ comment: comment?.trim() || null }),
+  },
+);

@@ -24,7 +24,12 @@ import {
   WalletHistoryScreen,
   WithdrawScreen,
 } from '@/features/wallet';
-import { AutoInvestScreen, InvestContractScreen, PortfolioScreen } from '@/features/investment';
+import {
+  AutoInvestScreen,
+  InvestContractScreen,
+  PortfolioScreen,
+  RescheduleConsentsScreen,
+} from '@/features/investment';
 import {
   MyOrdersScreen,
   OrderBookScreen,
@@ -90,6 +95,7 @@ function WalletTab() {
       <WalletStack.Screen name="Portfolio" component={PortfolioScreen} />
       <WalletStack.Screen name="AutoInvest" component={AutoInvestScreen} />
       <WalletStack.Screen name="InvestContract" component={InvestContractScreen} />
+      <WalletStack.Screen name="RescheduleConsents" component={RescheduleConsentsScreen} />
       <WalletStack.Screen name="SecondaryMarket" component={SecondaryMarketScreen} />
       <WalletStack.Screen name="OrderBook" component={OrderBookScreen} />
       <WalletStack.Screen name="PlaceBookOrder" component={PlaceOrderScreen} />

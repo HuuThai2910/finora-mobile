@@ -86,6 +86,9 @@ export default function PositionCard({ position: p, onSell }: Props) {
       <View style={styles.figures}>
         <Figure label="Dư nợ còn lại" value={formatDong(p.outstanding)} />
         <Figure label="Lãi đã nhận" value={formatDong(p.interestReceived)} accent={p.interestReceived > 0} />
+        {p.prepaymentFeeReceived > 0 ? (
+          <Figure label="Phí trả trước được chia" value={formatDong(p.prepaymentFeeReceived)} accent />
+        ) : null}
       </View>
 
       <Pressable

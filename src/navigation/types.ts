@@ -49,6 +49,7 @@ export type WalletStackParamList = {
   Portfolio: undefined;
   AutoInvest: undefined;
   InvestContract: undefined;
+  RescheduleConsents: undefined;
   /** Chợ Notes: danh sách khoản vay còn Note lưu hành, mỗi khoản một sổ lệnh Ask/Bid. */
   SecondaryMarket: undefined;
   /** Sổ lệnh của một đợt gọi vốn; `listingId` là mã đợt, không phải mã khoản vay. */

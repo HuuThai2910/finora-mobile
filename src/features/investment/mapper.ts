@@ -22,6 +22,7 @@ export interface PortfolioPositionDto {
   outstandingPrincipal: string;
   principalRepaid: string;
   interestReceived: string;
+  prepaymentFeeReceived: string;
   sharePercent: number;
   status: string;
   daysPastDue: number;
@@ -37,6 +38,7 @@ export interface PortfolioDto {
   investedAmount: string;
   principalRepaid: string;
   interestReceived: string;
+  prepaymentFeeReceived: string;
   totalReceived: string;
   activeNoteCount: number;
   positionCount: number;
@@ -80,6 +82,7 @@ function toPosition(dto: PortfolioPositionDto): PortfolioPosition {
     outstanding: toNumber(dto.outstandingPrincipal),
     principalRepaid: toNumber(dto.principalRepaid),
     interestReceived: toNumber(dto.interestReceived),
+    prepaymentFeeReceived: toNumber(dto.prepaymentFeeReceived),
     sharePercent: Number(dto.sharePercent.toFixed(2)),
     daysPastDue: dto.daysPastDue ?? 0,
     debtGroup: dto.debtGroup ?? 1,
@@ -96,6 +99,7 @@ export function toPortfolioSummary(dto: PortfolioDto): PortfolioSummary {
     pendingAmount: toNumber(dto.pendingAmount),
     principalRepaid: toNumber(dto.principalRepaid),
     interestReceived: toNumber(dto.interestReceived),
+    prepaymentFeeReceived: toNumber(dto.prepaymentFeeReceived),
     totalReceived: toNumber(dto.totalReceived),
     activeNoteCount: dto.activeNoteCount,
     positionCount: dto.positionCount,

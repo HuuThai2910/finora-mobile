@@ -159,6 +159,8 @@ export const repaymentStatusTone = (value: RepaymentResult['status']): TagTone =
  */
 const RESCHEDULE_STATUS: Record<RescheduleStatus, StatusLook> = {
   PENDING_REVIEW: { label: 'Chờ thẩm định', tone: 'blue', icon: 'clock' },
+  PENDING_INVESTOR_CONSENT: { label: 'Chờ nhà đầu tư đồng ý', tone: 'blue', icon: 'clock' },
+  INVESTOR_REJECTED: { label: 'Nhà đầu tư không đồng ý', tone: 'red', icon: 'circleX' },
   REJECTED: { label: 'Đã từ chối', tone: 'red', icon: 'circleX' },
   CREATE_PENDING: { label: 'Đã duyệt, chờ áp dụng', tone: 'blue', icon: 'refreshCw' },
   CREATING: { label: 'Đang áp dụng lịch mới', tone: 'blue', icon: 'refreshCw' },
@@ -178,12 +180,12 @@ export const rescheduleStatusLook = (value: RescheduleStatus): StatusLook =>
  * từ chối (`ACTIVE_RESTRUCTURE_REQUEST_EXISTS`).
  */
 export const isActiveReschedule = (value: RescheduleStatus): boolean =>
-  value !== 'REJECTED' && value !== 'COMPLETED';
+  value !== 'REJECTED' && value !== 'INVESTOR_REJECTED' && value !== 'COMPLETED';
 
 /** Tên hai hình thức, dùng chung cho lựa chọn ở biểu mẫu và tiêu đề đề nghị đã gửi. */
 export const RESCHEDULE_TYPE_LABEL = {
-  TERM_EXTENSION: 'Gia hạn thêm kỳ',
-  INSTALLMENT_ADJUSTMENT: 'Đổi ngày đến hạn',
+  TERM_EXTENSION: 'Gia hạn thời hạn vay',
+  INSTALLMENT_ADJUSTMENT: 'Điều chỉnh kỳ hạn trả nợ',
 } as const;
 
 /** "Gia hạn thêm 3 kỳ", "Đổi ngày đến hạn sang 05/10/2026". */

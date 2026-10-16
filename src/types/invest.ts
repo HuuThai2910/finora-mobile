@@ -157,6 +157,8 @@ export interface PortfolioPosition {
   outstanding: number;
   principalRepaid: number;
   interestReceived: number;
+  /** 80% phí trả trước được Payment phân bổ theo dư nợ Note. */
+  prepaymentFeeReceived: number;
   /** Phần của tôi trong tổng vốn khoản vay, %. */
   sharePercent: number;
   /** Projection vận hành từ Loan; không thay đổi điều khoản Note đã phát hành. */
@@ -175,6 +177,7 @@ export interface PortfolioSummary {
   pendingAmount: number;
   principalRepaid: number;
   interestReceived: number;
+  prepaymentFeeReceived: number;
   /** Gốc đã thu hồi cộng lãi đã nhận. */
   totalReceived: number;
   activeNoteCount: number;
@@ -182,6 +185,27 @@ export interface PortfolioSummary {
   /** Lãi suất bình quân theo dư nợ, %/năm — backend tính, không phải IRR. */
   averageRate: number;
   positions: PortfolioPosition[];
+}
+
+export type InvestorRescheduleConsentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+
+/** Phiếu xin ý kiến của nhà đầu tư đang nắm Note khi người vay đề nghị cơ cấu lịch trả nợ. */
+export interface InvestorRescheduleConsent {
+  requestId: string;
+  loanApplicationId: number;
+  loanNumber: string;
+  requestType: 'TERM_EXTENSION' | 'INSTALLMENT_ADJUSTMENT' | string;
+  /** Ngày đến hạn hiện tại của kỳ bắt đầu cơ cấu, yyyy-MM-dd. */
+  rescheduleFromDate: string;
+  adjustedDueDate: string | null;
+  extraTerms: number | null;
+  originalMaturityDate: string | null;
+  /** Dư nợ gốc của riêng nhà đầu tư tại thời điểm chốt danh sách biểu quyết. */
+  outstandingPrincipal: number;
+  status: InvestorRescheduleConsentStatus;
+  decisionComment: string | null;
+  decidedAt: string | null;
+  createdAt: string;
 }
 
 /**

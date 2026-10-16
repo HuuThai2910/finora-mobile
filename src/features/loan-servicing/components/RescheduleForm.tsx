@@ -53,13 +53,13 @@ export default function RescheduleForm({ loanNumber, policy, loan, periods, onSu
 
       <DetailCard title="Thông tin đề nghị" icon="calendar">
         <RescheduleDateField
-          label="Áp dụng từ kỳ"
+          label="Kỳ trả nợ muốn điều chỉnh"
           value={values.fromDate}
           onChange={value => set('fromDate', value)}
-          helper="Chọn một kỳ chưa trả. Kỳ khác thì chạm ô để chọn đúng ngày đến hạn của kỳ đó."
+          helper="Chọn ngày đến hạn hiện tại của một kỳ chưa thanh toán."
           error={errorOf('fromDate')}
           minDate={today}
-          sheetTitle="Ngày đến hạn của kỳ áp dụng"
+          sheetTitle="Chọn kỳ trả nợ cần điều chỉnh"
           options={options}
         />
         {extension ? (
@@ -70,13 +70,13 @@ export default function RescheduleForm({ loanNumber, policy, loan, periods, onSu
           />
         ) : (
           <RescheduleDateField
-            label="Ngày đến hạn mới"
+            label="Ngày muốn thanh toán kỳ này"
             value={values.adjustedDate}
             onChange={value => set('adjustedDate', value)}
-            helper="Ngày bạn sẽ trả kỳ đã chọn, phải sau ngày đến hạn cũ."
+            helper="Ngày mới phải sau ngày đến hạn hiện tại và không làm thay đổi ngày đáo hạn cuối cùng."
             error={errorOf('adjustedDate')}
             minDate={adjustedMin}
-            sheetTitle="Ngày đến hạn mới"
+            sheetTitle="Chọn ngày thanh toán mới"
           />
         )}
         <RescheduleReasonField value={values.reason} onChange={value => set('reason', value)} error={errorOf('reason')} />

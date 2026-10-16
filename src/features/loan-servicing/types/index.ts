@@ -48,6 +48,8 @@ export interface RepaymentResult {
   amount: number;
   coreAmount: number;
   platformFee: number;
+  investorFeeShare: number;
+  finoraFeeShare: number;
   currency: string;
   transactionDate: string;
   status: RepaymentStatus;
@@ -79,6 +81,8 @@ export interface EarlySettlementQuote {
   penaltyPortion: number;
   coreAmount: number;
   platformFee: number;
+  investorFeeShare: number;
+  finoraFeeShare: number;
   totalAmount: number;
   feeRate: number;
   policyVersion: string;
@@ -95,6 +99,8 @@ export interface PartialPrepaymentQuote {
   prepaidPrincipal: number;
   coreAmount: number;
   platformFee: number;
+  investorFeeShare: number;
+  finoraFeeShare: number;
   totalAmount: number;
   outstandingPrincipalBefore: number;
   nextDueDateBefore: string | null;
@@ -109,6 +115,8 @@ export interface PartialPrepaymentQuote {
 export type RescheduleType = 'INSTALLMENT_ADJUSTMENT' | 'TERM_EXTENSION';
 export type RescheduleStatus =
   | 'PENDING_REVIEW'
+  | 'PENDING_INVESTOR_CONSENT'
+  | 'INVESTOR_REJECTED'
   | 'REJECTED'
   | 'CREATE_PENDING'
   | 'CREATING'

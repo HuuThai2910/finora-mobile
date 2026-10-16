@@ -5,7 +5,6 @@ import { ApplicationDetailError } from '@/features/applications';
 import type { ProfileStackParamList } from '@/navigation/types';
 import LoanDetailSkeleton from '../components/LoanDetailSkeleton';
 import LoanPaymentCard from '../components/LoanPaymentCard';
-import LoanRestructureCard from '../components/LoanRestructureCard';
 import LoanSummaryCard from '../components/LoanSummaryCard';
 import ServicingScaffold from '../components/ServicingScaffold';
 import { useServicingLoan } from '../hooks/useLoanServicing';
@@ -69,10 +68,9 @@ export default function LoanServicingDetailScreen() {
           onPay={() => nav.navigate('LoanPayment', { loanNumber })}
           onPrepay={() => nav.navigate('PartialPrepayment', { loanNumber })}
           onSettle={() => nav.navigate('EarlySettlement', { loanNumber })}
+          onReschedule={() => nav.navigate('RescheduleLoan', { loanNumber })}
+          canReschedule={canRescheduleLoan(loan)}
         />
-      ) : null}
-      {canRescheduleLoan(loan) ? (
-        <LoanRestructureCard onOpen={() => nav.navigate('RescheduleLoan', { loanNumber })} />
       ) : null}
     </ServicingScaffold>
   );

@@ -1,19 +1,20 @@
 import { useRef, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
-import { ErrorState, LoadingScreen } from '@/components/feedback';
-import { PHeader, Screen } from '@/components/phone';
-import { Button, Card, Field, InfoNote } from '@/components/ui';
+import { ApplicationDetailError, DetailButton, DetailCard, DetailNote } from '@/features/applications';
+import { Field } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
 import type { ProfileStackParamList } from '@/navigation/types';
-import { Spacing, Text_ } from '@/theme';
+import { FontFamily, Spacing } from '@/theme';
 import { formatDong, formatDateTime, formatPercentValue } from '@/utils/format';
 import { useBalance } from '@/features/wallet';
 import { usePinGuard } from '@/features/pin';
 import { confirmPartialPrepayment, createPartialPrepaymentQuote } from '../api/servicingApi';
 import FinancialRows from '../components/FinancialRows';
+import LoanDetailSkeleton from '../components/LoanDetailSkeleton';
 import RepaymentResultCard from '../components/RepaymentResultCard';
+import ServicingScaffold from '../components/ServicingScaffold';
 import { useServicingLoan } from '../hooks/useLoanServicing';
 import { useRepaymentTracking } from '../hooks/useRepaymentTracking';
 import { parseDong } from '../mappers/servicing';
@@ -35,8 +36,12 @@ export default function PartialPrepaymentScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (state.loading && !state.data) return <Screen><PHeader title="Trả trước một phần" back /><LoadingScreen cards={3} /></Screen>;
-  if (state.error || !state.data) return <Screen><PHeader title="Trả trước một phần" back /><ErrorState message={state.error ?? 'Không tải được khoản vay.'} onRetry={state.reload} /></Screen>;
+  if (state.loading && !state.data) {
+    return <ServicingScaffold title="Trả trước một phần"><LoanDetailSkeleton label="Đang tải khoản vay" /></ServicingScaffold>;
+  }
+  if (state.error || !state.data) {
+    return <ServicingScaffold title="Trả trước một phần"><ApplicationDetailError message={state.error ?? 'Không tải được khoản vay.'} retrying={state.loading} onRetry={state.reload} /></ServicingScaffold>;
+  }
   const data = state.data;
   const amount = parseDong(amountText);
   const invalidAmount = amount === null || amount <= 0 || amount >= data.loan.principalOutstanding;
@@ -44,65 +49,80 @@ export default function PartialPrepaymentScreen() {
 
   const requestQuote = async () => {
     if (busy || invalidAmount || amount === null) return;
-    setBusy(true); setError(null);
+    setBusy(true);
+    setError(null);
     try { setQuote(await createPartialPrepaymentQuote(data.applicationId, amount)); }
     catch (reason) { setError(toUserMessage(reason)); }
     finally { setBusy(false); }
   };
   const confirm = async () => {
     if (!quote || busy || insufficient || quote.status !== 'ACTIVE') return;
-    setBusy(true); setError(null);
+    setBusy(true);
+    setError(null);
     try {
-      // Đóng bảng PIN là thôi xác nhận, không báo lỗi; báo giá vẫn giữ để bấm lại.
       const pinToken = await requirePin('REPAYMENT');
       if (!pinToken) return;
       setResult(await confirmPartialPrepayment(quote.quoteId, key, pinToken));
       balance.reload();
-    }
-    catch (reason) { setError(toUserMessage(reason)); }
+    } catch (reason) { setError(toUserMessage(reason)); }
     finally { setBusy(false); }
   };
 
+  const shortenTerm = quote?.allocationStrategy.endsWith('/NEXT_INSTALLMENT') ?? false;
   return (
-    <Screen>
-      <PHeader title="Trả trước một phần gốc" back hint={loanNumber} />
-      {trackedResult ? <><RepaymentResultCard result={trackedResult} /><Button label="Xem lịch mới" onPress={() => nav.goBack()} style={styles.action} /></> : quote ? (
+    <ServicingScaffold title="Trả trước một phần gốc" subtitle={loanNumber}>
+      {trackedResult ? (
         <>
-          <Card style={styles.card}>
-            <Text style={styles.title}>Báo giá trả trước</Text>
+          <RepaymentResultCard result={trackedResult} />
+          <DetailButton label="Xem lịch trả nợ mới" onPress={() => nav.goBack()} />
+        </>
+      ) : quote ? (
+        <>
+          <DetailCard title="Báo giá trả trước" icon="coins">
             <FinancialRows rows={[
               { label: 'Nghĩa vụ kỳ hiện tại', value: quote.scheduledDue },
               { label: 'Gốc trả trước thêm', value: quote.prepaidPrincipal },
-              { label: `Phí trả trước (${formatPercentValue(quote.feeRate * 100)})`, value: quote.platformFee },
+              { label: `Tổng phí trả trước (${formatPercentValue(quote.feeRate * 100)})`, value: quote.platformFee },
+              { label: 'Trong phí: bù nhà đầu tư (80%)', value: quote.investorFeeShare },
+              { label: 'Trong phí: FINORA (20%)', value: quote.finoraFeeShare },
               { label: 'Tổng trừ từ ví', value: quote.totalAmount, emphasis: true },
-              { label: 'Hết hiệu lực', value: formatDateTime(quote.expiresAt) },
+              { label: 'Báo giá có hiệu lực đến', value: formatDateTime(quote.expiresAt) },
             ]} />
-          </Card>
-          <InfoNote>Fineract chỉ sinh lịch mới sau khi giao dịch được ghi nhận. FINORA không dựng lịch giả trước thanh toán.</InfoNote>
-          {insufficient ? <InfoNote tone="warn">Số dư ví không đủ cho tổng báo giá.</InfoNote> : null}
+          </DetailCard>
+          <DetailNote>
+            {shortenTerm
+              ? 'Khoản trả thêm được phân bổ vào các kỳ gần nhất để ưu tiên rút ngắn thời gian vay. Không thu lãi của phần gốc cho các ngày chưa sử dụng.'
+              : 'Khoản vay này dùng cấu hình V2: số tiền các kỳ tương lai được tính lại sau khi Fineract ghi nhận giao dịch.'}
+          </DetailNote>
+          {insufficient ? <DetailNote tone="warn">Số dư ví không đủ cho tổng báo giá.</DetailNote> : null}
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <Button label="Xác nhận trả trước" loading={busy} disabled={insufficient || quote.status !== 'ACTIVE'} onPress={confirm} style={styles.action} />
-          <Button label="Nhập lại số tiền" variant="outline" disabled={busy} onPress={() => { setQuote(null); setError(null); }} />
+          <DetailButton label="Xác nhận trả trước" loading={busy} disabled={insufficient || quote.status !== 'ACTIVE'} onPress={confirm} />
+          <DetailButton label="Thay đổi số tiền" variant="outline" disabled={busy} onPress={() => { setQuote(null); setError(null); }} />
         </>
       ) : (
         <>
-          <Card style={styles.card}>
-            <Text style={styles.title}>Số gốc muốn trả thêm</Text>
+          <DetailCard title="Số gốc muốn trả thêm" icon="coins">
             <Text style={styles.hint}>Gốc còn lại: {formatDong(data.loan.principalOutstanding)}</Text>
-            <Field label="Số tiền" value={amountText} onChangeText={value => setAmountText(value.replace(/[^0-9]/g, ''))} keyboardType="number-pad" placeholder="Ví dụ: 5.000.000" required error={amountText && invalidAmount ? 'Số tiền phải lớn hơn 0 và nhỏ hơn gốc còn lại.' : undefined} />
-          </Card>
+            <Field
+              label="Số tiền trả trước"
+              value={amountText}
+              onChangeText={value => setAmountText(value.replace(/[^0-9]/g, ''))}
+              keyboardType="number-pad"
+              placeholder="Ví dụ: 5.000.000"
+              required
+              error={amountText && invalidAmount ? 'Số tiền phải lớn hơn 0 và nhỏ hơn gốc còn lại.' : undefined}
+            />
+          </DetailCard>
+          <DetailNote>Phí được tính trên phần gốc trả trước. Lãi chỉ tính đến ngày giao dịch, không thu lãi tương lai của phần gốc đã trả.</DetailNote>
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <Button label="Lập báo giá" loading={busy} disabled={invalidAmount || data.loan.stale} onPress={requestQuote} style={styles.action} />
+          <DetailButton label="Xem số tiền cần thanh toán" loading={busy} disabled={invalidAmount || data.loan.stale} onPress={() => void requestQuote()} />
         </>
       )}
-    </Screen>
+    </ServicingScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { gap: Spacing.lg },
-  title: { ...Text_.title, color: Colors.authInk },
-  hint: { ...Text_.micro, color: Colors.authMuted },
-  error: { ...Text_.microBold, color: Colors.red, marginTop: Spacing.lg },
-  action: { marginVertical: Spacing.xl },
+  hint: { fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authMuted },
+  error: { fontFamily: FontFamily.semibold, fontSize: 13, lineHeight: 19, color: Colors.red, marginVertical: Spacing.sm },
 });
