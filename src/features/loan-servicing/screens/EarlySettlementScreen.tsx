@@ -6,11 +6,12 @@ import { Colors } from '@/constants/colors';
 import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
 import type { ProfileStackParamList } from '@/navigation/types';
 import { FontFamily, Spacing } from '@/theme';
-import { formatDateTime, formatPercentValue } from '@/utils/format';
+import { formatDateTime } from '@/utils/format';
 import { useBalance } from '@/features/wallet';
 import { usePinGuard } from '@/features/pin';
 import { confirmEarlySettlement, createEarlySettlementQuote } from '../api/servicingApi';
 import FinancialRows from '../components/FinancialRows';
+import { feePolicyNote, feeRows } from '../mappers/fee';
 import LoanDetailSkeleton from '../components/LoanDetailSkeleton';
 import RepaymentResultCard from '../components/RepaymentResultCard';
 import ServicingScaffold from '../components/ServicingScaffold';
@@ -105,14 +106,13 @@ export default function EarlySettlementScreen() {
               { label: 'Gốc còn lại', value: quote.principalPortion },
               { label: 'Lãi phát sinh đến hôm nay', value: quote.interestPortion },
               { label: 'Phí/phạt nghĩa vụ hiện tại', value: quote.coreFeePortion + quote.penaltyPortion },
-              { label: `Tổng phí tất toán (${formatPercentValue(quote.feeRate * 100)})`, value: quote.platformFee },
-              { label: 'Trong phí: bù nhà đầu tư (80%)', value: quote.investorFeeShare },
-              { label: 'Trong phí: FINORA (20%)', value: quote.finoraFeeShare },
+              ...feeRows('Tổng phí tất toán', quote),
               { label: 'Tổng trừ từ ví', value: quote.totalAmount, emphasis: true },
               { label: 'Báo giá có hiệu lực đến', value: formatDateTime(quote.expiresAt) },
             ]} />
           </DetailCard>
           <DetailNote>Không thu lãi của các tháng tương lai. Phí tất toán được tính trên gốc còn lại theo thời gian đã sử dụng khoản vay.</DetailNote>
+          <DetailNote>{feePolicyNote(quote.policyVersion)}</DetailNote>
           {insufficient ? <DetailNote tone="warn">Số dư ví không đủ cho tổng báo giá.</DetailNote> : null}
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <DetailButton label="Xác nhận tất toán" onPress={askConfirm} loading={busy} disabled={insufficient || quote.status !== 'ACTIVE'} />

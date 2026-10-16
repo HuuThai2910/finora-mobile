@@ -7,11 +7,12 @@ import { Colors } from '@/constants/colors';
 import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
 import type { ProfileStackParamList } from '@/navigation/types';
 import { FontFamily, Spacing } from '@/theme';
-import { formatDong, formatDateTime, formatPercentValue } from '@/utils/format';
+import { formatDong, formatDateTime } from '@/utils/format';
 import { useBalance } from '@/features/wallet';
 import { usePinGuard } from '@/features/pin';
 import { confirmPartialPrepayment, createPartialPrepaymentQuote } from '../api/servicingApi';
 import FinancialRows from '../components/FinancialRows';
+import { feePolicyNote, feeRows } from '../mappers/fee';
 import LoanDetailSkeleton from '../components/LoanDetailSkeleton';
 import RepaymentResultCard from '../components/RepaymentResultCard';
 import ServicingScaffold from '../components/ServicingScaffold';
@@ -82,9 +83,7 @@ export default function PartialPrepaymentScreen() {
             <FinancialRows rows={[
               { label: 'Nghĩa vụ kỳ hiện tại', value: quote.scheduledDue },
               { label: 'Gốc trả trước thêm', value: quote.prepaidPrincipal },
-              { label: `Tổng phí trả trước (${formatPercentValue(quote.feeRate * 100)})`, value: quote.platformFee },
-              { label: 'Trong phí: bù nhà đầu tư (80%)', value: quote.investorFeeShare },
-              { label: 'Trong phí: FINORA (20%)', value: quote.finoraFeeShare },
+              ...feeRows('Tổng phí trả trước', quote),
               { label: 'Tổng trừ từ ví', value: quote.totalAmount, emphasis: true },
               { label: 'Báo giá có hiệu lực đến', value: formatDateTime(quote.expiresAt) },
             ]} />
@@ -94,6 +93,7 @@ export default function PartialPrepaymentScreen() {
               ? 'Khoản trả thêm được phân bổ vào các kỳ gần nhất để ưu tiên rút ngắn thời gian vay. Không thu lãi của phần gốc cho các ngày chưa sử dụng.'
               : 'Khoản vay này dùng cấu hình V2: số tiền các kỳ tương lai được tính lại sau khi Fineract ghi nhận giao dịch.'}
           </DetailNote>
+          <DetailNote>{feePolicyNote(quote.policyVersion)}</DetailNote>
           {insufficient ? <DetailNote tone="warn">Số dư ví không đủ cho tổng báo giá.</DetailNote> : null}
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <DetailButton label="Xác nhận trả trước" loading={busy} disabled={insufficient || quote.status !== 'ACTIVE'} onPress={confirm} />
