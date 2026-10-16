@@ -57,6 +57,13 @@ function mutationMessage(error: unknown): string {
   return 'Không thể nộp hồ sơ. Vui lòng kiểm tra kết nối và thử lại.';
 }
 
+function mutationCode(error: unknown): string | null {
+  if (typeof error === 'object' && error !== null && 'data' in error) {
+    return (error as { data?: { code?: string } }).data?.code ?? null;
+  }
+  return null;
+}
+
 /**
  * State và thao tác nộp hồ sơ ở bước 3/3.
  *
@@ -79,6 +86,8 @@ export function useApplyForm(selection: ApplyFormSelection, purposes: LoanPurpos
   const [values, setValues] = useState<ApplicationFormValues>(initialValues);
   const [errors, setErrors] = useState<ApplicationFormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Backend chỉ nhận hồ sơ của người vay đã xác minh eKYC (W2-KYC); khi đó màn mời mở luồng eKYC thay vì thử lại.
+  const [kycRequired, setKycRequired] = useState(false);
 
   const selectedPurpose = purposes?.find((item) => item.code === values.purposeCode);
   const purposeRequiresDetail = selectedPurpose?.requiresDetail ?? false;
@@ -106,6 +115,7 @@ export function useApplyForm(selection: ApplyFormSelection, purposes: LoanPurpos
     if (!result.request) return { status: 'invalid', errors: result.errors };
 
     setSubmitError(null);
+    setKycRequired(false);
     inFlight.current = true;
     try {
       const created = await createApplication({
@@ -117,6 +127,7 @@ export function useApplyForm(selection: ApplyFormSelection, purposes: LoanPurpos
     } catch (error) {
       // Giữ nguyên key nếu chưa biết backend đã nhận request hay chưa để lần thử lại không tạo hồ sơ trùng.
       setSubmitError(mutationMessage(error));
+      setKycRequired(mutationCode(error) === 'BORROWER_KYC_REQUIRED');
       return { status: 'failed' };
     } finally {
       inFlight.current = false;
@@ -130,6 +141,7 @@ export function useApplyForm(selection: ApplyFormSelection, purposes: LoanPurpos
     submit,
     submitting: createState.isLoading,
     submitError,
+    kycRequired,
     purposeRequiresDetail,
   };
 }
