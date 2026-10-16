@@ -31,6 +31,21 @@ export interface ServicingSchedule {
 }
 
 export type RepaymentType = 'SCHEDULED' | 'OVERDUE_CURE' | 'PARTIAL_PREPAYMENT' | 'EARLY_SETTLEMENT';
+
+/**
+ * Nghĩa vụ phải trả ngay lúc này do Payment đọc từ Fineract — đúng số mà lệnh trả nợ sẽ kiểm. Màn hình hiển thị và
+ * gửi lại nguyên `amount`, không tự cộng từ projection (có thể cũ, và Fineract làm tròn kỳ theo bội 1.000 VND).
+ */
+export interface ScheduledDue {
+  loanApplicationId: number;
+  amount: number;
+  /** Phần quá hạn nằm trong `amount`; lớn hơn 0 thì lệnh là khắc phục quá hạn. */
+  overdueAmount: number;
+  currency: string;
+  repaymentType: RepaymentType;
+  /** Ngày nghiệp vụ Việt Nam (YYYY-MM-DD) của báo giá; sang ngày khác phải đọc lại. */
+  businessDate: string;
+}
 export type RepaymentStatus =
   | 'COLLECTED'
   | 'CORE_POSTING'

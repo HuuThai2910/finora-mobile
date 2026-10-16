@@ -3,6 +3,7 @@ import type {
   AutoInvestMatch,
   InvestmentContract,
   PortfolioPosition,
+  PortfolioPositionStatus,
   PortfolioSummary,
 } from '@/types/invest';
 
@@ -68,9 +69,12 @@ const toNumber = (value: string): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const POSITION_STATUSES: readonly PortfolioPositionStatus[] = ['ACTIVE', 'CLOSED', 'DEFAULTED'];
+
 function toPosition(dto: PortfolioPositionDto): PortfolioPosition {
   return {
     loanId: dto.loanId,
+    status: POSITION_STATUSES.find(status => status === dto.status) ?? 'UNKNOWN',
     listingId: dto.listingId,
     purpose: dto.purpose,
     grade: dto.creditGrade?.trim().toUpperCase() || null,

@@ -145,8 +145,16 @@ export interface InvestOrderResult {
  * Một vị thế trong danh mục: mọi Note của tôi trên cùng một khoản vay, gộp lại.
  * Tiền là số VND chỉ để hiển thị — backend đã tính, màn hình không tính lại để hạch toán.
  */
+/** Trạng thái vị thế do Investment tổng hợp từ Note; giá trị lạ rơi về `UNKNOWN`. */
+export type PortfolioPositionStatus = 'ACTIVE' | 'CLOSED' | 'DEFAULTED' | 'UNKNOWN';
+
 export interface PortfolioPosition {
   loanId: number;
+  /**
+   * `ACTIVE` còn Note sinh dòng tiền; `CLOSED` đã thu hồi hết gốc (tất toán); `DEFAULTED` khoản vay nợ xấu.
+   * Vị thế đã kết thúc vẫn nằm trong danh mục để giữ lịch sử gốc/lãi đã nhận.
+   */
+  status: PortfolioPositionStatus;
   /** Đợt gọi vốn của khoản vay — mã sổ lệnh trên chợ Notes. */
   listingId: number;
   purpose: string | null;

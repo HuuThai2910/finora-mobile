@@ -14,7 +14,7 @@ import { usePinGuard } from '@/features/pin';
 import { createScheduledRepayment } from '../api/servicingApi';
 import FinancialRows from '../components/FinancialRows';
 import RepaymentResultCard from '../components/RepaymentResultCard';
-import { useServicingLoan } from '../hooks/useLoanServicing';
+import { useScheduledDue, useServicingLoan } from '../hooks/useLoanServicing';
 import { useRepaymentTracking } from '../hooks/useRepaymentTracking';
 import type { RepaymentResult } from '../types';
 
@@ -25,6 +25,7 @@ export default function LoanPaymentScreen() {
   const nav = useNavigation();
   const state = useServicingLoan(loanNumber);
   const balance = useBalance();
+  const due = useScheduledDue(state.data?.applicationId ?? null);
   const key = useRef(generateIdempotencyKey()).current;
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,12 +33,16 @@ export default function LoanPaymentScreen() {
   const trackedResult = useRepaymentTracking(result);
   const { requirePin } = usePinGuard();
 
-  if ((state.loading && !state.data) || (balance.loading && !balance.data)) return <Screen><PHeader title="Thanh toán khoản vay" back /><LoadingScreen cards={3} /></Screen>;
+  if ((state.loading && !state.data) || (balance.loading && !balance.data) || (due.loading && !due.data)) return <Screen><PHeader title="Thanh toán khoản vay" back /><LoadingScreen cards={3} /></Screen>;
   if (state.error || !state.data) return <Screen><PHeader title="Thanh toán khoản vay" back /><ErrorState message={state.error ?? 'Không tải được khoản vay.'} onRetry={state.reload} /></Screen>;
+  // Số tiền phải lấy từ Payment/Fineract: lệnh trả nợ chỉ được chấp nhận khi khớp đúng nghĩa vụ hiện tại.
+  if (due.error || !due.data) return <Screen><PHeader title="Thanh toán khoản vay" back /><ErrorState message={due.error ?? 'Chưa đọc được số tiền phải trả từ hệ thống lõi.'} onRetry={due.reload} /></Screen>;
 
   const data = state.data;
   const loan = data.loan;
-  const amount = loan.overdueAmount > 0 ? loan.overdueAmount : loan.nextDueAmount;
+  const scheduled = due.data;
+  const amount = scheduled.amount;
+  const overdue = scheduled.overdueAmount > 0;
   const available = balance.data?.available ?? 0;
   const insufficient = available < amount;
 
@@ -48,7 +53,7 @@ export default function LoanPaymentScreen() {
       // Đóng bảng PIN là thôi thanh toán, không báo lỗi.
       const pinToken = await requirePin('REPAYMENT');
       if (!pinToken) return;
-      setResult(await createScheduledRepayment(data.applicationId, amount, key, pinToken));
+      setResult(await createScheduledRepayment(scheduled.loanApplicationId, amount, key, pinToken));
       balance.reload();
     } catch (reason) { setError(toUserMessage(reason)); }
     finally { setSubmitting(false); }
@@ -56,7 +61,7 @@ export default function LoanPaymentScreen() {
 
   return (
     <Screen>
-      <PHeader title={loan.overdueAmount > 0 ? 'Khắc phục quá hạn' : 'Thanh toán kỳ tới'} back hint={loan.loanNumber} />
+      <PHeader title={overdue ? 'Khắc phục quá hạn' : 'Thanh toán kỳ tới'} back hint={loan.loanNumber} />
       {trackedResult ? (
         <><RepaymentResultCard result={trackedResult} /><Button label="Về khoản vay" onPress={() => nav.goBack()} style={styles.button} /></>
       ) : (
@@ -64,13 +69,14 @@ export default function LoanPaymentScreen() {
           <Card style={styles.hero}>
             <Text style={styles.heroLabel}>SỐ TIỀN THANH TOÁN</Text>
             <Text style={styles.heroAmount}>{formatDong(amount)}</Text>
-            <Text style={styles.heroHint}>{loan.overdueAmount > 0 ? `Quá hạn ${loan.daysPastDue} ngày` : `Đến hạn ${loan.nextDueDate ? formatLocalDate(loan.nextDueDate) : '—'}`}</Text>
+            <Text style={styles.heroHint}>{overdue ? `Quá hạn ${loan.daysPastDue} ngày` : `Đến hạn ${loan.nextDueDate ? formatLocalDate(loan.nextDueDate) : '—'}`}</Text>
           </Card>
           <Card style={styles.detail}>
             <FinancialRows rows={[
               { label: 'Số dư ví khả dụng', value: available },
               { label: 'Dư nợ hiện tại', value: loan.totalOutstanding },
-              { label: 'Nguồn số tiền', value: loan.overdueAmount > 0 ? 'Nghĩa vụ quá hạn từ Fineract' : 'Kỳ đến hạn từ Fineract' },
+              ...(overdue ? [{ label: 'Trong đó quá hạn', value: scheduled.overdueAmount }] : []),
+              { label: 'Nguồn số tiền', value: overdue ? 'Nghĩa vụ quá hạn từ Fineract' : 'Kỳ đến hạn từ Fineract' },
             ]} />
           </Card>
           {insufficient ? <InfoNote tone="warn">Số dư ví chưa đủ. Hãy nạp thêm tiền trước khi xác nhận.</InfoNote> : null}

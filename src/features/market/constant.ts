@@ -57,6 +57,18 @@ export const ESTIMATE_MASCOT: ImageSourcePropType = require('@/assets/mascot-coi
 /** Số tiền điền sẵn khi mở màn (giữ mức của màn cũ), tự kẹp vào khoảng đặt được của từng khoản. */
 export const DEFAULT_INVEST_AMOUNT = 5_000_000;
 
+/**
+ * Xác nhận của nhà đầu tư trước lệnh sơ cấp (D6, LEGAL-DISCLOSURE-02: Điều 22 khoản 8 điểm c Nghị định 94 yêu cầu
+ * cung cấp đủ thông tin khoản vay và có xác nhận của khách hàng). Backend lưu version và thời điểm xác nhận trên từng
+ * lệnh. Version phải khớp `finora.investment.risk-disclosure.version`; đổi nội dung thì tăng version ở cả hai nơi.
+ */
+export const RISK_DISCLOSURE_VERSION = 'INVESTOR_RISK_V1';
+
+export const RISK_DISCLOSURE_TEXT =
+  'Tôi xác nhận đã được cung cấp và đã xem thông tin khoản vay (số tiền, kỳ hạn, lãi suất, lịch trả) cùng hồ sơ người '
+  + 'vay ẩn danh trước khi góp vốn. Tôi hiểu khoản đầu tư không được bảo đảm vốn: người vay có thể trả chậm hoặc không '
+  + 'trả, khi đó tôi chỉ nhận phần tiền thu hồi được theo tỷ lệ Note đang nắm.';
+
 export const INVEST_NOTE =
   'Tiền được giữ tạm trong ví ngay khi đặt lệnh và chỉ chuyển đi khi khoản vay gọi đủ 100% vốn và các bên ký hợp đồng. Note bắt đầu sinh lãi khi khoản vay giải ngân.';
 

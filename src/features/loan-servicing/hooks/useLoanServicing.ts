@@ -1,5 +1,12 @@
 import { useAsync } from '@/hooks/useAsync';
-import { getLoanApplication, getServicingLoan, getServicingSchedule, listServicingLoans } from '../api/servicingApi';
+import {
+  getLoanApplication,
+  getScheduledDue,
+  getServicingLoan,
+  getServicingSchedule,
+  listServicingLoans,
+} from '../api/servicingApi';
+import type { ScheduledDue } from '../types';
 
 export const useServicingLoans = () => useAsync(listServicingLoans, []);
 
@@ -12,4 +19,10 @@ export const useServicingLoan = (loanNumber: string) => useAsync(async signal =>
   ]);
   return { loan, schedule, applicationId: application.id };
 }, [loanNumber]);
+
+/** Nghĩa vụ trả ngay theo Fineract; `null` khi chưa biết hồ sơ (chưa tải xong khoản vay). */
+export const useScheduledDue = (loanApplicationId: number | null) => useAsync<ScheduledDue | null>(
+  signal => (loanApplicationId == null ? Promise.resolve(null) : getScheduledDue(loanApplicationId, signal)),
+  [loanApplicationId],
+);
 

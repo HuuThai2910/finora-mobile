@@ -15,6 +15,12 @@ const GRADE_TONE: Record<string, { bg: string; fg: string }> = {
 };
 const NEUTRAL = { bg: Colors.grayBg, fg: Colors.tagGrayText };
 
+/** Vị thế đã kết thúc vẫn hiện để giữ lịch sử; nhãn nói rõ vì sao không còn dòng tiền. */
+const ENDED_LABEL: Partial<Record<PortfolioPosition['status'], { text: string; bg: string; fg: string }>> = {
+  CLOSED: { text: 'Đã tất toán', bg: Colors.grayBg, fg: Colors.tagGrayText },
+  DEFAULTED: { text: 'Nợ xấu', bg: Colors.redBg, fg: Colors.tagRedText },
+};
+
 const TILE = 44;
 const BAR_HEIGHT = 8;
 
@@ -34,6 +40,9 @@ export default function PositionCard({ position: p, onSell }: Props) {
   // Phần gốc đã về túi; thanh không được tràn khung nếu backend làm tròn dư một chút.
   const repaidShare = p.principal > 0 ? Math.min(Math.max(p.principalRepaid / p.principal, 0), 1) : 0;
   const repaidPercent = Math.round(repaidShare * 100);
+  const ended = ENDED_LABEL[p.status];
+  // Chỉ Note còn hoạt động mới bán được trên chợ; khoản đã tất toán không còn Note để bán.
+  const canSell = p.status === 'ACTIVE';
 
   return (
     <View style={styles.card}>
@@ -53,6 +62,11 @@ export default function PositionCard({ position: p, onSell }: Props) {
           <Text style={styles.meta} numberOfLines={1} maxFontSizeMultiplier={1.4}>
             {[p.purpose, `${p.termMonths} tháng`].filter(Boolean).join(', ')}
           </Text>
+          {ended ? (
+            <View style={[styles.pill, styles.endedPill, { backgroundColor: ended.bg }]}>
+              <Text style={[styles.pillText, { color: ended.fg }]} maxFontSizeMultiplier={1.4}>{ended.text}</Text>
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -91,16 +105,18 @@ export default function PositionCard({ position: p, onSell }: Props) {
         ) : null}
       </View>
 
-      <Pressable
-        onPress={onSell}
-        accessibilityRole="button"
-        accessibilityLabel={`Bán Note của khoản vay ${p.loanId} trên chợ Notes`}
-        style={({ pressed }) => [styles.sell, pressed && styles.pressed]}
-      >
-        <Icon name="layers" size={18} color={Colors.authPrimary} />
-        <Text style={styles.sellText} maxFontSizeMultiplier={1.4}>Bán Note trên chợ</Text>
-        <Icon name="chevronRight" size={18} color={Colors.chevronMuted} />
-      </Pressable>
+      {canSell ? (
+        <Pressable
+          onPress={onSell}
+          accessibilityRole="button"
+          accessibilityLabel={`Bán Note của khoản vay ${p.loanId} trên chợ Notes`}
+          style={({ pressed }) => [styles.sell, pressed && styles.pressed]}
+        >
+          <Icon name="layers" size={18} color={Colors.authPrimary} />
+          <Text style={styles.sellText} maxFontSizeMultiplier={1.4}>Bán Note trên chợ</Text>
+          <Icon name="chevronRight" size={18} color={Colors.chevronMuted} />
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -138,6 +154,7 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: Spacing.sm },
   title: { flexShrink: 1, fontFamily: FontFamily.bold, fontSize: 16, lineHeight: 23, color: Colors.authInk },
   pill: { borderRadius: Radius.pill, paddingHorizontal: 10, paddingVertical: 3 },
+  endedPill: { alignSelf: 'flex-start', marginTop: Spacing.xs },
   pillText: { fontFamily: FontFamily.semibold, fontSize: 12, lineHeight: 17, ...tabularNums },
   meta: { marginTop: 2, fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 18, color: Colors.authMuted },
   progressHead: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.md, marginTop: Spacing.lg },
