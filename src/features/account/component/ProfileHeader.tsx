@@ -3,7 +3,7 @@ import type { UserProfile } from '@/types/auth';
 import { Colors } from '@/constants/colors';
 import { FontFamily, FontSize, LineHeight, Spacing, lh } from '@/theme';
 import { Tag } from '@/components/ui';
-import { PROFILE_MASCOT } from '../constant';
+import { PROFILE_MASCOT, canStartEkyc } from '../constant';
 import KycBadge from './KycBadge';
 
 type Props = {
@@ -29,7 +29,6 @@ const mascotWidth = (column: number) => Math.min(114, Math.max(96, Math.round(co
  */
 export default function ProfileHeader({ profile, width, onStartEkyc }: Props) {
   const name = profile.fullName?.trim();
-  const verified = profile.kycStatus === 'KYC_VERIFIED';
   const mascot = mascotWidth(width);
 
   return (
@@ -56,7 +55,7 @@ export default function ProfileHeader({ profile, width, onStartEkyc }: Props) {
           </Text>
 
           <View style={styles.badges}>
-            <KycBadge status={profile.kycStatus} onPress={verified ? undefined : onStartEkyc} />
+            <KycBadge status={profile.kycStatus} onPress={canStartEkyc(profile.kycStatus) ? onStartEkyc : undefined} />
             {/* Điểm tín dụng chưa có trong `GET /users/me`; ẩn hẳn thay vì hiện số rỗng. */}
             {profile.creditGrade && profile.creditScore !== null ? (
               <Tag tone="blue" small>{`Điểm ${profile.creditGrade}+ · ${profile.creditScore}`}</Tag>

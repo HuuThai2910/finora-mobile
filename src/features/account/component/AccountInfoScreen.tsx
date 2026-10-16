@@ -12,7 +12,7 @@ import { WaveBackdrop } from '@/components/phone';
 import { ErrorState } from '@/components/feedback';
 import type { ProfileStackParamList } from '@/navigation/types';
 import { formatLocalDate } from '@/utils/format';
-import { GENDER_LABEL, PROFILE_MAX_WIDTH, ROLE_LABEL } from '../constant';
+import { GENDER_LABEL, PROFILE_MAX_WIDTH, ROLE_LABEL, canStartEkyc } from '../constant';
 import { useMyProfile } from '../hook/useAccount';
 import AccountInfoCard from './AccountInfoCard';
 import AccountInfoHeader from './AccountInfoHeader';
@@ -62,9 +62,9 @@ export default function AccountInfoScreen() {
     body = <AccountInfoSkeleton />;
   } else {
     const verified = p.kycStatus === 'KYC_VERIFIED';
-    // Cùng quy tắc với màn Hồ sơ: chưa định danh thì nhãn trạng thái (và lời mời
-    // trong ghi chú) mở thẳng luồng chụp CCCD.
-    const startEkyc = verified ? undefined : () => nav.navigate('EkycCapture', { side: 'front' });
+    // Cùng quy tắc với màn Hồ sơ: còn phải định danh thì nhãn trạng thái (và lời mời
+    // trong ghi chú) mở luồng eKYC, luôn bắt đầu từ màn điều khoản.
+    const startEkyc = canStartEkyc(p.kycStatus) ? () => nav.navigate('EkycConsent') : undefined;
 
     body = (
       <View style={styles.sections}>

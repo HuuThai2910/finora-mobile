@@ -1,21 +1,19 @@
 import { useCallback } from 'react';
 import { useSubmit } from '@/hooks/useSubmit';
-import type { EkycVerifyResult } from '@/types/ekyc';
+import type { EkycResultResponse, EkycVerifyRequest } from '@/types/ekyc';
 import { verifyEkyc } from '../api/ekycApi';
 
 /**
- * Gửi ảnh hai mặt CCCD để xác minh.
+ * Gửi ảnh hai mặt CCCD để server đọc thẻ (QR → MRZ → chữ in → AI chỉ điền chỗ trống).
  *
- * Backend trả kết quả nghiệp vụ (đạt/trượt kèm `resultCode`) trong body 200,
- * nên mọi kết quả — kể cả trượt — đều đi qua nhánh thành công của `useSubmit`;
- * `error` chỉ dành cho lỗi vận chuyển (mất mạng, 401, 5xx).
+ * Backend trả kết quả nghiệp vụ (đạt / chụp lại / từ chối) trong body 200, nên mọi kết quả đều
+ * đi qua nhánh thành công của `useSubmit`; `error` chỉ dành cho lỗi vận chuyển (mất mạng,
+ * hết thời gian chờ, 401, 5xx). Cờ chống bấm lặp của `useSubmit` ngăn gửi hai lần.
  */
 export function useEkycVerify() {
   const action = useCallback(
-    async (front: string, back: string): Promise<EkycVerifyResult> =>
-      verifyEkyc({ cccdFrontBase64: front, cccdBackBase64: back }),
+    (request: EkycVerifyRequest): Promise<EkycResultResponse> => verifyEkyc(request),
     [],
   );
-
   return useSubmit(action);
 }

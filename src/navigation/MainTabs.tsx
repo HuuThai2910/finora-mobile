@@ -32,7 +32,14 @@ import {
   SecondaryMarketScreen,
 } from '@/features/secondary-market';
 import { AccountInfoScreen, AccountScreen } from '@/features/account';
-import { EkycCaptureScreen, EkycResultScreen, EkycSessionProvider } from '@/features/ekyc';
+import {
+  EkycCaptureScreen,
+  EkycConsentScreen,
+  EkycLivenessScreen,
+  EkycPrivacyScreen,
+  EkycResultScreen,
+  EkycSessionProvider,
+} from '@/features/ekyc';
 import {
   EarlySettlementScreen,
   LoanPaymentScreen,
@@ -107,8 +114,17 @@ function ProfileTab() {
       <ProfileStack.Navigator screenOptions={stackOptions}>
       <ProfileStack.Screen name="Profile" component={AccountScreen} />
       <ProfileStack.Screen name="AccountInfo" component={AccountInfoScreen} />
-      <ProfileStack.Screen name="EkycCapture" component={EkycCaptureScreen} />
+      <ProfileStack.Screen name="EkycConsent" component={EkycConsentScreen} />
+      {/* Mỗi mặt thẻ một màn: `navigate` về mặt trước khi server bắt chụp lại sẽ quay về
+          đúng màn đó thay vì chồng thêm màn mới. */}
+      <ProfileStack.Screen
+        name="EkycCapture"
+        component={EkycCaptureScreen}
+        getId={({ params }) => params?.side ?? 'front'}
+      />
+      <ProfileStack.Screen name="EkycLiveness" component={EkycLivenessScreen} />
       <ProfileStack.Screen name="EkycResult" component={EkycResultScreen} />
+      <ProfileStack.Screen name="EkycPrivacy" component={EkycPrivacyScreen} />
       <ProfileStack.Screen name="MyApplications" component={MyApplicationsScreen} />
       <ProfileStack.Screen name="ApplicationDetail" component={ApplicationDetailScreen} />
       <ProfileStack.Screen name="MyContracts" component={MyContractsScreen} />

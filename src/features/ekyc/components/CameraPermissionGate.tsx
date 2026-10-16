@@ -34,7 +34,7 @@ export default function CameraPermissionGate({ children }: { children: React.Rea
         <Text style={styles.body}>
           {blockedForever
             ? 'Bạn đã tắt quyền camera cho FINORA. Hãy bật lại trong Cài đặt để tiếp tục định danh.'
-            : 'FINORA cần camera để chụp CCCD và xác minh khuôn mặt. Ảnh chỉ dùng cho lần xác minh này.'}
+            : 'FINORA cần camera để chụp CCCD và kiểm tra khuôn mặt khi định danh. Ảnh và video được xử lý theo Điều khoản eKYC bạn đã đồng ý.'}
         </Text>
         <Button
           label={blockedForever ? 'Mở Cài đặt' : 'Cho phép truy cập'}

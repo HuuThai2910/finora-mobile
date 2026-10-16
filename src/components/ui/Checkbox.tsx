@@ -8,21 +8,24 @@ type Props = {
   onChange: (v: boolean) => void;
   label: string;
   children: React.ReactNode;
+  /** Khoá ô khi chưa đủ điều kiện tick, ví dụ chưa cuộn đọc hết điều khoản eKYC. */
+  disabled?: boolean;
 };
 
 /**
  * Ô xác nhận — vùng chạm phủ cả ô lẫn phần chữ.
- * Dùng ở màn đăng ký (đồng ý điều khoản) và màn tạo hồ sơ vay (xác nhận đã xem
- * công bố lãi suất).
+ * Dùng ở màn đăng ký (đồng ý điều khoản), màn tạo hồ sơ vay (xác nhận đã xem
+ * công bố lãi suất) và màn điều khoản eKYC.
  */
-export default function Checkbox({ checked, onChange, label, children }: Props) {
+export default function Checkbox({ checked, onChange, label, children, disabled = false }: Props) {
   return (
     <Pressable
       onPress={() => onChange(!checked)}
+      disabled={disabled}
       accessibilityRole="checkbox"
-      accessibilityState={{ checked }}
+      accessibilityState={{ checked, disabled }}
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.row, pressed && styles.pressed, disabled && styles.disabled]}
     >
       <View style={[styles.box, checked && styles.boxChecked]}>
         {checked ? <Icon name="check" size={16} color={Colors.onDark} strokeWidth={3} /> : null}
@@ -41,6 +44,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
   },
   pressed: { opacity: 0.7 },
+  disabled: { opacity: 0.45 },
   box: {
     width: 26,
     height: 26,

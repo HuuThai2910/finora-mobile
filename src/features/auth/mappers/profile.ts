@@ -13,6 +13,11 @@ export type UserProfileDto = {
   phone: string | null;
   role: string | null;
   profileCompleted: boolean;
+  /**
+   * `EkycStatus` của finora-user (`PENDING | VERIFIED | FAILED | MANUAL_REVIEW`). Tuỳ chọn để
+   * vẫn chạy với bản server cũ chưa trả trường này.
+   */
+  ekycStatus?: string | null;
 };
 
 const ROLES: readonly UserRole[] = ['BORROWER', 'INVESTOR', 'ADMIN'];
@@ -31,13 +36,23 @@ function toGender(raw: string | null): Gender | null {
   return GENDERS.find(g => g === raw) ?? null;
 }
 
+const EKYC_TO_KYC: Record<string, KycStatus> = {
+  VERIFIED: 'KYC_VERIFIED',
+  MANUAL_REVIEW: 'PENDING_REVIEW',
+  FAILED: 'REJECTED',
+  PENDING: 'NOT_STARTED',
+};
+
 /**
- * `finora-user` mới chỉ có cờ `profileCompleted`, chưa có trạng thái duyệt eKYC,
- * nên chỉ suy ra được hai đầu của thang trạng thái. Khi backend bổ sung trạng
- * thái chờ duyệt/từ chối thì sửa đúng chỗ này.
+ * Trạng thái định danh lấy theo `ekycStatus` (nguồn sự thật của luồng eKYC): chờ duyệt tay,
+ * bị từ chối, và quan trọng là **rút lại đồng ý** — khi đó hồ sơ về `PENDING` nhưng vẫn còn
+ * họ tên + số định danh nên `profileCompleted` vẫn `true`; đọc cờ này sẽ hiện nhầm "đã định
+ * danh". Chỉ rơi về `profileCompleted` khi server cũ chưa trả `ekycStatus` (hoặc trả mã lạ).
  */
-function toKycStatus(profileCompleted: boolean): KycStatus {
-  return profileCompleted ? 'KYC_VERIFIED' : 'NOT_STARTED';
+function toKycStatus(dto: UserProfileDto): KycStatus {
+  const mapped = dto.ekycStatus ? EKYC_TO_KYC[dto.ekycStatus] : undefined;
+  if (mapped) return mapped;
+  return dto.profileCompleted ? 'KYC_VERIFIED' : 'NOT_STARTED';
 }
 
 function toInitial(fullName: string | null, email: string): string {
@@ -54,7 +69,7 @@ export function toUserProfile(dto: UserProfileDto): UserProfile {
     phone: dto.phone,
     email: dto.email,
     initial: toInitial(dto.fullName, dto.email),
-    kycStatus: toKycStatus(dto.profileCompleted),
+    kycStatus: toKycStatus(dto),
     role: toRole(dto.role),
     dateOfBirth: dto.dateOfBirth,
     gender: toGender(dto.gender),

@@ -40,8 +40,21 @@ const parse = (raw: string | undefined): ReadonlySet<string> =>
       .filter(Boolean),
   );
 
+/**
+ * Kịch bản nghiệp vụ giả, bật qua `EXPO_PUBLIC_MOCK_SCENARIOS` (cách nhau bằng dấu phẩy),
+ * để xem các nhánh hiếm gặp khi demo mà không cần backend:
+ * - `ekyc-retake`: server bắt chụp lại mặt trước hai lần liên tiếp rồi mới ra bản nháp
+ *   (hiện nút "Chọn ảnh có sẵn"); bản nháp lúc đó cần duyệt tay;
+ * - `ekyc-reject`: thẻ bị từ chối (hết hạn);
+ * - `ekyc-review`: kiểm tra khuôn mặt rơi vào vùng xám → xác nhận xong là chờ duyệt;
+ * - `ekyc-liveness-fail`: quay lại vì tối → trượt động tác → mặt không khớp → đủ 3 lần
+ *   trượt thì hồ sơ chuyển duyệt tay.
+ */
+export type MockScenario = 'ekyc-retake' | 'ekyc-reject' | 'ekyc-review' | 'ekyc-liveness-fail';
+
 const MOCKED = parse(process.env.EXPO_PUBLIC_MOCK_DOMAINS);
 const FAILING = parse(process.env.EXPO_PUBLIC_MOCK_FAIL);
+const SCENARIOS = parse(process.env.EXPO_PUBLIC_MOCK_SCENARIOS);
 
 export const isMocked = (domain: MockDomain): boolean => MOCKED.has(domain);
 
@@ -50,3 +63,6 @@ export const isMocked = (domain: MockDomain): boolean => MOCKED.has(domain);
  * Mặc định mock không bao giờ ném lỗi.
  */
 export const shouldMockFail = (domain: MockDomain): boolean => FAILING.has(domain);
+
+/** Kịch bản giả đang bật; chỉ có tác dụng với miền đang chạy mock. */
+export const hasMockScenario = (scenario: MockScenario): boolean => SCENARIOS.has(scenario);
