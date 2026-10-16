@@ -12,6 +12,12 @@ DRAFT -> APPROVED -> IN_PROGRESS -> READY_FOR_REVIEW -> ACCEPTED
 - Chỉ Thái chuyển task sang `APPROVED` hoặc `ACCEPTED`.
 - Khi backend contract thay đổi, cập nhật plan trước khi sửa UI nếu thay đổi luồng hoặc acceptance criteria.
 
+Trạng thái trong bảng là trạng thái **nghiệm thu task**, không phải kết luận code của luồng chưa tồn tại.
+`READY_FOR_REVIEW` nghĩa là code/typecheck đã có nhưng còn chờ owner/UAT. `MOBILE-LOAN-001` đang
+`IN_PROGRESS` và `MOBILE-EKYC-001` đang `DRAFT` không phủ nhận luồng hiện hành; phải đọc plan/code để
+phân biệt phần đã chạy với phần acceptance/hardening còn dự kiến. Plan tổng hợp liên repository nằm tại
+`../finora-platform/.agents/plans/finora-remaining-work-plan.md`.
+
 ## Danh sách task
 
 | Task | Phạm vi | Backend | Trạng thái | Đặc tả |

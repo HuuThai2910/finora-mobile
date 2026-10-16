@@ -16,7 +16,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { FontFamily, Radius, Spacing } from '@/theme';
 import type { InvestOrderResult, MarketLoan } from '@/types/invest';
 import { formatDong } from '@/utils/format';
-import { INVEST_BLOCK_COPY } from '../constant';
+import { INVEST_BLOCK_COPY, cancelledListingHint } from '../constant';
 import { useInvestForm } from '../hook/useInvestForm';
 import { useMarketLoan } from '../hook/useMarket';
 import { fundingState, investBlock } from '../investRules';
@@ -133,7 +133,7 @@ function LoanInvest({ loan, refreshing, onRefresh }: InvestProps) {
         <LoanStatusCard
           icon={INVEST_BLOCK_COPY[block].icon}
           title={INVEST_BLOCK_COPY[block].title}
-          message={INVEST_BLOCK_COPY[block].hint}
+          message={block === 'CANCELLED' ? cancelledListingHint(loan.cancellationReason) : INVEST_BLOCK_COPY[block].hint}
           primary={{ label: 'Về sàn khoản vay', onPress: toMarket }}
         />
       ) : (

@@ -88,6 +88,8 @@ export function useApplicationDetail(applicationNumber: string): ApplicationDeta
   ) && (
     applicationQuery.data?.funding == null
     || applicationQuery.data.funding.status === 'FULLY_FUNDED'
+    // Đợt gọi vốn bị hủy vẫn có hợp đồng (hết hạn/từ chối/đã ký) để người vay xem lại.
+    || applicationQuery.data.funding.status === 'CANCELLED'
   );
   const contractsQuery = useListMyContractsQuery(
     { page: 0, size: CONTRACT_LOOKUP_SIZE },

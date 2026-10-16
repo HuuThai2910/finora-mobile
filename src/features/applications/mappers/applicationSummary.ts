@@ -107,7 +107,8 @@ export function contractActionOf(
   const contractStage =
     application.status === 'APPROVED' &&
     (terms == null || terms === 'AUTO_AUTHORIZED' || terms === 'ACCEPTED') &&
-    (application.funding == null || application.funding.status === 'FULLY_FUNDED');
+    (application.funding == null || application.funding.status === 'FULLY_FUNDED'
+      || application.funding.status === 'CANCELLED');
   if (!contractStage) return null;
 
   if (!contract) return null;

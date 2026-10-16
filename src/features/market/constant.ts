@@ -72,6 +72,23 @@ export const FUNDING_STATE_BADGE: Record<FundingState, { label: string; dot: str
 
 const PICK_ANOTHER = 'Chọn khoản vay khác đang gọi vốn trên sàn.';
 
+/** Lý do Loan hủy đợt gọi vốn đã đủ vốn; mã lạ dùng câu chung thay vì hiện mã kỹ thuật. */
+const FUNDING_CANCELLATION_REASON: Record<string, string> = {
+  CONTRACT_DECLINED: 'hợp đồng bị từ chối ký',
+  CONTRACT_EXPIRED: 'hợp đồng hết hạn ký',
+  DISBURSEMENT_FAILED: 'giải ngân không thành công',
+};
+
+/**
+ * Lời giải thích cho đợt gọi vốn bị hủy. Hủy sau khi đủ vốn nghĩa là khoản vay không giải ngân;
+ * phần tiền nhà đầu tư đang giữ cho khoản này được trả lại ví, không bị trừ.
+ */
+export function cancelledListingHint(reasonCode: string | null): string {
+  if (!reasonCode) return INVEST_BLOCK_COPY.CANCELLED.hint;
+  const reason = FUNDING_CANCELLATION_REASON[reasonCode] ?? 'khoản vay không đủ điều kiện giải ngân';
+  return `Khoản vay không được giải ngân vì ${reason}. Tiền bạn đã giữ cho khoản này được trả lại ví. ${PICK_ANOTHER}`;
+}
+
 /** Thay chỗ ô nhập số tiền khi khoản vay không nhận lệnh mới nữa. */
 export const INVEST_BLOCK_COPY: Record<InvestBlock, { icon: IconName; title: string; hint: string }> = {
   EXPIRED: { icon: 'clock', title: 'Đã hết hạn gọi vốn', hint: `Khoản vay này không nhận thêm lệnh mới. ${PICK_ANOTHER}` },

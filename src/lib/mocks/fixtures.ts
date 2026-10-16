@@ -178,7 +178,12 @@ const daysFromNow = (days: number): string => new Date(Date.now() + days * 86_40
  * Tham số sàn lấy theo giá trị khởi tạo của Investment (mệnh giá 1 triệu, tối thiểu một Note);
  * phần đã gọi luôn là bội số mệnh giá như dữ liệu thật.
  */
-const NOTE_TERMS = { noteDenomination: 1_000_000, minInvestmentAmount: 1_000_000, status: 'OPEN' } as const;
+const NOTE_TERMS = {
+  noteDenomination: 1_000_000,
+  minInvestmentAmount: 1_000_000,
+  status: 'OPEN',
+  cancellationReason: null,
+} as const;
 
 export const MARKET_LOANS: MarketLoan[] = [
   {

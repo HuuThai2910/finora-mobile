@@ -37,6 +37,11 @@ export interface MarketLoan {
    * (bản cũ), lúc đó màn hình không hiện thẻ hồ sơ người vay.
    */
   applicationNumber: string | null;
+  /**
+   * Chỉ có khi `CANCELLED` sau khi đã đủ vốn: `CONTRACT_DECLINED`, `CONTRACT_EXPIRED` hoặc
+   * `DISBURSEMENT_FAILED`. Khoản vay không giải ngân và tiền giữ được trả lại ví nhà đầu tư.
+   */
+  cancellationReason: string | null;
 }
 
 /* ---------- Hồ sơ người vay cho nhà đầu tư (Loan Service) ---------- */
