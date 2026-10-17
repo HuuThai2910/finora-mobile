@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { getMyProfile, logout as revokeSession, refreshTokens } from '@/features/auth/api';
-import { setAccessToken, setRefreshHandler } from '@/lib/authSession';
+import { unregisterPushDevice } from '@/features/push-notifications';
+import { getAccessToken, setAccessToken, setRefreshHandler } from '@/lib/authSession';
 import { clearRefreshToken, readRefreshToken, saveRefreshToken } from '@/lib/secureStorage';
 import type { AuthTokens, Session, UserProfile } from '@/types/auth';
 
@@ -53,6 +54,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(() => {
     const refreshToken = refreshTokenRef.current;
+
+    // Gỡ máy này khỏi danh sách nhận push của tài khoản, bằng access token chụp
+    // trước khi phiên bị xoá. Best-effort như thu hồi token: lỗi mạng không chặn
+    // đăng xuất, lần đăng nhập sau backend tự chuyển token sang tài khoản mới.
+    void unregisterPushDevice(getAccessToken()).catch(() => undefined);
 
     // Thu hồi token phía Keycloak là best-effort: mất mạng thì vẫn phải cho
     // người dùng thoát khỏi phiên trên máy.

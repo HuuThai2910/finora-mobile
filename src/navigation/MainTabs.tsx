@@ -39,6 +39,7 @@ import {
   SecondaryMarketScreen,
 } from '@/features/secondary-market';
 import { AccountInfoScreen, AccountScreen } from '@/features/account';
+import { NotificationSettingsScreen } from '@/features/push-notifications';
 import { EkycCaptureScreen, EkycResultScreen, EkycSessionProvider } from '@/features/ekyc';
 import {
   EarlySettlementScreen,
@@ -131,6 +132,7 @@ function ProfileTab() {
       <ProfileStack.Screen name="PartialPrepayment" component={PartialPrepaymentScreen} />
       <ProfileStack.Screen name="EarlySettlement" component={EarlySettlementScreen} />
       <ProfileStack.Screen name="RescheduleLoan" component={RescheduleLoanScreen} />
+      <ProfileStack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
       </ProfileStack.Navigator>
     </EkycSessionProvider>
   );

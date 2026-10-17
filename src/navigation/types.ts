@@ -93,6 +93,8 @@ export type ProfileStackParamList = {
   PartialPrepayment: { loanNumber: string };
   EarlySettlement: { loanNumber: string };
   RescheduleLoan: { loanNumber: string };
+  /** Thông báo đẩy của thiết bị và bật/tắt push theo nhóm (finora-notification R7). */
+  NotificationSettings: undefined;
 };
 
 export type TabParamList = {

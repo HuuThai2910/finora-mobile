@@ -101,10 +101,9 @@ export const SECURITY_SETTINGS: readonly UpcomingSetting[] = [
 ];
 
 /**
- * Nhóm "Thông báo & Cài đặt": chưa có màn cài đặt thông báo (màn Thông báo ở
- * trang chủ chỉ là hộp thư) và chưa có trang điều khoản trong app.
+ * Mục "Sắp có" của nhóm "Thông báo & Cài đặt": chưa có trang điều khoản trong app.
+ * "Cài đặt thông báo" đã có màn thật (feature `push-notifications`) nên vẽ thành dòng bấm được.
  */
 export const NOTIFICATION_SETTINGS: readonly UpcomingSetting[] = [
-  { icon: 'bell', title: 'Cài đặt thông báo' },
   { icon: 'fileCog', title: 'Điều khoản' },
 ];
