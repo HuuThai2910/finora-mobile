@@ -59,8 +59,17 @@ phép agent tự chọn phương án và làm luôn (D23 của plan tồn đọn
 - Chưa có thiết bị thật nên chưa kiểm push tới máy; backend mặc định `NOTIFICATION_PUSH_PROVIDER=log` (giả lập).
 - UAT cần: development build (`expo-dev-client`/EAS) có projectId, máy Android/iOS thật, backend `expo`.
 
+## Cập nhật giao diện 2026-10-17 (nhánh `feat/w3c-pades-contract`, D74, B74)
+
+Màn Cài đặt thông báo bỏ khung `Screen`/`PHeader` và `Card`/`InfoNote`/`SectionLabel` cũ, vẽ lại theo màn "Thông tin tài
+khoản" và thẻ cài đặt của tab Hồ sơ: nền sóng `HOME_WAVES`, `NotificationSettingsHeader` (quay lại + tiêu đề),
+`SettingsGroupCard` (thẻ trắng có tiêu đề), `SettingsTileRow` (ô icon 40pt, tên, chữ phụ, mũi tên hoặc công tắc),
+`NotificationNote` (hộp ghi chú, tông info/warn), `NotificationSettingsSkeleton`. Thẻ trạng thái giữ nguyên tám trạng
+thái và câu chữ, nhãn thành viên thuốc kiểu nhãn định danh, hành động (bật, thử lại, mở cài đặt máy) thành dòng có mũi
+tên. Hành vi, hook và API không đổi. Component ở lại feature này vì import `@/features/account` sẽ tạo vòng require
+qua `AuthProvider`. Đã thêm dòng task vào `PLAN.md`.
+
 ## Còn lại
 
 - Mục Thông báo vẫn đánh dấu đọc từng tin; backend đã có `POST /notifications/read-all`, đổi hook `useNotificationFeed`
   sang API này là việc nhỏ của owner UI trang chủ.
-- Thêm dòng task này vào `PLAN.md` khi merge (không sửa trong nhánh này để tránh xung đột với nhánh rút tiền).
