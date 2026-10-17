@@ -62,6 +62,11 @@ export interface InvestorContractDto {
   availableSignatureProvider: 'MOCK' | 'VNPT_SMART_CA';
   availableSignatureMethod: 'CLICK_WRAP_MVP' | 'VNPT_SMART_CA';
   expiresAt: string;
+  /** Các field PAdES (R5, W3C) là bổ sung; backend cũ không trả thì coi như chưa có chữ ký nào trong tệp. */
+  signatureProfile?: 'DETACHED_EVIDENCE' | 'PADES_B_B' | null;
+  pdfSignatureCount?: number;
+  signedPdfDocumentHash?: string | null;
+  receiptDocumentHash?: string | null;
 }
 
 const toNumber = (value: string): number => {
@@ -133,6 +138,12 @@ export function toInvestmentContract(dto: InvestorContractDto): InvestmentContra
     availableSignatureMethod: dto.availableSignatureMethod,
     downloadPath: `/investor/loan-contracts/${dto.contractNumber}/document`,
     expiresAt: dto.expiresAt,
+    padesSigned: dto.signatureProfile === 'PADES_B_B',
+    pdfSignatureCount: dto.pdfSignatureCount ?? 0,
+    signedPdfDocumentHash: dto.signedPdfDocumentHash ?? null,
+    receiptDocumentHash: dto.receiptDocumentHash ?? null,
+    signedDocumentPath: `/investor/loan-contracts/${dto.contractNumber}/signed-document`,
+    receiptPath: `/investor/loan-contracts/${dto.contractNumber}/receipt`,
   };
 }
 

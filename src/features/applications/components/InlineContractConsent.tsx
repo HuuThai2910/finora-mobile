@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { Checkbox } from '@/components/ui';
 import { Colors } from '@/constants/colors';
+import { padesLegalNotice, SIGNATURE_REJECTED_CODE } from '@/constants/contractSignature';
 import { FontFamily, Spacing } from '@/theme';
 import type { LoanContractDetail } from '@/types/contract';
 import type { DeclineReasonCode } from '../constant';
@@ -16,6 +17,8 @@ import DisclosureSection from './DisclosureSection';
 type Props = {
   contract: LoanContractDetail;
   countdown: Countdown;
+  /** Lần ký SmartCA trước bị từ chối (vòng hỏi kết quả báo về): nút ký đổi thành "Ký lại". */
+  signatureRejected?: boolean;
   onDone: () => void;
   onStale: () => void;
 };
@@ -25,7 +28,13 @@ type Props = {
  * cha đã mở thành công đúng artifact hiện hành, nên checkbox không thể thay thế
  * điều kiện phải đọc tài liệu trước khi consent.
  */
-export default function InlineContractConsent({ contract, countdown, onDone, onStale }: Props) {
+export default function InlineContractConsent({
+  contract,
+  countdown,
+  signatureRejected = false,
+  onDone,
+  onStale,
+}: Props) {
   const consent = useContractConsent(contract);
   const [mode, setMode] = useState<'sign' | 'decline'>('sign');
   const [accepted, setAccepted] = useState(false);
@@ -33,31 +42,38 @@ export default function InlineContractConsent({ contract, countdown, onDone, onS
   const [reasonDetail, setReasonDetail] = useState('');
   const declineReady = reason !== 'OTHER' || reasonDetail.trim().length > 0;
 
+  const pades = contract.signatureProfile === 'PADES_B_B';
+  // Chữ ký vừa bị từ chối (lời gọi ký hoặc vòng hỏi kết quả): backend đã trả hợp đồng về chờ ký, nút đổi thành
+  // "Ký lại" (lần ký mới, key mới).
+  const resign = signatureRejected || consent.error?.code === SIGNATURE_REJECTED_CODE;
+
   const sign = async () => {
     if (!accepted) return;
-    const succeeded = await consent.sign();
-    if (succeeded) {
+    const outcome = await consent.sign();
+    if (outcome.ok) {
       const smartCa = contract.availableSignatureMethod === 'VNPT_SMART_CA';
       Alert.alert(
         smartCa ? 'Đã gửi yêu cầu ký số' : 'Đã xác nhận hợp đồng',
         smartCa
           ? 'Hãy mở ứng dụng VNPT SmartCA để xác nhận. Sau đó quay lại FINORA kiểm tra kết quả.'
-          : 'FINORA đã ghi nhận xác nhận click-wrap của bạn và tạo bản PDF xác nhận.',
+          : pades
+            ? 'FINORA đã nhúng chữ ký số của bạn vào tệp PDF hợp đồng. Chữ ký dùng chứng thư demo nên không có giá trị pháp lý.'
+            : 'FINORA đã ghi nhận xác nhận click-wrap của bạn và tạo bản PDF xác nhận.',
         [{ text: 'Đã hiểu', onPress: onDone }],
       );
-    } else if (consent.error?.stale) {
+    } else if (outcome.error?.stale) {
       onStale();
     }
   };
 
   const decline = async () => {
     if (!declineReady) return;
-    const succeeded = await consent.decline(reason, reasonDetail);
-    if (succeeded) {
+    const outcome = await consent.decline(reason, reasonDetail);
+    if (outcome.ok) {
       Alert.alert('Đã từ chối hợp đồng', 'FINORA đã ghi nhận quyết định của bạn.', [
         { text: 'Đã hiểu', onPress: onDone },
       ]);
-    } else if (consent.error?.stale) {
+    } else if (outcome.error?.stale) {
       onStale();
     }
   };
@@ -121,9 +137,11 @@ export default function InlineContractConsent({ contract, countdown, onDone, onS
 
       <View style={styles.actions}>
         <DetailButton
-          label={contract.availableSignatureMethod === 'VNPT_SMART_CA'
-            ? 'Gửi yêu cầu VNPT SmartCA'
-            : 'Ký xác nhận hợp đồng'}
+          label={resign
+            ? 'Ký lại'
+            : contract.availableSignatureMethod === 'VNPT_SMART_CA'
+              ? 'Gửi yêu cầu VNPT SmartCA'
+              : 'Ký xác nhận hợp đồng'}
           onPress={sign}
           disabled={!accepted || consent.busy}
           loading={consent.signing}
@@ -156,9 +174,13 @@ export default function InlineContractConsent({ contract, countdown, onDone, onS
       </DisclosureSection>
 
       <Text style={styles.legal}>
-        {contract.availableSignatureMethod === 'VNPT_SMART_CA'
-          ? 'Hợp đồng chỉ được ghi nhận đã ký sau khi VNPT SmartCA trả kết quả thành công.'
-          : 'Đây là xác nhận điện tử dạng click-wrap trong FINORA, chưa phải chữ ký số VNPT SmartCA.'}
+        {pades
+          // Hợp đồng PAdES: kể cả với MOCK, backend nhúng một chữ ký số thật (chứng thư demo) vào tệp, nên câu
+          // "chỉ là click-wrap" không còn đúng; nói rõ cách ký và giới hạn pháp lý.
+          ? `Chữ ký số của bạn được nhúng vào chính tệp PDF, sau chữ ký của các bên cho vay. ${padesLegalNotice(contract.availableSignatureProvider)}`
+          : contract.availableSignatureMethod === 'VNPT_SMART_CA'
+            ? 'Hợp đồng chỉ được ghi nhận đã ký sau khi VNPT SmartCA trả kết quả thành công.'
+            : 'Đây là xác nhận điện tử dạng click-wrap trong FINORA, chưa phải chữ ký số VNPT SmartCA.'}
       </Text>
     </DetailCard>
   );

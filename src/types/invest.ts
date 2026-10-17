@@ -276,4 +276,14 @@ export interface InvestmentContract {
   availableSignatureMethod: 'CLICK_WRAP_MVP' | 'VNPT_SMART_CA';
   downloadPath: string;
   expiresAt: string;
+  /** Hợp đồng ký PAdES nhúng chữ ký vào chính tệp PDF (R5, W3C); false với hợp đồng ký kiểu cũ. */
+  padesSigned: boolean;
+  /** Số chữ ký đã nhúng trong tệp PDF. */
+  pdfSignatureCount: number;
+  /** Hash bản mới nhất của chuỗi chữ ký (`/signed-document`); null khi chưa bên nào ký số. */
+  signedPdfDocumentHash: string | null;
+  /** Hash trang biên nhận chữ ký (`/receipt`); chỉ có sau khi đủ chữ ký các bên. */
+  receiptDocumentHash: string | null;
+  signedDocumentPath: string;
+  receiptPath: string;
 }

@@ -1,4 +1,10 @@
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import {
+  SIGNATURE_IN_PROGRESS_CODE,
+  SIGNATURE_IN_PROGRESS_MESSAGE,
+  SIGNATURE_REJECTED_CODE,
+  SIGNATURE_REJECTED_MESSAGE,
+} from '@/constants/contractSignature';
 
 export type ActionError = {
   message: string;
@@ -9,6 +15,8 @@ export type ActionError = {
    * thao tác tiếp, tuyệt đối không tự tăng `version` để gửi lại.
    */
   stale: boolean;
+  /** Mã lỗi backend (nếu có) để nơi gọi rẽ nhánh đúng tình huống, ví dụ chữ ký bị từ chối thì ký lại. */
+  code?: string;
 };
 
 type ErrorBody = { code?: string; message?: string };
@@ -62,6 +70,18 @@ export function toActionError(error: unknown): ActionError {
 
   const body = bodyOf(error);
 
+  // Ký PAdES nối tiếp (W3C): bên khác đang có phiên ký chờ trên hợp đồng. Dữ liệu trên máy không cũ và không có
+  // gì được ghi cho lần bấm này; người dùng tự bấm ký lại sau vài phút, cùng ý định nên giữ idempotency key. Không
+  // tự thử lại theo vòng lặp.
+  if (body.code === SIGNATURE_IN_PROGRESS_CODE) {
+    return { message: SIGNATURE_IN_PROGRESS_MESSAGE, retryable: true, stale: false, code: body.code };
+  }
+
+  // 503 sau khi backend đã hủy hẳn lần ký có chữ ký không khớp chứng thư và trả hợp đồng về chờ ký: mời ký lại.
+  if (body.code === SIGNATURE_REJECTED_CODE) {
+    return { message: SIGNATURE_REJECTED_MESSAGE, retryable: true, stale: false, code: body.code };
+  }
+
   if (error.status === 409) {
     return {
       message:
@@ -69,13 +89,14 @@ export function toActionError(error: unknown): ActionError {
         'Nội dung đã được cập nhật ở nơi khác. Hãy tải lại bản mới nhất rồi xác nhận lại.',
       retryable: false,
       stale: true,
+      code: body.code,
     };
   }
 
   // 403 `PIN_REQUIRED`/`PIN_TOKEN_INVALID` (token PIN hết 3 phút hoặc sai phạm vi) không phải
   // lỗi phiên: hiện nguyên lời backend để người dùng biết chỉ cần bấm ký lại và nhập PIN.
   if (error.status === 403 && body.code?.startsWith('PIN_') && body.message) {
-    return { message: body.message, retryable: true, stale: false };
+    return { message: body.message, retryable: true, stale: false, code: body.code };
   }
 
   if (error.status === 401 || error.status === 403) {
@@ -91,6 +112,7 @@ export function toActionError(error: unknown): ActionError {
       message: body.message ?? 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau ít phút.',
       retryable: true,
       stale: false,
+      code: body.code,
     };
   }
 
@@ -98,6 +120,7 @@ export function toActionError(error: unknown): ActionError {
     message: body.message ?? 'Yêu cầu không được chấp nhận. Vui lòng tải lại và kiểm tra lại thông tin.',
     retryable: false,
     stale: false,
+    code: body.code,
   };
 }
 

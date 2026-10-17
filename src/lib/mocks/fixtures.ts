@@ -413,6 +413,13 @@ export const INVESTMENT_CONTRACT: InvestmentContract = {
   availableSignatureMethod: 'CLICK_WRAP_MVP',
   downloadPath: '/investor/loan-contracts/INV_1036EB_1779470224528/document',
   expiresAt: '2026-10-03T00:00:00Z',
+  // Bản giả lập là hợp đồng ký kiểu cũ, chưa có chữ ký số nào: không giả số chữ ký hay biên nhận PAdES.
+  padesSigned: false,
+  pdfSignatureCount: 0,
+  signedPdfDocumentHash: null,
+  receiptDocumentHash: null,
+  signedDocumentPath: '/investor/loan-contracts/INV_1036EB_1779470224528/signed-document',
+  receiptPath: '/investor/loan-contracts/INV_1036EB_1779470224528/receipt',
 };
 
 /* ---------------- Hồ sơ vay của tôi ---------------- */
