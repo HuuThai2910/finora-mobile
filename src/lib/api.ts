@@ -1,4 +1,5 @@
 import { getValidAccessToken, refreshAccessToken } from './authSession';
+import { recordApiError } from './lastApiError';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8081/api/v1';
 
@@ -155,6 +156,8 @@ async function response(
   if (!res.ok) {
     const body = await res.text();
     const { code, message, traceId } = parseError(body);
+    // Trợ lý FINORA gửi kèm mã lỗi vừa gặp (context.lastErrorCode) để giải thích đúng lỗi đó.
+    recordApiError(code);
     throw new ApiError(res.status, body, code, message, traceId);
   }
 
@@ -226,6 +229,13 @@ export const paymentFetch = <T>(path: string, init?: ApiRequestInit): Promise<T>
 
 /** Notification Service đi qua Gateway để dùng cùng access token Keycloak. */
 export const notificationFetch = <T>(path: string, init?: ApiRequestInit): Promise<T> =>
+  request<T>(AUTH_BASE_URL, path, { ...init, authenticated: true });
+
+/**
+ * Trợ lý FINORA (`finora-ai`) đi qua Gateway (`/api/v1/ai/**`) cùng cổng với finora-user, bằng
+ * Bearer của phiên đăng nhập. Nhận `timeoutMs` vì một lượt hỏi có thể chờ LLM tới 40 giây.
+ */
+export const assistantFetch = <T>(path: string, init?: ApiRequestInit): Promise<T> =>
   request<T>(AUTH_BASE_URL, path, { ...init, authenticated: true });
 
 type ParsedError = { code: string; message: string | null; traceId: string | null };

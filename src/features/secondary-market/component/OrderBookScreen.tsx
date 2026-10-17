@@ -8,6 +8,7 @@ import { WaveBackdrop } from '@/components/phone';
 import { Icon } from '@/components/ui';
 import { HOME_WAVES } from '@/constants/backgrounds';
 import { Colors } from '@/constants/colors';
+import { AskAssistantButton } from '@/features/assistant';
 import type { WalletStackParamList } from '@/navigation/types';
 import { FontFamily, Radius, Spacing, tabularNums } from '@/theme';
 import type { OrderSide } from '@/types/orderBook';
@@ -99,6 +100,7 @@ export default function OrderBookScreen() {
     return (
       <>
         <BookPriceCard book={data} />
+        <AskAssistantButton context={{ screen: 'OrderBook', params: { listingId: String(listingId) } }} />
         {data.defaulted ? (
           <View style={styles.warning} accessibilityRole="alert">
             <Icon name="alert" size={20} color={Colors.tagRedText} />

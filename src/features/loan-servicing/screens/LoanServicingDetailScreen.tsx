@@ -2,6 +2,7 @@ import { useCallback, useRef } from 'react';
 import { useFocusEffect, useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ApplicationDetailError } from '@/features/applications';
+import { AskAssistantButton } from '@/features/assistant';
 import type { ProfileStackParamList } from '@/navigation/types';
 import LoanDetailSkeleton from '../components/LoanDetailSkeleton';
 import LoanPaymentCard from '../components/LoanPaymentCard';
@@ -63,6 +64,7 @@ export default function LoanServicingDetailScreen() {
         periodCount={schedule.periods.length}
         onOpenSchedule={() => nav.navigate('ServicingSchedule', { loanNumber })}
       />
+      <AskAssistantButton context={{ screen: 'LoanServicingDetail', params: { loanNumber } }} />
       {canPayLoan(loan) ? (
         <LoanPaymentCard
           loan={loan}

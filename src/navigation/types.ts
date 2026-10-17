@@ -1,4 +1,5 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
+import type { AssistantContext } from '@/types/assistant';
 
 /**
  * Bản đồ màn hình. Bốn tab lấy đúng theo hàm `TABBAR` của mockup, và mỗi màn
@@ -95,4 +96,17 @@ export type TabParamList = {
   Sàn: NavigatorScreenParams<MarketStackParamList>;
   Ví: NavigatorScreenParams<WalletStackParamList>;
   'Hồ sơ': NavigatorScreenParams<ProfileStackParamList>;
+};
+
+/**
+ * Stack gốc sau khi đăng nhập: bốn tab nằm trong `Main`, Trợ lý FINORA mở dạng modal phủ lên mọi
+ * tab, nên mở được từ bất kỳ màn nào mà không đổi tab đang đứng; đóng trợ lý là về đúng màn cũ.
+ */
+export type AppStackParamList = {
+  Main: NavigatorScreenParams<TabParamList>;
+  /**
+   * `context`: màn đang mở và mã nghiệp vụ trên màn đó (spec mục 13.1).
+   * `suggestionId`: id gợi ý do server cấp; có thì màn chat tự hỏi gợi ý đó khi mở.
+   */
+  Assistant: { context?: AssistantContext; suggestionId?: string };
 };

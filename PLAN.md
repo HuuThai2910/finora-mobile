@@ -23,6 +23,7 @@ DRAFT -> APPROVED -> IN_PROGRESS -> READY_FOR_REVIEW -> ACCEPTED
 | MOBILE-LOAN-003 | Giải ngân, repayment, overdue, prepayment, settlement, restructuring | LN-011–LN-017 | `READY_FOR_REVIEW` — UI người vay đã build thành công ngày 2026-10-04 | [Plan](plans/MOBILE-LOAN-003-servicing-repayment.md) |
 | MOBILE-INVESTOR-001 | Risk projection trên danh mục + thông báo servicing thật | Investment/Notification P5-B04 | `READY_FOR_REVIEW` — portfolio hiển thị DPD/nhóm nợ; notification list/count/read nối Gateway ngày 2026-10-04 | [Contract chung](../finora-platform/docs/integrations/CIC-RISK-NOTIFICATION.md) |
 | MOBILE-INVESTOR-002 | Hồ sơ người vay (ẩn danh, không SHAP): thẻ tóm tắt trên màn khoản vay + màn "Hồ sơ người vay" | Loan `GET /investor/loan-applications/{n}/borrower-profile`; Investment trả `applicationNumber` | `READY_FOR_REVIEW` — Hải chốt ngày 2026-10-10: ẩn danh, đủ chỉ số | [Spec](../finora-platform/docs/superpowers/specs/2026-10-10-investor-borrower-profile-design.md) |
+| MOBILE-AI-CHAT-001 | Trợ lý FINORA cho người vay và nhà đầu tư: màn chat dạng modal, nút nổi ở Trang chủ, nút "Hỏi trợ lý" trên các màn hồ sơ/hợp đồng/khoản vay/sổ lệnh/Auto-Invest/danh mục, thông báo lần đầu về AI và dữ liệu | finora-ai `/api/v1/ai/assistant/*` (AI-CHAT-001) | `IN_PROGRESS` | [Spec](../finora-platform/docs/superpowers/specs/2026-10-15-tro-ly-finora-design.md) · [Plan](../finora-platform/docs/superpowers/plans/2026-10-15-tro-ly-finora.md) |
 
 ## Quy tắc đồng bộ về sau
 

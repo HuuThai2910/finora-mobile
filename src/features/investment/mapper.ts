@@ -23,6 +23,7 @@ export interface PortfolioPositionDto {
   principalRepaid: string;
   interestReceived: string;
   sharePercent: number;
+  /** `ACTIVE` hoặc `DEFAULTED` (khoản vay nợ xấu, nhóm nợ 3–5). */
   status: string;
   daysPastDue: number;
   debtGroup: number;
@@ -42,6 +43,13 @@ export interface PortfolioDto {
   positionCount: number;
   weightedAverageRate: number;
   positions: PortfolioPositionDto[];
+  /**
+   * Ba trường Investment thêm cùng AI-CHAT-001. Để tùy chọn: app mới vẫn chạy với backend chưa
+   * cập nhật (thiếu thì coi như không có nợ xấu, đúng với cách backend cũ bỏ Note DEFAULTED).
+   */
+  defaultedAmount?: string;
+  defaultedNoteCount?: number;
+  defaultedPositionCount?: number;
 }
 
 /** Contract Loan trả cho đúng investor đang đăng nhập; không chứa PII của các bên khác. */
@@ -87,6 +95,7 @@ function toPosition(dto: PortfolioPositionDto): PortfolioPosition {
     servicingStatus: dto.servicingStatus ?? 'ACTIVE',
     maturityDate: dto.maturityDate,
     riskDataAsOf: dto.riskDataAsOf,
+    defaulted: dto.status === 'DEFAULTED',
   };
 }
 
@@ -103,6 +112,9 @@ export function toPortfolioSummary(dto: PortfolioDto): PortfolioSummary {
     // IRR cần cả dòng tiền theo thời gian, backend chưa tính.
     averageRate: Number(dto.weightedAverageRate.toFixed(2)),
     positions: dto.positions.map(toPosition),
+    defaultedAmount: toNumber(dto.defaultedAmount ?? '0'),
+    defaultedNoteCount: dto.defaultedNoteCount ?? 0,
+    defaultedPositionCount: dto.defaultedPositionCount ?? 0,
   };
 }
 

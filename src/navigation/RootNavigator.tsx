@@ -4,8 +4,8 @@ import { Screen } from '@/components/phone';
 import { LoadingScreen } from '@/components/feedback';
 import { useAuth } from '@/providers/AuthProvider';
 import { PinProvider } from '@/features/pin';
+import AppNavigator from './AppNavigator';
 import AuthNavigator from './AuthNavigator';
-import MainTabs from './MainTabs';
 
 /** Chủ đề điều hướng khớp bảng màu của mockup. */
 const navTheme: Theme = {
@@ -46,7 +46,7 @@ export default function RootNavigator() {
     <NavigationContainer theme={navTheme}>
       {session ? (
         <PinProvider>
-          <MainTabs />
+          <AppNavigator />
         </PinProvider>
       ) : (
         <AuthNavigator />

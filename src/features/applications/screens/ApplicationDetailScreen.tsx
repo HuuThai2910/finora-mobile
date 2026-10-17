@@ -1,5 +1,6 @@
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AskAssistantButton } from '@/features/assistant';
 import type { ProfileStackParamList } from '@/navigation/types';
 import { REPAYMENT_LABELS } from '../constant';
 import { useApplicationDetail } from '../hook/useApplicationDetail';
@@ -98,6 +99,10 @@ export default function ApplicationDetailScreen() {
               }
             : null
         }
+      />
+
+      <AskAssistantButton
+        context={{ screen: 'ApplicationDetail', params: { applicationNumber: application.applicationNumber } }}
       />
 
       <PricingResultCard application={application} />

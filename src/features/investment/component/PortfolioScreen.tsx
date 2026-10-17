@@ -8,6 +8,7 @@ import { WaveBackdrop } from '@/components/phone';
 import { Icon } from '@/components/ui';
 import { HOME_WAVES } from '@/constants/backgrounds';
 import { Colors } from '@/constants/colors';
+import { AskAssistantButton } from '@/features/assistant';
 import type { WalletStackParamList } from '@/navigation/types';
 import { FontFamily, Radius, Spacing } from '@/theme';
 import { formatDong } from '@/utils/format';
@@ -69,6 +70,7 @@ export default function PortfolioScreen() {
       <>
         <PortfolioHeroCard summary={data} width={width - PORTFOLIO_PADDING * 2} />
         <PortfolioShortcuts items={shortcuts} />
+        <AskAssistantButton context={{ screen: 'Portfolio' }} />
 
         {data.pendingAmount > 0 ? (
           <View style={styles.note}>

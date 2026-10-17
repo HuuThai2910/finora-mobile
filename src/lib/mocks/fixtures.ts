@@ -341,33 +341,40 @@ export const BORROWER_PROFILES: Record<string, BorrowerProfile> = {
 
 /* ---------------- Danh mục đầu tư ---------------- */
 
+/** Khoản 1877 đang nợ xấu: dư nợ của nó nằm ở `defaultedAmount`, không cộng vào `investedAmount`. */
 export const PORTFOLIO: PortfolioSummary = {
-  investedAmount: 46_400_000,
+  investedAmount: 36_400_000,
   pendingAmount: 20_000_000,
   principalRepaid: 3_600_000,
   interestReceived: 1_284_500,
   totalReceived: 4_884_500,
-  activeNoteCount: 50,
-  positionCount: 3,
-  averageRate: 14.62,
+  activeNoteCount: 40,
+  positionCount: 2,
+  averageRate: 14.32,
+  defaultedAmount: 10_000_000,
+  defaultedNoteCount: 10,
+  defaultedPositionCount: 1,
   positions: [
     {
       loanId: 3041, listingId: 31, purpose: 'Mở rộng cửa hàng tạp hoá', grade: 'A', annualRate: 13.5,
       termMonths: 12, noteCount: 20, principal: 20_000_000, outstanding: 16_400_000,
       principalRepaid: 3_600_000, interestReceived: 812_000, sharePercent: 20,
       daysPastDue: 0, debtGroup: 1, overdueAmount: 0, servicingStatus: 'ACTIVE', maturityDate: null, riskDataAsOf: null,
+      defaulted: false,
     },
     {
       loanId: 2044, listingId: 24, purpose: 'Học phí cao học', grade: 'B', annualRate: 15,
       termMonths: 9, noteCount: 20, principal: 20_000_000, outstanding: 20_000_000,
       principalRepaid: 0, interestReceived: 472_500, sharePercent: 10,
       daysPastDue: 12, debtGroup: 2, overdueAmount: 1_250_000, servicingStatus: 'ACTIVE', maturityDate: null, riskDataAsOf: '2026-10-04T00:00:00Z',
+      defaulted: false,
     },
     {
       loanId: 1877, listingId: 18, purpose: 'Sửa chữa nhà', grade: 'D', annualRate: 18,
       termMonths: 6, noteCount: 10, principal: 10_000_000, outstanding: 10_000_000,
       principalRepaid: 0, interestReceived: 0, sharePercent: 25,
-      daysPastDue: 0, debtGroup: 1, overdueAmount: 0, servicingStatus: 'ACTIVE', maturityDate: null, riskDataAsOf: null,
+      daysPastDue: 96, debtGroup: 3, overdueAmount: 3_480_000, servicingStatus: 'ACTIVE', maturityDate: null, riskDataAsOf: '2026-10-04T00:00:00Z',
+      defaulted: true,
     },
   ],
 };

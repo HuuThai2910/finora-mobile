@@ -8,8 +8,9 @@ import { PORTFOLIO_MASCOT } from '../constant';
 
 /**
  * Thẻ tổng quan danh mục, cùng dáng thẻ ví ở trang chủ: nền xanh đậm dần, robot cầm đồng xu ở
- * góc phải. Con số lớn là vốn đang nằm trong các Note; hàng dưới là ba con số người đầu tư hỏi
- * tiếp theo — lãi suất bình quân, đã nhận về bao nhiêu, và đang chờ giải ngân bao nhiêu.
+ * góc phải. Con số lớn là vốn đang nằm trong các Note đang trả bình thường; hàng dưới là ba con số
+ * người đầu tư hỏi tiếp theo — lãi suất bình quân, đã nhận về bao nhiêu, đang chờ giải ngân bao
+ * nhiêu — cộng dòng "Đang nợ xấu" khi danh mục có khoản nợ xấu.
  */
 /** Bề rộng thẻ trong mockup (màn 393pt trừ lề hai bên). */
 const DESIGN_WIDTH = 361;
@@ -21,6 +22,12 @@ const DESIGN_WIDTH = 361;
  */
 const unitFor = (width: number) => Math.min(1.1, Math.max(0.8, width / DESIGN_WIDTH));
 
+/** Số Note và khoản vay đang trả bình thường; khoản nợ xấu đếm riêng vì không nằm trong số vốn ở trên. */
+const subline = (s: PortfolioSummary) => {
+  const base = `${s.activeNoteCount} Note trên ${s.positionCount} khoản vay`;
+  return s.defaultedPositionCount > 0 ? `${base} · ${s.defaultedPositionCount} khoản nợ xấu` : base;
+};
+
 export default function PortfolioHeroCard({ summary, width }: { summary: PortfolioSummary; width: number }) {
   const invested = formatDong(summary.investedAmount);
   const u = unitFor(width);
@@ -29,6 +36,10 @@ export default function PortfolioHeroCard({ summary, width }: { summary: Portfol
     { label: 'Lãi suất bình quân', value: `${formatPercentValue(summary.averageRate)}/năm` },
     { label: 'Đã nhận về', value: formatDong(summary.totalReceived) },
     { label: 'Chờ giải ngân', value: formatDong(summary.pendingAmount) },
+    // Dư nợ nợ xấu tách khỏi "Vốn đang đầu tư"; chỉ thêm dòng khi có, để thẻ không hiện "0 đ" thừa.
+    ...(summary.defaultedAmount > 0
+      ? [{ label: 'Đang nợ xấu', value: formatDong(summary.defaultedAmount) }]
+      : []),
   ];
 
   return (
@@ -60,7 +71,7 @@ export default function PortfolioHeroCard({ summary, width }: { summary: Portfol
         {invested}
       </Text>
       <Text style={styles.sub} maxFontSizeMultiplier={1.4}>
-        {`${summary.activeNoteCount} Note trên ${summary.positionCount} khoản vay`}
+        {subline(summary)}
       </Text>
 
       {/* Ba dòng nhãn–số trong một khung mờ: số tiền đủ tám chữ số không vừa ba ô ngang trên máy hẹp. */}

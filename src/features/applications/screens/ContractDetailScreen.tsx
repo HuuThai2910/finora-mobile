@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AskAssistantButton } from '@/features/assistant';
 import type { ProfileStackParamList } from '@/navigation/types';
 import ApplicationDetailError from '../components/ApplicationDetailError';
 import ApplicationDetailSkeleton from '../components/ApplicationDetailSkeleton';
@@ -90,6 +91,8 @@ function ContractDetailBody({
   return (
     <ContractDetailScaffold onRefresh={reload} refreshing={refreshing}>
       <ContractSummaryCard contract={contract} countdown={countdown} />
+
+      <AskAssistantButton context={{ screen: 'ContractDetail', params: { contractNumber: contract.contractNumber } }} />
 
       <ContractDisbursementCard contract={contract} />
 

@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/feedback';
 import { Icon } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import { toUserMessage } from '@/lib/api';
+import { AskAssistantButton } from '@/features/assistant';
 import { usePinGuard } from '@/features/pin';
 import { FontFamily, Radius, Spacing } from '@/theme';
 import type { AutoInvestConfig } from '@/types/invest';
@@ -114,6 +115,7 @@ export default function AutoInvestScreen() {
             <Text style={styles.errorText}>{saveError}</Text>
           </View>
         ) : null}
+        <AskAssistantButton context={{ screen: 'AutoInvest' }} />
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle} accessibilityRole="header" maxFontSizeMultiplier={1.4}>

@@ -30,7 +30,12 @@ export type MockDomain =
    * (danh mục) để bật mock riêng phần này mà vẫn gọi thật hai phần kia — backend chợ thứ cấp đã
    * có, nên miền này mặc định **không** nằm trong danh sách mock.
    */
-  | 'secondary';
+  | 'secondary'
+  /**
+   * Trợ lý FINORA: câu trả lời mẫu viết sẵn, không gọi finora-ai hay LLM. Dùng để xem giao diện chat
+   * khi chưa chạy backend; mặc định **không** nằm trong danh sách mock.
+   */
+  | 'assistant';
 
 const parse = (raw: string | undefined): ReadonlySet<string> =>
   new Set(

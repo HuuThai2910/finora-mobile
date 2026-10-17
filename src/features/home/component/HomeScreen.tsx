@@ -11,6 +11,7 @@ import { WaveBackdrop } from '@/components/phone';
 import { useAuth } from '@/providers/AuthProvider';
 import { useBalance } from '@/features/wallet';
 import { useMyApplications } from '@/features/applications';
+import { AssistantFab } from '@/features/assistant';
 import type { HomeStackParamList, TabParamList } from '@/navigation/types';
 import { PROMO_SLIDES, type PromoTarget } from '../constant';
 import { useHomeSummary, useUnreadCount } from '../hook/useHome';
@@ -102,78 +103,83 @@ export default function HomeScreen() {
   const latest = applications.data?.[0];
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={styles.scroll}
-      showsVerticalScrollIndicator={false}
-      onLayout={e => setViewportHeight(e.nativeEvent.layout.height)}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={reload}
-          // iOS đọc `tintColor`, Android đọc `colors`.
-          tintColor={Colors.authPrimary}
-          colors={[Colors.authPrimary]}
-        />
-      }
-    >
-      <View style={{ width, minHeight: viewportHeight }}>
-        <WaveBackdrop background={HOME_WAVES} width={width} />
-
-        <View style={[styles.content, { paddingTop: insets.top + Spacing.xs }]}>
-          <HomeHeader
-            unread={unread.data ?? 0}
-            onOpenNotifications={() => nav.navigate('Notifications')}
+    <View style={styles.screen}>
+      <ScrollView
+        style={styles.root}
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        onLayout={e => setViewportHeight(e.nativeEvent.layout.height)}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={reload}
+            // iOS đọc `tintColor`, Android đọc `colors`.
+            tintColor={Colors.authPrimary}
+            colors={[Colors.authPrimary]}
           />
+        }
+      >
+        <View style={{ width, minHeight: viewportHeight }}>
+          <WaveBackdrop background={HOME_WAVES} width={width} />
 
-          <View style={styles.hero}>
-            <Greeting fullName={session?.profile.fullName} />
-            <PromoCarousel slides={PROMO_SLIDES} onOpen={openPromo} />
-          </View>
-
-          <WalletCard
-            available={balance.data?.available ?? null}
-            loading={balance.loading}
-            error={balance.error}
-            onRetry={balance.reload}
-            onOpenWallet={() => nav.navigate('Ví', { screen: 'WalletHistory' })}
-            actions={actions}
-            width={width - CONTENT_PADDING * 2}
-          />
-
-          <View style={styles.section}>
-            <LatestApplicationSection
-              application={latest}
-              contract={
-                latest ? applications.contractsByApplication.get(latest.applicationNumber) : undefined
-              }
-              loading={applications.loading}
-              error={applications.error}
-              onRetry={applications.reload}
-              onOpen={applicationNumber =>
-                nav.navigate('Hồ sơ', { screen: 'ApplicationDetail', params: { applicationNumber } })
-              }
-              onSeeAll={() => nav.navigate('Hồ sơ', { screen: 'MyApplications' })}
-              onBrowseProducts={openProducts}
+          <View style={[styles.content, { paddingTop: insets.top + Spacing.xs }]}>
+            <HomeHeader
+              unread={unread.data ?? 0}
+              onOpenNotifications={() => nav.navigate('Notifications')}
             />
-          </View>
 
-          <View style={styles.section}>
-            <RecentActivitySection
-              summary={summary.data}
-              loading={summary.loading}
-              error={summary.error}
-              onRetry={summary.reload}
-              onSeeAll={() => nav.navigate('Ví', { screen: 'WalletHistory' })}
+            <View style={styles.hero}>
+              <Greeting fullName={session?.profile.fullName} />
+              <PromoCarousel slides={PROMO_SLIDES} onOpen={openPromo} />
+            </View>
+
+            <WalletCard
+              available={balance.data?.available ?? null}
+              loading={balance.loading}
+              error={balance.error}
+              onRetry={balance.reload}
+              onOpenWallet={() => nav.navigate('Ví', { screen: 'WalletHistory' })}
+              actions={actions}
+              width={width - CONTENT_PADDING * 2}
             />
+
+            <View style={styles.section}>
+              <LatestApplicationSection
+                application={latest}
+                contract={
+                  latest ? applications.contractsByApplication.get(latest.applicationNumber) : undefined
+                }
+                loading={applications.loading}
+                error={applications.error}
+                onRetry={applications.reload}
+                onOpen={applicationNumber =>
+                  nav.navigate('Hồ sơ', { screen: 'ApplicationDetail', params: { applicationNumber } })
+                }
+                onSeeAll={() => nav.navigate('Hồ sơ', { screen: 'MyApplications' })}
+                onBrowseProducts={openProducts}
+              />
+            </View>
+
+            <View style={styles.section}>
+              <RecentActivitySection
+                summary={summary.data}
+                loading={summary.loading}
+                error={summary.error}
+                onRetry={summary.reload}
+                onSeeAll={() => nav.navigate('Ví', { screen: 'WalletHistory' })}
+              />
+            </View>
           </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+      <AssistantFab context={{ screen: 'Home' }} />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // Khung ngoài giữ nút trợ lý nổi đứng yên khi nội dung cuộn.
+  screen: { flex: 1 },
   // Nền trùng hàng trên cùng của ảnh sóng: kéo làm mới lộ ra phía trên vẫn liền màu.
   root: { flex: 1, backgroundColor: Colors.homeWaveTop },
   scroll: { flexGrow: 1, alignItems: 'center' },

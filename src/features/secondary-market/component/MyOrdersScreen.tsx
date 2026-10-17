@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/feedback';
 import { WaveBackdrop } from '@/components/phone';
 import { CONTRACTS_WAVES } from '@/constants/backgrounds';
 import { Colors } from '@/constants/colors';
+import { AskAssistantButton } from '@/features/assistant';
 import type { WalletStackParamList } from '@/navigation/types';
 import { FontFamily, Radius, SoftShadow, Spacing } from '@/theme';
 import { BOOK_MAX_WIDTH, BOOK_PADDING, MY_ORDERS_ART } from '../constant';
@@ -122,6 +123,7 @@ export default function MyOrdersScreen() {
               );
             })}
           </View>
+          <AskAssistantButton context={{ screen: 'MyBookOrders' }} />
           {renderList()}
         </View>
       </View>

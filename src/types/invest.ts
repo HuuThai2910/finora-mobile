@@ -166,10 +166,15 @@ export interface PortfolioPosition {
   servicingStatus: string;
   maturityDate: string | null;
   riskDataAsOf: string | null;
+  /**
+   * Khoản vay đã chuyển nợ xấu (nhóm nợ 3–5): Investment trả `status: 'DEFAULTED'` cho vị thế.
+   * Note vẫn thuộc nhà đầu tư nên vẫn nằm trong danh mục, nhưng phải gắn nhãn rõ.
+   */
+  defaulted: boolean;
 }
 
 export interface PortfolioSummary {
-  /** Vốn đang nằm trong các Note còn dư nợ. */
+  /** Dư nợ gốc của các Note đang trả bình thường; không gồm nợ xấu (xem `defaultedAmount`). */
   investedAmount: number;
   /** Vốn đã cam kết nhưng khoản vay chưa giải ngân, chưa thành Note. */
   pendingAmount: number;
@@ -177,11 +182,17 @@ export interface PortfolioSummary {
   interestReceived: number;
   /** Gốc đã thu hồi cộng lãi đã nhận. */
   totalReceived: number;
+  /** Số Note và số khoản vay đang trả bình thường — khớp với `investedAmount`. */
   activeNoteCount: number;
   positionCount: number;
-  /** Lãi suất bình quân theo dư nợ, %/năm — backend tính, không phải IRR. */
+  /** Lãi suất bình quân theo dư nợ, %/năm — backend tính, không phải IRR; không tính nợ xấu. */
   averageRate: number;
+  /** Mọi vị thế, kể cả vị thế nợ xấu (`defaulted`). */
   positions: PortfolioPosition[];
+  /** Dư nợ gốc còn nằm trong các Note nợ xấu. */
+  defaultedAmount: number;
+  defaultedNoteCount: number;
+  defaultedPositionCount: number;
 }
 
 /**

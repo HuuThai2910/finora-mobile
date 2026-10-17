@@ -10,6 +10,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Skeleton } from '@/components/feedback';
 import { Colors } from '@/constants/colors';
 import type { IconName } from '@/constants/icons';
+import { AskAssistantButton } from '@/features/assistant';
 import { REPAYMENT_METHOD_LABEL } from '@/features/products';
 import type { MarketStackParamList, TabParamList } from '@/navigation/types';
 import { useAuth } from '@/providers/AuthProvider';
@@ -123,6 +124,7 @@ function LoanInvest({ loan, refreshing, onRefresh }: InvestProps) {
       <LoanHeroCard loan={loan} />
       <FundingProgressCard loan={loan} state={state} />
       <LoanTermsCard loan={loan} />
+      <AskAssistantButton context={{ screen: 'LoanDetail', params: { loanId: loan.id } }} />
       {applicationNumber ? (
         <BorrowerSummaryCard
           applicationNumber={applicationNumber}

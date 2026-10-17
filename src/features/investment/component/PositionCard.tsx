@@ -34,6 +34,8 @@ export default function PositionCard({ position: p, onSell }: Props) {
   // Phần gốc đã về túi; thanh không được tràn khung nếu backend làm tròn dư một chút.
   const repaidShare = p.principal > 0 ? Math.min(Math.max(p.principalRepaid / p.principal, 0), 1) : 0;
   const repaidPercent = Math.round(repaidShare * 100);
+  // Nợ xấu luôn tô đỏ, kể cả khi Loan chưa gửi số ngày quá hạn sang.
+  const severe = p.defaulted || p.debtGroup >= 3;
 
   return (
     <View style={styles.card}>
@@ -65,11 +67,11 @@ export default function PositionCard({ position: p, onSell }: Props) {
         </Text>
       </View>
 
-      {p.daysPastDue > 0 ? (
-        <View style={[styles.risk, p.debtGroup >= 3 && styles.riskHigh]}>
-          <Icon name="alert" size={18} color={p.debtGroup >= 3 ? Colors.red : Colors.tagAmberText} />
+      {p.defaulted || p.daysPastDue > 0 ? (
+        <View style={[styles.risk, severe && styles.riskHigh]}>
+          <Icon name="alert" size={18} color={severe ? Colors.red : Colors.tagAmberText} />
           <View style={styles.riskTextBlock}>
-            <Text style={styles.riskTitle}>{`Quá hạn ${p.daysPastDue} ngày · Nhóm nợ ${p.debtGroup}`}</Text>
+            <Text style={styles.riskTitle}>{riskTitle(p)}</Text>
             <Text style={styles.riskDetail}>{`Số tiền quá hạn ${formatDong(p.overdueAmount)}`}</Text>
           </View>
         </View>
@@ -100,6 +102,14 @@ export default function PositionCard({ position: p, onSell }: Props) {
       </Pressable>
     </View>
   );
+}
+
+/** "Nợ xấu" đứng đầu để nhà đầu tư thấy ngay; số ngày quá hạn và nhóm nợ là dữ liệu vận hành từ Loan. */
+function riskTitle(p: PortfolioPosition): string {
+  const overdue = `Quá hạn ${p.daysPastDue} ngày · Nhóm nợ ${p.debtGroup}`;
+  if (!p.defaulted) return overdue;
+  // Thiếu dữ liệu vận hành thì vẫn báo nợ xấu theo trạng thái Note, không ghi "quá hạn 0 ngày".
+  return p.daysPastDue > 0 ? `Nợ xấu · ${overdue}` : 'Nợ xấu';
 }
 
 function Figure({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
