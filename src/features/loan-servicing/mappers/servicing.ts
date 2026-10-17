@@ -144,14 +144,40 @@ export const repaymentStatusLabel = (value: RepaymentResult['status']): string =
   COMPLETED: 'Hoàn tất',
   RECONCILIATION_REQUIRED: 'Cần đối soát',
   FAILED: 'Không thành công',
-})[value];
+  CANCELLED: 'Đã hủy, tiền về ví',
+})[value] ?? value;
 
 export const repaymentStatusTone = (value: RepaymentResult['status']): TagTone => {
   if (value === 'COMPLETED') return 'green';
   if (value === 'FAILED') return 'red';
   if (value === 'RECONCILIATION_REQUIRED') return 'amber';
+  if (value === 'CANCELLED') return 'gray';
   return 'blue';
 };
+
+/**
+ * Khoản trả kỳ trước hạn đang giữ tới ngày đến hạn (D16): tiền đã rời ví, sổ nợ ghi nhận đúng ngày đến hạn nên
+ * trạng thái đứng ở COLLECTED tới ngày đó; không phải lỗi và không cần theo dõi liên tục.
+ */
+export const isHeldUntilDueDate = (value: Pick<RepaymentResult, 'status' | 'postOn'>): boolean =>
+  value.status === 'COLLECTED' && !!value.postOn;
+
+/** Khoản vay sản phẩm cũ (lãi tính trước cả kỳ hạn): Payment chặn trả trước và tất toán trên ứng dụng (D17). */
+export const LEGACY_PREPAYMENT_CODE = 'PREPAYMENT_NOT_SUPPORTED_FOR_LEGACY_LOAN';
+/** Còn khoản trả kỳ chờ ghi nhận: phải hủy (tiền về ví) trước khi lập báo giá trả trước/tất toán. */
+export const INSTALLMENT_PENDING_CODE = 'INSTALLMENT_PENDING_POSTING';
+
+/** Câu giải thích cách Fineract dùng phần gốc trả thêm, theo chiến lược đã chụp trong báo giá. */
+export function prepaymentAllocationNote(strategy: string): string {
+  if (strategy.endsWith('/DAILY_INTEREST_RECALCULATION')) {
+    return 'Toàn bộ số tiền được ghi nhận hôm nay: lãi chỉ tính đến hôm nay trên dư nợ thực tế, phần còn lại trừ '
+      + 'vào gốc và dùng cho các kỳ gần nhất theo thứ tự. Kỳ cuối được điều chỉnh theo dư nợ thực tế.';
+  }
+  if (strategy.endsWith('/NEXT_INSTALLMENT')) {
+    return 'Khoản trả thêm được phân bổ vào các kỳ gần nhất để ưu tiên rút ngắn thời gian vay.';
+  }
+  return 'Số tiền các kỳ tương lai được tính lại sau khi Fineract ghi nhận giao dịch.';
+}
 
 /**
  * Bốn bước sau duyệt (tạo và phê duyệt lịch mới trên hệ thống lõi) là việc nội bộ;

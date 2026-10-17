@@ -51,6 +51,17 @@ export const createScheduledRepayment = (
 export const getRepayment = (repaymentId: string, signal?: AbortSignal): Promise<RepaymentResult> =>
   paymentFetch<RepaymentResult>(`/repayments/${encodeURIComponent(repaymentId)}`, { signal });
 
+/**
+ * Hủy khoản trả kỳ trước hạn đang chờ ghi nhận; tiền hoàn về ví. Cần PIN `REPAYMENT` vì hủy nhầm làm kỳ có thể bị
+ * quá hạn. Gọi lại với khoản đã hủy trả nguyên kết quả cũ.
+ */
+export const cancelPendingRepayment = (repaymentId: string, pinToken: string): Promise<RepaymentResult> =>
+  paymentFetch<RepaymentResult>(`/repayments/${encodeURIComponent(repaymentId)}/cancel`, {
+    method: 'POST',
+    headers: { [PIN_TOKEN_HEADER]: pinToken },
+    timeoutMs: 30_000,
+  });
+
 export const createPartialPrepaymentQuote = (
   loanApplicationId: number,
   prepaidPrincipal: number,

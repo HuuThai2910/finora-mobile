@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ApplicationDetailError, DetailButton, DetailCard, DetailNote } from '@/features/applications';
 import { Field } from '@/components/ui';
 import { Colors } from '@/constants/colors';
-import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
+import { ApiError, generateIdempotencyKey, toUserMessage } from '@/lib/api';
 import type { ProfileStackParamList } from '@/navigation/types';
 import { FontFamily, Spacing } from '@/theme';
 import { formatDong, formatDateTime } from '@/utils/format';
@@ -18,14 +19,20 @@ import RepaymentResultCard from '../components/RepaymentResultCard';
 import ServicingScaffold from '../components/ServicingScaffold';
 import { useServicingLoan } from '../hooks/useLoanServicing';
 import { useRepaymentTracking } from '../hooks/useRepaymentTracking';
-import { parseDong } from '../mappers/servicing';
+import {
+  INSTALLMENT_PENDING_CODE,
+  LEGACY_PREPAYMENT_CODE,
+  parseDong,
+  prepaymentAllocationNote,
+} from '../mappers/servicing';
 import type { PartialPrepaymentQuote, RepaymentResult } from '../types';
 
 type Route = RouteProp<ProfileStackParamList, 'PartialPrepayment'>;
+type Nav = NativeStackNavigationProp<ProfileStackParamList, 'PartialPrepayment'>;
 
 export default function PartialPrepaymentScreen() {
   const { loanNumber } = useRoute<Route>().params;
-  const nav = useNavigation();
+  const nav = useNavigation<Nav>();
   const state = useServicingLoan(loanNumber);
   const balance = useBalance();
   const key = useRef(generateIdempotencyKey()).current;
@@ -36,6 +43,7 @@ export default function PartialPrepaymentScreen() {
   const { requirePin } = usePinGuard();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
 
   if (state.loading && !state.data) {
     return <ServicingScaffold title="Trả trước một phần"><LoanDetailSkeleton label="Đang tải khoản vay" /></ServicingScaffold>;
@@ -52,10 +60,17 @@ export default function PartialPrepaymentScreen() {
     if (busy || invalidAmount || amount === null) return;
     setBusy(true);
     setError(null);
+    setErrorCode(null);
     try { setQuote(await createPartialPrepaymentQuote(data.applicationId, amount)); }
-    catch (reason) { setError(toUserMessage(reason)); }
+    catch (reason) {
+      setError(toUserMessage(reason));
+      setErrorCode(reason instanceof ApiError ? reason.code : null);
+    }
     finally { setBusy(false); }
   };
+  // Khoản vay sản phẩm cũ không trả trước được (D17); kỳ đang chờ ghi nhận phải hủy trước ở màn thanh toán kỳ.
+  const blocked = errorCode === LEGACY_PREPAYMENT_CODE;
+  const pendingInstallment = errorCode === INSTALLMENT_PENDING_CODE;
   const confirm = async () => {
     if (!quote || busy || insufficient || quote.status !== 'ACTIVE') return;
     setBusy(true);
@@ -69,7 +84,6 @@ export default function PartialPrepaymentScreen() {
     finally { setBusy(false); }
   };
 
-  const shortenTerm = quote?.allocationStrategy.endsWith('/NEXT_INSTALLMENT') ?? false;
   return (
     <ServicingScaffold title="Trả trước một phần gốc" subtitle={loanNumber}>
       {trackedResult ? (
@@ -81,18 +95,14 @@ export default function PartialPrepaymentScreen() {
         <>
           <DetailCard title="Báo giá trả trước" icon="coins">
             <FinancialRows rows={[
-              { label: 'Nghĩa vụ kỳ hiện tại', value: quote.scheduledDue },
+              { label: 'Khoản của kỳ gần nhất', value: quote.scheduledDue },
               { label: 'Gốc trả trước thêm', value: quote.prepaidPrincipal },
               ...feeRows('Tổng phí trả trước', quote),
               { label: 'Tổng trừ từ ví', value: quote.totalAmount, emphasis: true },
               { label: 'Báo giá có hiệu lực đến', value: formatDateTime(quote.expiresAt) },
             ]} />
           </DetailCard>
-          <DetailNote>
-            {shortenTerm
-              ? 'Khoản trả thêm được phân bổ vào các kỳ gần nhất để ưu tiên rút ngắn thời gian vay. Không thu lãi của phần gốc cho các ngày chưa sử dụng.'
-              : 'Khoản vay này dùng cấu hình V2: số tiền các kỳ tương lai được tính lại sau khi Fineract ghi nhận giao dịch.'}
-          </DetailNote>
+          <DetailNote>{prepaymentAllocationNote(quote.allocationStrategy)}</DetailNote>
           <DetailNote>{feePolicyNote(quote.policyVersion)}</DetailNote>
           {insufficient ? <DetailNote tone="warn">Số dư ví không đủ cho tổng báo giá.</DetailNote> : null}
           {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -114,8 +124,15 @@ export default function PartialPrepaymentScreen() {
             />
           </DetailCard>
           <DetailNote>Phí được tính trên phần gốc trả trước. Lãi chỉ tính đến ngày giao dịch, không thu lãi tương lai của phần gốc đã trả.</DetailNote>
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          <DetailButton label="Xem số tiền cần thanh toán" loading={busy} disabled={invalidAmount || data.loan.stale} onPress={() => void requestQuote()} />
+          {blocked || pendingInstallment ? (
+            <DetailNote tone="warn">{error ?? ''}</DetailNote>
+          ) : error ? <Text style={styles.error}>{error}</Text> : null}
+          {pendingInstallment ? (
+            <DetailButton label="Xem khoản chờ ghi nhận" variant="outline" onPress={() => nav.navigate('LoanPayment', { loanNumber })} />
+          ) : null}
+          {blocked ? null : (
+            <DetailButton label="Xem số tiền cần thanh toán" loading={busy} disabled={invalidAmount || data.loan.stale} onPress={() => void requestQuote()} />
+          )}
         </>
       )}
     </ServicingScaffold>

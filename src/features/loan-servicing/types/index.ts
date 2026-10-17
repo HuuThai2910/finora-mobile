@@ -45,14 +45,35 @@ export interface ScheduledDue {
   repaymentType: RepaymentType;
   /** Ngày nghiệp vụ Việt Nam (YYYY-MM-DD) của báo giá; sang ngày khác phải đọc lại. */
   businessDate: string;
+  /** Ngày đến hạn của kỳ mà `amount` thanh toán. */
+  dueDate: string | null;
+  /**
+   * Trả ngay bây giờ thì khoản tiền được ghi vào sổ nợ ngày này: trả kỳ trước hạn trên khoản vay tính lãi theo ngày
+   * (D16). Tiền rời ví hôm nay nhưng lãi của kỳ giữ nguyên theo lịch. `null` là ghi ngay.
+   */
+  postOn: string | null;
+  /** Khoản đã thu nhưng chưa ghi xong vào sổ nợ; khác `null` thì chưa trả thêm được cho kỳ này. */
+  pending: PendingRepayment | null;
 }
+
+export interface PendingRepayment {
+  repaymentId: string;
+  amount: number;
+  status: RepaymentStatus;
+  /** Ngày ghi nhận đã hẹn của khoản trả kỳ trước hạn; `null` là khoản đang được ghi ngay. */
+  postOn: string | null;
+  /** Còn hủy được (trước ngày ghi nhận); hủy thì tiền hoàn về ví. */
+  cancellable: boolean;
+}
+
 export type RepaymentStatus =
   | 'COLLECTED'
   | 'CORE_POSTING'
   | 'CORE_POSTED'
   | 'COMPLETED'
   | 'RECONCILIATION_REQUIRED'
-  | 'FAILED';
+  | 'FAILED'
+  | 'CANCELLED';
 
 export interface RepaymentResult {
   repaymentId: string;
@@ -83,6 +104,8 @@ export interface RepaymentResult {
   nextDueAmount: number | null;
   errorCode: string | null;
   completedAt: string | null;
+  /** Ngày ghi vào sổ nợ khi khác ngày thu (trả kỳ trước hạn); `null` là ghi ngay. */
+  postOn: string | null;
 }
 
 export interface EarlySettlementQuote {

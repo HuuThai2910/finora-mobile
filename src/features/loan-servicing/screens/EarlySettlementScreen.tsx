@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ApplicationDetailError, DetailButton, DetailCard, DetailNote } from '@/features/applications';
 import { Colors } from '@/constants/colors';
-import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
+import { ApiError, generateIdempotencyKey, toUserMessage } from '@/lib/api';
 import type { ProfileStackParamList } from '@/navigation/types';
 import { FontFamily, Spacing } from '@/theme';
 import { formatDateTime } from '@/utils/format';
@@ -17,14 +18,16 @@ import RepaymentResultCard from '../components/RepaymentResultCard';
 import ServicingScaffold from '../components/ServicingScaffold';
 import { useServicingLoan } from '../hooks/useLoanServicing';
 import { useRepaymentTracking } from '../hooks/useRepaymentTracking';
+import { INSTALLMENT_PENDING_CODE, LEGACY_PREPAYMENT_CODE } from '../mappers/servicing';
 import type { EarlySettlementQuote, RepaymentResult } from '../types';
 
 type Route = RouteProp<ProfileStackParamList, 'EarlySettlement'>;
+type Nav = NativeStackNavigationProp<ProfileStackParamList, 'EarlySettlement'>;
 
 /** Mở màn là lấy báo giá ngay; cảnh báo không hoàn tác chỉ xuất hiện ở lần xác nhận cuối. */
 export default function EarlySettlementScreen() {
   const { loanNumber } = useRoute<Route>().params;
-  const nav = useNavigation();
+  const nav = useNavigation<Nav>();
   const state = useServicingLoan(loanNumber);
   const balance = useBalance();
   const key = useRef(generateIdempotencyKey()).current;
@@ -35,6 +38,11 @@ export default function EarlySettlementScreen() {
   const { requirePin } = usePinGuard();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
+  const failQuote = (reason: unknown) => {
+    setError(toUserMessage(reason));
+    setErrorCode(reason instanceof ApiError ? reason.code : null);
+  };
 
   const applicationId = state.data?.applicationId;
   const stale = state.data?.loan.stale ?? false;
@@ -45,7 +53,7 @@ export default function EarlySettlementScreen() {
     setError(null);
     createEarlySettlementQuote(applicationId)
       .then(setQuote)
-      .catch(reason => setError(toUserMessage(reason)))
+      .catch(failQuote)
       .finally(() => setBusy(false));
   }, [applicationId, stale]);
 
@@ -54,8 +62,9 @@ export default function EarlySettlementScreen() {
     requested.current = true;
     setBusy(true);
     setError(null);
+    setErrorCode(null);
     try { setQuote(await createEarlySettlementQuote(applicationId)); }
-    catch (reason) { setError(toUserMessage(reason)); }
+    catch (reason) { failQuote(reason); }
     finally { setBusy(false); }
   };
 
@@ -91,6 +100,9 @@ export default function EarlySettlementScreen() {
   }
 
   const insufficient = !!quote && (balance.data?.available ?? 0) < quote.totalAmount;
+  // Khoản vay sản phẩm cũ không tự tất toán được (D17); kỳ đang chờ ghi nhận phải hủy trước ở màn thanh toán kỳ.
+  const blocked = errorCode === LEGACY_PREPAYMENT_CODE;
+  const pendingInstallment = errorCode === INSTALLMENT_PENDING_CODE;
 
   return (
     <ServicingScaffold title="Tất toán trước hạn" subtitle={loanNumber}>
@@ -120,9 +132,17 @@ export default function EarlySettlementScreen() {
         </>
       ) : (
         <>
-          <LoanDetailSkeleton label="Đang lập báo giá tất toán" />
+          {error ? null : <LoanDetailSkeleton label="Đang lập báo giá tất toán" />}
           {stale ? <DetailNote tone="warn">Số liệu đang chờ đồng bộ. Hãy quay lại làm mới khoản vay.</DetailNote> : null}
-          {error ? (
+          {blocked ? (
+            <DetailNote tone="warn">{error ?? ''}</DetailNote>
+          ) : pendingInstallment ? (
+            <DetailCard title="Còn khoản chờ ghi nhận" icon="alert">
+              <Text style={styles.error}>{error}</Text>
+              <DetailButton label="Xem khoản chờ ghi nhận" variant="outline" onPress={() => nav.navigate('LoanPayment', { loanNumber })} />
+              <DetailButton label="Thử lại" variant="outline" onPress={() => void requestQuote()} disabled={busy || stale} />
+            </DetailCard>
+          ) : error ? (
             <DetailCard title="Chưa lấy được báo giá" icon="alert">
               <Text style={styles.error}>{error}</Text>
               <DetailButton label="Thử lại" variant="outline" onPress={() => void requestQuote()} disabled={busy || stale} />
