@@ -4,8 +4,10 @@ import { Screen } from '@/components/phone';
 import { LoadingScreen } from '@/components/feedback';
 import { useAuth } from '@/providers/AuthProvider';
 import { PinProvider } from '@/features/pin';
+import { PushNotificationsBridge } from '@/features/push-notifications';
 import AuthNavigator from './AuthNavigator';
 import MainTabs from './MainTabs';
+import { navigationRef } from './navigationRef';
 
 /** Chủ đề điều hướng khớp bảng màu của mockup. */
 const navTheme: Theme = {
@@ -29,7 +31,8 @@ const navTheme: Theme = {
  * dùng đã đăng nhập vẫn thấy màn đăng nhập nhấp nháy một nhịp.
  *
  * Bảng nhập mã PIN chỉ sống trong phiên đăng nhập: đăng xuất gỡ `PinProvider`, lượt
- * nhập PIN còn dở bị huỷ cùng phiên.
+ * nhập PIN còn dở bị huỷ cùng phiên. Cầu nối thông báo đẩy cũng vậy: đăng ký thiết bị lúc
+ * mở phiên, gỡ listener khi đăng xuất.
  */
 export default function RootNavigator() {
   const { session, restoring } = useAuth();
@@ -43,9 +46,10 @@ export default function RootNavigator() {
   }
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer theme={navTheme} ref={navigationRef}>
       {session ? (
         <PinProvider>
+          <PushNotificationsBridge />
           <MainTabs />
         </PinProvider>
       ) : (
