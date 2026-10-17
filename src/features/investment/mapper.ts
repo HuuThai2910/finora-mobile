@@ -144,6 +144,10 @@ export interface AutoInvestConfigDto {
   maxTermMonths: number;
   amountPerLoan: string;
   enabledAt: string | null;
+  riskAcknowledgedVersion?: string | null;
+  riskAcknowledgedAt?: string | null;
+  riskDisclosureVersion?: string;
+  pausedForRiskAcknowledgement?: boolean;
 }
 
 export interface AutoInvestMatchDto {
@@ -164,6 +168,8 @@ export const toAutoInvestConfig = (dto: AutoInvestConfigDto): AutoInvestConfig =
   minAnnualRate: Number(dto.minAnnualRate),
   maxTermMonths: dto.maxTermMonths,
   amountPerLoan: Number(dto.amountPerLoan),
+  riskAcknowledgedVersion: dto.riskAcknowledgedVersion ?? null,
+  pausedForRiskAcknowledgement: dto.pausedForRiskAcknowledgement ?? false,
 });
 
 export const toAutoInvestMatch = (dto: AutoInvestMatchDto): AutoInvestMatch => ({

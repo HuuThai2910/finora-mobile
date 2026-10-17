@@ -22,6 +22,7 @@ import { useRepaymentTracking } from '../hooks/useRepaymentTracking';
 import {
   INSTALLMENT_PENDING_CODE,
   LEGACY_PREPAYMENT_CODE,
+  PREPAYMENT_OVERDUE_CODE,
   parseDong,
   prepaymentAllocationNote,
 } from '../mappers/servicing';
@@ -71,6 +72,9 @@ export default function PartialPrepaymentScreen() {
   // Khoản vay sản phẩm cũ không trả trước được (D17); kỳ đang chờ ghi nhận phải hủy trước ở màn thanh toán kỳ.
   const blocked = errorCode === LEGACY_PREPAYMENT_CODE;
   const pendingInstallment = errorCode === INSTALLMENT_PENDING_CODE;
+  // Quá hạn (D27): Payment từ chối báo giá; số liệu khoản vay còn mới thì báo trước, không cần gọi API.
+  const overdue = errorCode === PREPAYMENT_OVERDUE_CODE
+    || (!data.loan.stale && (data.loan.daysPastDue > 0 || data.loan.overdueAmount > 0));
   const confirm = async () => {
     if (!quote || busy || insufficient || quote.status !== 'ACTIVE') return;
     setBusy(true);
@@ -124,13 +128,17 @@ export default function PartialPrepaymentScreen() {
             />
           </DetailCard>
           <DetailNote>Phí được tính trên phần gốc trả trước. Lãi chỉ tính đến ngày giao dịch, không thu lãi tương lai của phần gốc đã trả.</DetailNote>
-          {blocked || pendingInstallment ? (
+          {overdue ? (
+            <DetailNote tone="warn">Khoản vay đang quá hạn. Hãy thanh toán phần quá hạn trước khi trả trước gốc; phần gốc trả thêm lúc này sẽ chỉ trả nợ quá hạn mà vẫn bị tính phí.</DetailNote>
+          ) : blocked || pendingInstallment ? (
             <DetailNote tone="warn">{error ?? ''}</DetailNote>
           ) : error ? <Text style={styles.error}>{error}</Text> : null}
-          {pendingInstallment ? (
+          {overdue ? (
+            <DetailButton label="Thanh toán phần quá hạn" onPress={() => nav.navigate('LoanPayment', { loanNumber })} />
+          ) : pendingInstallment ? (
             <DetailButton label="Xem khoản chờ ghi nhận" variant="outline" onPress={() => nav.navigate('LoanPayment', { loanNumber })} />
           ) : null}
-          {blocked ? null : (
+          {blocked || overdue ? null : (
             <DetailButton label="Xem số tiền cần thanh toán" loading={busy} disabled={invalidAmount || data.loan.stale} onPress={() => void requestQuote()} />
           )}
         </>

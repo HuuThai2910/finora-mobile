@@ -231,6 +231,10 @@ export interface AutoInvestConfig {
   minAnnualRate: number;
   maxTermMonths: number;
   amountPerLoan: number;
+  /** Phiên bản công bố rủi ro đã xác nhận khi bật quy tắc (Q5); thiếu là chưa từng xác nhận. */
+  riskAcknowledgedVersion?: string | null;
+  /** Đang bật nhưng chưa xác nhận bản công bố hiện hành: backend không đặt lệnh thay nhà đầu tư. */
+  pausedForRiskAcknowledgement?: boolean;
 }
 
 /** Lý do Auto-Invest bỏ qua một khoản; mã do Investment Service trả về. */
@@ -240,6 +244,7 @@ export type AutoInvestSkipReason =
   | 'INSUFFICIENT_FUNDS'
   | 'LISTING_FULL'
   | 'LISTING_CLOSED'
+  | 'RISK_ACKNOWLEDGEMENT_OUTDATED'
   | (string & {});
 
 export interface AutoInvestMatch {

@@ -3,7 +3,7 @@ import { Alert, StyleSheet, Text } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { ErrorState, LoadingScreen } from '@/components/feedback';
 import { PHeader, Screen } from '@/components/phone';
-import { Button, Card, InfoNote } from '@/components/ui';
+import { Button, Card, InfoNote, SegmentGroup, type SegmentOption } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
 import type { ProfileStackParamList } from '@/navigation/types';
@@ -20,13 +20,23 @@ import type { PendingRepayment, RepaymentResult } from '../types';
 
 type Route = RouteProp<ProfileStackParamList, 'LoanPayment'>;
 
+/** Quá hạn nhiều kỳ: trả toàn bộ phần quá hạn (mặc định) hoặc chỉ kỳ quá hạn cũ nhất (D26). */
+type OverdueChoice = 'full' | 'oldest';
+
+const OVERDUE_CHOICES: readonly SegmentOption<OverdueChoice>[] = [
+  { value: 'full', label: 'Toàn bộ quá hạn' },
+  { value: 'oldest', label: 'Chỉ kỳ cũ nhất' },
+];
+
 export default function LoanPaymentScreen() {
   const { loanNumber } = useRoute<Route>().params;
   const nav = useNavigation();
   const state = useServicingLoan(loanNumber);
   const balance = useBalance();
   const due = useScheduledDue(state.data?.applicationId ?? null);
-  const key = useRef(generateIdempotencyKey()).current;
+  // Mỗi lựa chọn số tiền là một ý định riêng: cùng key mà khác số tiền thì Payment từ chối (IDEMPOTENCY_KEY_REUSED).
+  const keys = useRef<Record<OverdueChoice, string>>({ full: generateIdempotencyKey(), oldest: generateIdempotencyKey() }).current;
+  const [choice, setChoice] = useState<OverdueChoice>('full');
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,8 +54,12 @@ export default function LoanPaymentScreen() {
   const loan = data.loan;
   const scheduled = due.data;
   const pending = scheduled.pending;
-  const amount = scheduled.amount;
   const overdue = scheduled.overdueAmount > 0;
+  const partialAmount = scheduled.partialOverdueAmount;
+  const canPayOldest = overdue && partialAmount != null && partialAmount > 0 && partialAmount < scheduled.amount;
+  const payOldest = canPayOldest && choice === 'oldest';
+  const amount = payOldest && partialAmount != null ? partialAmount : scheduled.amount;
+  const key = keys[payOldest ? 'oldest' : 'full'];
   const dueDate = scheduled.dueDate ?? loan.nextDueDate;
   const available = balance.data?.available ?? 0;
   const insufficient = available < amount;
@@ -112,6 +126,15 @@ export default function LoanPaymentScreen() {
         </>
       ) : (
         <>
+          {canPayOldest ? (
+            <SegmentGroup
+              label="Chọn số tiền thanh toán"
+              options={OVERDUE_CHOICES}
+              value={payOldest ? 'oldest' : 'full'}
+              onChange={value => { setChoice(value); setError(null); }}
+              style={styles.choice}
+            />
+          ) : null}
           <Card style={styles.hero}>
             <Text style={styles.heroLabel}>SỐ TIỀN THANH TOÁN</Text>
             <Text style={styles.heroAmount}>{formatDong(amount)}</Text>
@@ -126,6 +149,11 @@ export default function LoanPaymentScreen() {
               ...(scheduled.postOn ? [{ label: 'Ghi nhận vào sổ nợ', value: formatLocalDate(scheduled.postOn) }] : []),
             ]} />
           </Card>
+          {payOldest ? (
+            <InfoNote tone="warn">
+              {`Bạn chỉ trả kỳ quá hạn cũ nhất. Khoản vay vẫn quá hạn với ${formatDong(scheduled.overdueAmount - amount)} còn lại và chỉ trở lại bình thường khi trả đủ toàn bộ phần quá hạn.`}
+            </InfoNote>
+          ) : null}
           {scheduled.postOn ? (
             <InfoNote>
               {`Bạn đang thanh toán trước ngày đến hạn. Tiền được trừ khỏi ví hôm nay và ghi nhận vào kỳ đúng ngày ${formatLocalDate(scheduled.postOn)}, nên lãi của kỳ giữ nguyên theo lịch. Muốn giảm lãi, hãy chọn trả trước một phần gốc.`}
@@ -144,6 +172,7 @@ export default function LoanPaymentScreen() {
 }
 
 const styles = StyleSheet.create({
+  choice: { marginBottom: Spacing.lg },
   hero: { alignItems: 'center', gap: Spacing.md, marginBottom: Spacing.lg },
   heroLabel: { ...Text_.sectionLabel, color: Colors.authMuted },
   heroAmount: { ...Text_.hero, color: Colors.authInk, ...tabularNums },

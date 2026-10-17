@@ -43,17 +43,26 @@ export const getAutoInvestMatches = async (signal?: AbortSignal): Promise<AutoIn
 
 /**
  * Lưu toàn bộ tiêu chí; bật lại sau khi tắt thì xuống cuối hàng chờ khớp lệnh.
- * Cần token PIN phạm vi `AUTO_INVEST` vì cấu hình này tự giữ tiền trong ví khi khớp.
+ * Cần token PIN phạm vi `AUTO_INVEST` vì cấu hình này tự giữ tiền trong ví khi khớp. Bật quy tắc phải kèm phiên bản
+ * công bố rủi ro người dùng vừa đọc (Q5); backend từ chối `RISK_DISCLOSURE_OUTDATED` nếu bản đã đổi.
  */
 export const saveAutoInvest = async (
   config: AutoInvestConfig,
   pinToken: string,
+  riskAcknowledgementVersion?: string,
 ): Promise<AutoInvestConfig> => {
   if (isMocked('invest')) return investMock.saveAutoInvest(config);
   const dto = await investmentFetch<AutoInvestConfigDto>('/investments/auto-invest', {
     method: 'PUT',
     headers: { [PIN_TOKEN_HEADER]: pinToken },
-    body: JSON.stringify(config),
+    body: JSON.stringify({
+      enabled: config.enabled,
+      grades: config.grades,
+      minAnnualRate: config.minAnnualRate,
+      maxTermMonths: config.maxTermMonths,
+      amountPerLoan: config.amountPerLoan,
+      riskAcknowledgementVersion: config.enabled ? riskAcknowledgementVersion : undefined,
+    }),
   });
   return toAutoInvestConfig(dto);
 };

@@ -166,6 +166,8 @@ export const isHeldUntilDueDate = (value: Pick<RepaymentResult, 'status' | 'post
 export const LEGACY_PREPAYMENT_CODE = 'PREPAYMENT_NOT_SUPPORTED_FOR_LEGACY_LOAN';
 /** Còn khoản trả kỳ chờ ghi nhận: phải hủy (tiền về ví) trước khi lập báo giá trả trước/tất toán. */
 export const INSTALLMENT_PENDING_CODE = 'INSTALLMENT_PENDING_POSTING';
+/** Khoản vay đang quá hạn: phải thanh toán phần quá hạn trước khi trả trước gốc (D27); tất toán vẫn được. */
+export const PREPAYMENT_OVERDUE_CODE = 'PARTIAL_PREPAYMENT_LOAN_OVERDUE';
 
 /** Câu giải thích cách Fineract dùng phần gốc trả thêm, theo chiến lược đã chụp trong báo giá. */
 export function prepaymentAllocationNote(strategy: string): string {

@@ -39,8 +39,13 @@ export type RepaymentType = 'SCHEDULED' | 'OVERDUE_CURE' | 'PARTIAL_PREPAYMENT' 
 export interface ScheduledDue {
   loanApplicationId: number;
   amount: number;
-  /** Phần quá hạn nằm trong `amount`; lớn hơn 0 thì lệnh là khắc phục quá hạn. */
+  /** Phần quá hạn nằm trong `amount`; lớn hơn 0 thì lệnh là khắc phục quá hạn và `amount` là toàn bộ phần quá hạn. */
   overdueAmount: number;
+  /**
+   * Quá hạn nhiều kỳ: số tiền của riêng kỳ quá hạn cũ nhất, người vay được chọn trả bớt thay cho `amount` (D26).
+   * Khoản vay vẫn quá hạn sau lượt trả này. `null` khi không áp dụng.
+   */
+  partialOverdueAmount: number | null;
   currency: string;
   repaymentType: RepaymentType;
   /** Ngày nghiệp vụ Việt Nam (YYYY-MM-DD) của báo giá; sang ngày khác phải đọc lại. */
