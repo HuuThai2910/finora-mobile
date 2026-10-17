@@ -6,7 +6,8 @@ import { FontFamily, MIN_TOUCH, Radius, SoftShadow, Spacing } from '@/theme';
 
 type Props =
   | { kind: 'error'; message: string; onRetry: () => void }
-  | { kind: 'empty'; onTopUp: () => void };
+  | { kind: 'empty'; onTopUp: () => void }
+  | { kind: 'noWithdrawals'; onWithdraw: () => void };
 
 type Message = {
   icon: IconName;
@@ -28,6 +29,16 @@ function messageFor(props: Props): Message {
       onAction: props.onRetry,
     };
   }
+  if (props.kind === 'noWithdrawals') {
+    return {
+      icon: 'banknoteArrowUp',
+      danger: false,
+      title: 'Chưa có lệnh rút tiền',
+      hint: 'Lệnh rút về ngân hàng sẽ hiện ở đây cùng trạng thái xử lý.',
+      action: 'Rút tiền',
+      onAction: props.onWithdraw,
+    };
+  }
   // Giữ lối "Nạp tiền" của màn cũ: ví trống thì việc tiếp theo là nạp tiền.
   return {
     icon: 'wallet',
@@ -40,7 +51,7 @@ function messageFor(props: Props): Message {
 }
 
 /**
- * Nội dung thay chỗ danh sách giao dịch khi tải lỗi hoặc ví chưa có giao dịch.
+ * Nội dung thay chỗ danh sách giao dịch (hoặc danh sách lệnh rút) khi tải lỗi hay chưa có gì.
  * Nằm trong thẻ trắng để không chìm vào nền, và luôn chỉ ra việc làm tiếp theo.
  */
 export default function WalletHistoryStatus(props: Props) {

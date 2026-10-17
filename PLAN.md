@@ -29,6 +29,7 @@ phân biệt phần đã chạy với phần acceptance/hardening còn dự ki�
 | MOBILE-LOAN-003 | Giải ngân, repayment, overdue, prepayment, settlement, restructuring | LN-011–LN-017 | `READY_FOR_REVIEW` — UI người vay/nhà đầu tư và consent cơ cấu đã typecheck ngày 2026-10-16 | [Plan](plans/MOBILE-LOAN-003-servicing-repayment.md) |
 | MOBILE-INVESTOR-001 | Risk projection trên danh mục + thông báo servicing thật | Investment/Notification P5-B04 | `READY_FOR_REVIEW` — portfolio hiển thị DPD/nhóm nợ; notification list/count/read nối Gateway ngày 2026-10-04 | [Contract chung](../finora-platform/docs/integrations/CIC-RISK-NOTIFICATION.md) |
 | MOBILE-INVESTOR-002 | Hồ sơ người vay (ẩn danh, không SHAP): thẻ tóm tắt trên màn khoản vay + màn "Hồ sơ người vay" | Loan `GET /investor/loan-applications/{n}/borrower-profile`; Investment trả `applicationNumber` | `READY_FOR_REVIEW` — Hải chốt ngày 2026-10-10: ẩn danh, đủ chỉ số | [Spec](../finora-platform/docs/superpowers/specs/2026-10-10-investor-borrower-profile-design.md) |
+| MOBILE-WALLET-001 | Rút tiền về ngân hàng: hạn mức theo policy, chọn ngân hàng, PIN `WITHDRAW` gắn `Idempotency-Key`, theo dõi lệnh tới `COMPLETED`/`FAILED` (hoàn tiền về ví), lịch sử lệnh rút; nhãn môi trường demo khi provider giả lập | Payment W3B (R4) `/wallets/withdrawal-policy`, `/wallets/me/withdrawals` | `READY_FOR_REVIEW` — thay màn rút tiền giả lập, typecheck ngày 2026-10-17, chờ E2E với Payment | [Plan W3B](../finora-platform/.agents/plans/W3B-wallet-withdrawal-mock-payout.md) |
 
 ## Quy tắc đồng bộ về sau
 

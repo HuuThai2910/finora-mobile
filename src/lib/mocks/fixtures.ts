@@ -14,7 +14,7 @@ import type {
   TopUpInstruction,
   WalletBalance,
   WalletTransaction,
-  WithdrawQuote,
+  WithdrawalBank,
 } from '@/types/wallet';
 import type {
   AutoInvestConfig,
@@ -107,7 +107,13 @@ export const TOPUP: TopUpInstruction = {
   transferNote: 'tự sinh theo mã QR',
 };
 
-export const WITHDRAW_QUOTE: WithdrawQuote = { fee: 0, estimatedSeconds: 30, channel: 'Napas 247' };
+/** Vài ngân hàng trong danh sách demo của Payment (`WithdrawalBank`), đủ để thử bảng chọn ngân hàng. */
+export const WITHDRAWAL_BANKS: WithdrawalBank[] = [
+  { code: 'VCB', name: 'Vietcombank' },
+  { code: 'BIDV', name: 'BIDV' },
+  { code: 'TCB', name: 'Techcombank' },
+  { code: 'MB', name: 'MB Bank' },
+];
 
 export const DUE_INSTALLMENT: DueInstallment = {
   loanId: 'LN-1980',

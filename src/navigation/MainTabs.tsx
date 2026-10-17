@@ -22,6 +22,8 @@ import {
   PayInstallmentScreen,
   TopUpScreen,
   WalletHistoryScreen,
+  WithdrawalDetailScreen,
+  WithdrawalHistoryScreen,
   WithdrawScreen,
 } from '@/features/wallet';
 import {
@@ -91,6 +93,8 @@ function WalletTab() {
       <WalletStack.Screen name="WalletHistory" component={WalletHistoryScreen} />
       <WalletStack.Screen name="TopUp" component={TopUpScreen} />
       <WalletStack.Screen name="Withdraw" component={WithdrawScreen} />
+      <WalletStack.Screen name="WithdrawalHistory" component={WithdrawalHistoryScreen} />
+      <WalletStack.Screen name="WithdrawalDetail" component={WithdrawalDetailScreen} />
       <WalletStack.Screen name="PayInstallment" component={PayInstallmentScreen} />
       <WalletStack.Screen name="Portfolio" component={PortfolioScreen} />
       <WalletStack.Screen name="AutoInvest" component={AutoInvestScreen} />

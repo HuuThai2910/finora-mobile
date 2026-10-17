@@ -45,6 +45,10 @@ export type WalletStackParamList = {
   WalletHistory: undefined;
   TopUp: undefined;
   Withdraw: undefined;
+  /** Lịch sử lệnh rút tiền về ngân hàng (R4). */
+  WithdrawalHistory: undefined;
+  /** Trạng thái một lệnh rút; màn tự đọc lại lệnh theo mã và theo dõi tới khi có kết quả cuối. */
+  WithdrawalDetail: { withdrawalId: string };
   PayInstallment: undefined;
   Portfolio: undefined;
   AutoInvest: undefined;

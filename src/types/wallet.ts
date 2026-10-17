@@ -52,17 +52,79 @@ export interface TopUpOrder {
   mockCompletionAvailable: boolean;
 }
 
-export interface LinkedBankAccount {
-  bank: string;
-  maskedNumber: string;
-  holder: string;
-  verified: boolean;
+/* ---------- Rút tiền về tài khoản ngân hàng (R4, W3B) — khớp DTO của Payment Service ---------- */
+
+/** Ngân hàng nhận được hỗ trợ; `code` là mã gửi lại trong lệnh rút. */
+export interface WithdrawalBank {
+  code: string;
+  name: string;
 }
 
-export interface WithdrawQuote {
-  fee: number;
-  estimatedSeconds: number;
-  channel: string;
+/**
+ * `GET /wallets/withdrawal-policy`: policy demo cấu hình được (Q4/D19) của người đang đăng nhập.
+ * `usedToday`/`remainingToday` tính theo ngày nghiệp vụ Việt Nam và không tính lệnh đã thất bại (đã hoàn tiền).
+ */
+export interface WithdrawalPolicy {
+  minimumAmount: number;
+  dailyLimit: number;
+  feeAmount: number;
+  /** Ngày nghiệp vụ `yyyy-MM-dd` đang dùng để cộng hạn mức. */
+  businessDate: string;
+  usedToday: number;
+  remainingToday: number;
+  availableBalance: number;
+  /** `true`: lệnh chi do provider giả lập xử lý, không có tiền thật rời hệ thống. */
+  simulatedProvider: boolean;
+  banks: WithdrawalBank[];
+}
+
+/**
+ * Vòng đời lệnh rút. Tiền đã rời ví từ `REQUESTED`; `FAILED` luôn đi kèm bút toán hoàn tiền về ví.
+ * `RECONCILIATION_REQUIRED`: chưa rõ provider đã chi hay chưa, Payment chỉ tra cứu lại chứ không gửi lệnh chi mới.
+ */
+export type WithdrawalStatus =
+  | 'REQUESTED'
+  | 'PROCESSING'
+  | 'PROVIDER_PENDING'
+  | 'RECONCILIATION_REQUIRED'
+  | 'COMPLETED'
+  | 'FAILED';
+
+/** `WithdrawalResponse`: số tài khoản chỉ ở dạng che; `failureCode/failureReason` chỉ có khi `FAILED`. */
+export interface Withdrawal {
+  withdrawalId: string;
+  amount: number;
+  feeAmount: number;
+  currency: string;
+  status: WithdrawalStatus;
+  bankCode: string;
+  bankName: string;
+  /** Dạng che của backend, ví dụ "******1234". */
+  accountNumberMasked: string;
+  /** Backend đã chuẩn hoá: viết hoa, gộp khoảng trắng. */
+  accountHolderName: string;
+  failureCode: string | null;
+  failureReason: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+/** Thân `POST /wallets/me/withdrawals`; số tài khoản đầy đủ chỉ đi trong request này, không bao giờ trả lại. */
+export interface CreateWithdrawalRequest {
+  amount: number;
+  bankCode: string;
+  accountNumber: string;
+  accountHolderName: string;
+}
+
+/** `PageResponse` chung của finora-common: danh sách nằm ở `content`, trang tính từ 0. */
+export interface WithdrawalPage {
+  content: Withdrawal[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
 }
 
 export interface DueInstallment {
