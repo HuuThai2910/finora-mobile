@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Skeleton } from '@/components/feedback';
 import { Icon } from '@/components/ui';
 import { Colors } from '@/constants/colors';
-import { toUserMessage } from '@/lib/api';
+import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
 import { usePinGuard } from '@/features/pin';
 import { FontFamily, Radius, Spacing } from '@/theme';
 import type { AutoInvestConfig } from '@/types/invest';
@@ -37,6 +37,8 @@ export default function AutoInvestScreen() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const { requirePin } = usePinGuard();
+  // Mỗi lần lưu là một thao tác có mã riêng, token PIN chỉ duyệt đúng lần lưu đó (D38).
+  const saveKey = useRef(generateIdempotencyKey());
 
   useEffect(() => {
     if (config.data) setSaved(config.data);
@@ -68,9 +70,10 @@ export default function AutoInvestScreen() {
     setSaving(true);
     setSaveError(null);
     try {
-      const pinToken = await requirePin('AUTO_INVEST');
+      const pinToken = await requirePin('AUTO_INVEST', saveKey.current);
       if (!pinToken) return false;
-      setSaved(await saveAutoInvest(next, pinToken, RISK_DISCLOSURE_VERSION));
+      setSaved(await saveAutoInvest(next, saveKey.current, pinToken, RISK_DISCLOSURE_VERSION));
+      saveKey.current = generateIdempotencyKey();
       return true;
     } catch (e) {
       setSaveError(toUserMessage(e));

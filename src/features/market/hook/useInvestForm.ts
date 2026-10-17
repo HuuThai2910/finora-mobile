@@ -47,7 +47,7 @@ export function useInvestForm(loan: MarketLoan) {
     setSubmitting(true);
     try {
       // Đóng bảng PIN là thôi đặt lệnh: không báo lỗi, giữ nguyên khoá cho lần bấm sau.
-      const pinToken = await requirePin('INVEST');
+      const pinToken = await requirePin('INVEST', idempotencyKey.current);
       if (!pinToken) return;
       const order = await invest(loan.id, amount, idempotencyKey.current, pinToken, RISK_DISCLOSURE_VERSION);
       if (order.status !== 'PENDING_FUNDS') idempotencyKey.current = generateIdempotencyKey();

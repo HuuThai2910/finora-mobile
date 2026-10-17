@@ -3,11 +3,12 @@ import type { PinSavedAction, PinScope } from '../types';
 
 export type PinGuardValue = {
   /**
-   * Hỏi mã PIN trước một thao tác nhạy cảm. Trả `pinToken` để gửi kèm đúng một lời gọi API
-   * (header `X-Pin-Token`), hoặc `null` khi người dùng đóng bảng — lúc đó thao tác phải dừng
-   * lặng lẽ, không báo lỗi. Chưa có PIN thì bảng tự chuyển sang tạo PIN rồi đi tiếp luôn.
+   * Hỏi mã PIN trước một thao tác nhạy cảm. `requestKey` là `Idempotency-Key` mà lời gọi API ngay sau sẽ gửi:
+   * token chỉ hợp lệ cho đúng thao tác đó (D38). Trả `pinToken` để gửi kèm (header `X-Pin-Token`), hoặc `null`
+   * khi người dùng đóng bảng — lúc đó thao tác phải dừng lặng lẽ, không báo lỗi. Chưa có PIN thì bảng tự chuyển
+   * sang tạo PIN rồi đi tiếp luôn.
    */
-  requirePin: (scope: PinScope) => Promise<string | null>;
+  requirePin: (scope: PinScope, requestKey: string) => Promise<string | null>;
   /** Mở luồng tạo/đổi mã PIN từ màn Hồ sơ; `null` nếu người dùng đóng giữa chừng. */
   managePin: () => Promise<PinSavedAction | null>;
 };

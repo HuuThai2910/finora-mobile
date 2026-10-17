@@ -19,7 +19,10 @@ export type PinStatus = {
   remainingAttempts: number;
 };
 
-/** `POST /users/me/pin/verify` — token sống 3 phút, chỉ hợp lệ cho đúng phạm vi và người dùng. */
+/**
+ * `POST /users/me/pin/verify` — token sống 3 phút, chỉ hợp lệ cho đúng phạm vi, người dùng và một thao tác
+ * (`Idempotency-Key` gửi kèm khi xác nhận, D38).
+ */
 export type PinVerification = {
   pinToken: string;
   expiresAt: string;
@@ -29,7 +32,7 @@ export type PinVerification = {
  * Lý do mở bảng PIN: chặn trước một thao tác nhạy cảm (cần token để gửi kèm),
  * hoặc người dùng tự vào "Đổi/Tạo mã PIN" ở màn Hồ sơ.
  */
-export type PinRequest = { kind: 'guard'; scope: PinScope } | { kind: 'manage' };
+export type PinRequest = { kind: 'guard'; scope: PinScope; requestKey: string } | { kind: 'manage' };
 
 /** Việc đã làm xong với mã PIN khi mở từ màn Hồ sơ. */
 export type PinSavedAction = 'created' | 'changed' | 'reset';

@@ -75,7 +75,7 @@ export default function EarlySettlementScreen() {
     setBusy(true);
     setError(null);
     try {
-      const pinToken = await requirePin('REPAYMENT');
+      const pinToken = await requirePin('REPAYMENT', key);
       if (!pinToken) return;
       setResult(await confirmEarlySettlement(quote.quoteId, key, pinToken));
       balance.reload();

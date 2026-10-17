@@ -48,13 +48,15 @@ export const getAutoInvestMatches = async (signal?: AbortSignal): Promise<AutoIn
  */
 export const saveAutoInvest = async (
   config: AutoInvestConfig,
+  idempotencyKey: string,
   pinToken: string,
   riskAcknowledgementVersion?: string,
 ): Promise<AutoInvestConfig> => {
   if (isMocked('invest')) return investMock.saveAutoInvest(config);
   const dto = await investmentFetch<AutoInvestConfigDto>('/investments/auto-invest', {
     method: 'PUT',
-    headers: { [PIN_TOKEN_HEADER]: pinToken },
+    // Token PIN gắn với đúng lần lưu này qua Idempotency-Key (D38).
+    headers: { 'Idempotency-Key': idempotencyKey, [PIN_TOKEN_HEADER]: pinToken },
     body: JSON.stringify({
       enabled: config.enabled,
       grades: config.grades,

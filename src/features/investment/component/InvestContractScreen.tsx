@@ -54,7 +54,7 @@ export default function InvestContractScreen() {
     setSignError(null);
     try {
       // Hỏi PIN sau khi đã bấm ký; đóng bảng PIN là thôi ký, không báo lỗi.
-      const pinToken = await requirePin('SIGN_CONTRACT');
+      const pinToken = await requirePin('SIGN_CONTRACT', signKey.current);
       if (!pinToken) return;
       const result = await signContract(data, signKey.current, pinToken);
       signKey.current = generateIdempotencyKey();

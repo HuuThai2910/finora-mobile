@@ -80,7 +80,7 @@ export default function PartialPrepaymentScreen() {
     setBusy(true);
     setError(null);
     try {
-      const pinToken = await requirePin('REPAYMENT');
+      const pinToken = await requirePin('REPAYMENT', key);
       if (!pinToken) return;
       setResult(await confirmPartialPrepayment(quote.quoteId, key, pinToken));
       balance.reload();

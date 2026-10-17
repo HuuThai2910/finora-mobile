@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Colors } from '@/constants/colors';
@@ -7,7 +7,7 @@ import { PHeader, PItem, Screen } from '@/components/phone';
 import { Button, Field, InfoNote, SectionLabel, Tag } from '@/components/ui';
 import { ErrorState, LoadingScreen } from '@/components/feedback';
 import { formatDong } from '@/utils/format';
-import { toUserMessage } from '@/lib/api';
+import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
 import { usePinGuard } from '@/features/pin';
 import { AML_NOTE } from '../constant';
 import { useBalance, useLinkedAccount, useWithdrawQuote } from '../hook/useWallet';
@@ -24,6 +24,7 @@ export default function WithdrawScreen() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const { requirePin } = usePinGuard();
+  const withdrawKey = useRef(generateIdempotencyKey());
 
   const loading = balance.loading || account.loading || quote.loading;
   const loadError = balance.error ?? account.error ?? quote.error;
@@ -50,7 +51,7 @@ export default function WithdrawScreen() {
     try {
       // Rút tiền chưa có endpoint thật (`withdraw` vẫn là mock) nên token PIN chưa gửi đi đâu,
       // nhưng vẫn bắt nhập PIN để luồng người dùng giống hệt khi nối API thật.
-      const pinToken = await requirePin('WITHDRAW');
+      const pinToken = await requirePin('WITHDRAW', withdrawKey.current);
       if (!pinToken) return;
       await withdraw();
       Alert.alert('Đã gửi lệnh rút', 'Tiền về tài khoản trong khoảng 30 giây.', [

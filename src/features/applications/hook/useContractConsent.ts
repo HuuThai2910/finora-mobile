@@ -41,7 +41,7 @@ export function useContractConsent(contract: LoanContractDetail): ContractConsen
   const sign = async (): Promise<boolean> => {
     if (busy) return false;
     setError(null);
-    const pinToken = await requirePin('SIGN_CONTRACT');
+    const pinToken = await requirePin('SIGN_CONTRACT', signKey.current);
     if (!pinToken) return false;
     try {
       await signContract({

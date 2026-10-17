@@ -36,6 +36,8 @@ export default function LoanPaymentScreen() {
   const due = useScheduledDue(state.data?.applicationId ?? null);
   // Mỗi lựa chọn số tiền là một ý định riêng: cùng key mà khác số tiền thì Payment từ chối (IDEMPOTENCY_KEY_REUSED).
   const keys = useRef<Record<OverdueChoice, string>>({ full: generateIdempotencyKey(), oldest: generateIdempotencyKey() }).current;
+  // Lần hủy cũng có mã riêng để token PIN chỉ duyệt đúng lần hủy này (D38); hủy xong mới đổi mã.
+  const cancelKey = useRef(generateIdempotencyKey());
   const [choice, setChoice] = useState<OverdueChoice>('full');
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -69,7 +71,7 @@ export default function LoanPaymentScreen() {
     setSubmitting(true); setError(null); setNotice(null);
     try {
       // Đóng bảng PIN là thôi thanh toán, không báo lỗi.
-      const pinToken = await requirePin('REPAYMENT');
+      const pinToken = await requirePin('REPAYMENT', key);
       if (!pinToken) return;
       setResult(await createScheduledRepayment(scheduled.loanApplicationId, amount, key, pinToken));
       balance.reload();
@@ -81,9 +83,10 @@ export default function LoanPaymentScreen() {
     if (cancelling) return;
     setCancelling(true); setError(null); setNotice(null);
     try {
-      const pinToken = await requirePin('REPAYMENT');
+      const pinToken = await requirePin('REPAYMENT', cancelKey.current);
       if (!pinToken) return;
-      await cancelPendingRepayment(value.repaymentId, pinToken);
+      await cancelPendingRepayment(value.repaymentId, cancelKey.current, pinToken);
+      cancelKey.current = generateIdempotencyKey();
       setNotice('Đã hủy khoản thanh toán chờ ghi nhận; tiền đã hoàn về ví. Kỳ này vẫn cần được thanh toán trước ngày đến hạn.');
       balance.reload();
       due.reload();
