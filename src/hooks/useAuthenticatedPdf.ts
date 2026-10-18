@@ -2,13 +2,32 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { apiFetchResponse } from '@/lib/api';
+import { ApiError, NetworkError, apiFetchResponse, toUserMessage } from '@/lib/api';
 
 export type AuthenticatedPdfSource = {
   cacheKey: string;
   fileName: string;
   downloadPath: string;
 };
+
+/** Lỗi do chính luồng PDF phát hiện (tệp rỗng, sai định dạng, máy không chia sẻ được); câu đã viết cho người dùng. */
+export class PdfDocumentError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'PdfDocumentError';
+  }
+}
+
+/**
+ * Câu báo lỗi mở/tải PDF cho người dùng. `ApiError.message` là chuỗi kỹ thuật `API {status}: {body}` nên lỗi HTTP và
+ * lỗi mạng đi qua `toUserMessage`; lỗi lạ của hệ thống tệp hay trình chia sẻ quy về `fallback`. Đối tượng lỗi gốc
+ * không đổi nên status, code và traceId vẫn còn để chẩn đoán.
+ */
+export function toPdfErrorMessage(cause: unknown, fallback: string): string {
+  if (cause instanceof PdfDocumentError) return cause.message;
+  if (cause instanceof ApiError || cause instanceof NetworkError) return toUserMessage(cause);
+  return fallback;
+}
 
 /** Tải PDF có bearer token vào cache rồi mở nội bộ; không lộ token trong URL ngoài ứng dụng. */
 export function useAuthenticatedPdf(source: AuthenticatedPdfSource) {
@@ -25,7 +44,9 @@ export function useAuthenticatedPdf(source: AuthenticatedPdfSource) {
       timeoutMs: 30_000,
     });
     const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
-    if (!contentType.includes('application/pdf')) throw new Error('Máy chủ không trả về tài liệu PDF hợp lệ.');
+    if (!contentType.includes('application/pdf')) {
+      throw new PdfDocumentError('Máy chủ không trả về tài liệu PDF hợp lệ.');
+    }
     return response;
   }, [source.downloadPath]);
 
@@ -34,7 +55,7 @@ export function useAuthenticatedPdf(source: AuthenticatedPdfSource) {
     if (cached?.key === source.cacheKey && cached.file.exists) return cached.file;
     const response = await fetchPdf();
     const bytes = new Uint8Array(await response.arrayBuffer());
-    if (bytes.byteLength === 0) throw new Error('Tài liệu PDF đang rỗng.');
+    if (bytes.byteLength === 0) throw new PdfDocumentError('Tài liệu PDF đang rỗng.');
     const target = new File(Paths.cache, `${source.fileName}.pdf`);
     target.create({ intermediates: true, overwrite: true });
     target.write(bytes);
@@ -45,7 +66,7 @@ export function useAuthenticatedPdf(source: AuthenticatedPdfSource) {
   const webBlobUrl = useCallback(async (): Promise<string> => {
     const response = await fetchPdf();
     const blob = await response.blob();
-    if (blob.size === 0) throw new Error('Tài liệu PDF đang rỗng.');
+    if (blob.size === 0) throw new PdfDocumentError('Tài liệu PDF đang rỗng.');
     return URL.createObjectURL(blob);
   }, [fetchPdf]);
 
@@ -72,7 +93,7 @@ export function useAuthenticatedPdf(source: AuthenticatedPdfSource) {
       }
       return true;
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Không thể mở bản PDF hợp đồng.');
+      setError(toPdfErrorMessage(cause, 'Không mở được tài liệu, vui lòng thử lại.'));
       return false;
     } finally {
       setOpening(false);
@@ -96,14 +117,14 @@ export function useAuthenticatedPdf(source: AuthenticatedPdfSource) {
         return;
       }
       const file = await nativeFile();
-      if (!await Sharing.isAvailableAsync()) throw new Error('Thiết bị không hỗ trợ lưu hoặc chia sẻ file.');
+      if (!await Sharing.isAvailableAsync()) throw new PdfDocumentError('Thiết bị không hỗ trợ lưu hoặc chia sẻ file.');
       await Sharing.shareAsync(file.uri, {
         mimeType: 'application/pdf',
         UTI: 'com.adobe.pdf',
         dialogTitle: `Lưu hợp đồng ${source.fileName}`,
       });
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Không thể tải bản PDF hợp đồng.');
+      setError(toPdfErrorMessage(cause, 'Không tải được tài liệu, vui lòng thử lại.'));
     } finally {
       setSharing(false);
     }
