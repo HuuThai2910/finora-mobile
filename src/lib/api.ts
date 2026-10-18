@@ -62,7 +62,10 @@ export class ApiError extends Error {
       return 'Hệ thống đang chuẩn bị lịch trả nợ. Vui lòng đợi khoảng 30 giây rồi thử lại.';
     }
     if (this.serverMessage) return this.serverMessage;
-    if (this.status === 401 || this.status === 403) return 'Phiên đăng nhập đã hết hạn.';
+    // Chỉ 401 (đã thử làm mới token mà vẫn bị từ chối) mới là phiên hỏng. 403 không có body là phiên còn hợp lệ
+    // nhưng vai trò không được phép, ví dụ người vay bấm "Đầu tư" trên sàn (FUND-N18): báo hết phiên là sai.
+    if (this.status === 401) return 'Phiên đăng nhập đã hết hạn.';
+    if (this.status === 403) return 'Bạn không có quyền thực hiện thao tác này.';
     if (this.status === 404) return 'Không tìm thấy dữ liệu.';
     if (this.status === 422) return 'Dữ liệu gửi lên chưa hợp lệ.';
     if (this.status === 429) return 'Bạn thao tác quá nhiều lần, vui lòng thử lại sau.';
