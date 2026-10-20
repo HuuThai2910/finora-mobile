@@ -37,6 +37,8 @@ export interface MarketListingDto {
   fundingClosesAt: string | null;
   /** Mã hồ sơ vay của Loan; bản backend cũ chưa trả field này. */
   applicationNumber?: string | null;
+  /** Lý do Loan hủy đợt gọi vốn đã đủ vốn; bản backend cũ chưa trả field này. */
+  cancellationReason?: string | null;
 }
 
 export interface PageDto<T> {
@@ -102,6 +104,7 @@ export function toMarketLoan(dto: MarketListingDto): MarketLoan {
     contractNumber: dto.contractNumber,
     contractStatus: dto.contractStatus,
     applicationNumber: dto.applicationNumber ?? null,
+    cancellationReason: dto.cancellationReason ?? null,
   };
 }
 

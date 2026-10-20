@@ -50,8 +50,8 @@ export default function PinProvider({ children }: { children: React.ReactNode })
 
   const value = useMemo<PinGuardValue>(
     () => ({
-      requirePin: async scope => {
-        const outcome = await open({ kind: 'guard', scope });
+      requirePin: async (scope, requestKey) => {
+        const outcome = await open({ kind: 'guard', scope, requestKey });
         return outcome.type === 'verified' ? outcome.pinToken : null;
       },
       managePin: async () => {

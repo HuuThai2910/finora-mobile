@@ -136,6 +136,13 @@ export default function AccountScreen() {
           </UpcomingGroup>
           <UpcomingGroup icon="bell" title="Thông báo & Cài đặt" items={NOTIFICATION_SETTINGS}>
             <SettingsRow
+              icon="bell"
+              title="Cài đặt thông báo"
+              subtitle="Thông báo đẩy và nhóm tin muốn nhận"
+              onPress={() => nav.navigate('NotificationSettings')}
+              accessibilityHint="Mở màn cài đặt thông báo đẩy"
+            />
+            <SettingsRow
               icon="shieldCheck"
               title="Quyền riêng tư eKYC"
               subtitle="Điều khoản đã đồng ý, rút lại đồng ý"

@@ -218,7 +218,16 @@ export default function ApplyFormScreen() {
         </ApplyFormSection>
       </ScrollView>
 
-      <ApplyFormSubmitBar onPress={onSubmit} submitting={form.submitting} error={form.submitError} />
+      <ApplyFormSubmitBar
+        onPress={onSubmit}
+        submitting={form.submitting}
+        error={form.submitError}
+        onStartEkyc={
+          form.kycRequired
+            ? () => navigation.navigate('Hồ sơ', { screen: 'EkycCapture', params: { side: 'front' } })
+            : undefined
+        }
+      />
     </LoanStepBackdrop>
   );
 }

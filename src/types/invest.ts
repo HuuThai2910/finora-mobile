@@ -37,6 +37,11 @@ export interface MarketLoan {
    * (bản cũ), lúc đó màn hình không hiện thẻ hồ sơ người vay.
    */
   applicationNumber: string | null;
+  /**
+   * Chỉ có khi `CANCELLED` sau khi đã đủ vốn: `CONTRACT_DECLINED`, `CONTRACT_EXPIRED` hoặc
+   * `DISBURSEMENT_FAILED`. Khoản vay không giải ngân và tiền giữ được trả lại ví nhà đầu tư.
+   */
+  cancellationReason: string | null;
 }
 
 /* ---------- Hồ sơ người vay cho nhà đầu tư (Loan Service) ---------- */
@@ -140,8 +145,16 @@ export interface InvestOrderResult {
  * Một vị thế trong danh mục: mọi Note của tôi trên cùng một khoản vay, gộp lại.
  * Tiền là số VND chỉ để hiển thị — backend đã tính, màn hình không tính lại để hạch toán.
  */
+/** Trạng thái vị thế do Investment tổng hợp từ Note; giá trị lạ rơi về `UNKNOWN`. */
+export type PortfolioPositionStatus = 'ACTIVE' | 'CLOSED' | 'DEFAULTED' | 'UNKNOWN';
+
 export interface PortfolioPosition {
   loanId: number;
+  /**
+   * `ACTIVE` còn Note sinh dòng tiền; `CLOSED` đã thu hồi hết gốc (tất toán); `DEFAULTED` khoản vay nợ xấu.
+   * Vị thế đã kết thúc vẫn nằm trong danh mục để giữ lịch sử gốc/lãi đã nhận.
+   */
+  status: PortfolioPositionStatus;
   /** Đợt gọi vốn của khoản vay — mã sổ lệnh trên chợ Notes. */
   listingId: number;
   purpose: string | null;
@@ -157,6 +170,8 @@ export interface PortfolioPosition {
   outstanding: number;
   principalRepaid: number;
   interestReceived: number;
+  /** 80% phí trả trước được Payment phân bổ theo dư nợ Note. */
+  prepaymentFeeReceived: number;
   /** Phần của tôi trong tổng vốn khoản vay, %. */
   sharePercent: number;
   /** Projection vận hành từ Loan; không thay đổi điều khoản Note đã phát hành. */
@@ -175,6 +190,7 @@ export interface PortfolioSummary {
   pendingAmount: number;
   principalRepaid: number;
   interestReceived: number;
+  prepaymentFeeReceived: number;
   /** Gốc đã thu hồi cộng lãi đã nhận. */
   totalReceived: number;
   activeNoteCount: number;
@@ -182,6 +198,27 @@ export interface PortfolioSummary {
   /** Lãi suất bình quân theo dư nợ, %/năm — backend tính, không phải IRR. */
   averageRate: number;
   positions: PortfolioPosition[];
+}
+
+export type InvestorRescheduleConsentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+
+/** Phiếu xin ý kiến của nhà đầu tư đang nắm Note khi người vay đề nghị cơ cấu lịch trả nợ. */
+export interface InvestorRescheduleConsent {
+  requestId: string;
+  loanApplicationId: number;
+  loanNumber: string;
+  requestType: 'TERM_EXTENSION' | 'INSTALLMENT_ADJUSTMENT' | string;
+  /** Ngày đến hạn hiện tại của kỳ bắt đầu cơ cấu, yyyy-MM-dd. */
+  rescheduleFromDate: string;
+  adjustedDueDate: string | null;
+  extraTerms: number | null;
+  originalMaturityDate: string | null;
+  /** Dư nợ gốc của riêng nhà đầu tư tại thời điểm chốt danh sách biểu quyết. */
+  outstandingPrincipal: number;
+  status: InvestorRescheduleConsentStatus;
+  decisionComment: string | null;
+  decidedAt: string | null;
+  createdAt: string;
 }
 
 /**
@@ -194,6 +231,10 @@ export interface AutoInvestConfig {
   minAnnualRate: number;
   maxTermMonths: number;
   amountPerLoan: number;
+  /** Phiên bản công bố rủi ro đã xác nhận khi bật quy tắc (Q5); thiếu là chưa từng xác nhận. */
+  riskAcknowledgedVersion?: string | null;
+  /** Đang bật nhưng chưa xác nhận bản công bố hiện hành: backend không đặt lệnh thay nhà đầu tư. */
+  pausedForRiskAcknowledgement?: boolean;
 }
 
 /** Lý do Auto-Invest bỏ qua một khoản; mã do Investment Service trả về. */
@@ -203,6 +244,7 @@ export type AutoInvestSkipReason =
   | 'INSUFFICIENT_FUNDS'
   | 'LISTING_FULL'
   | 'LISTING_CLOSED'
+  | 'RISK_ACKNOWLEDGEMENT_OUTDATED'
   | (string & {});
 
 export interface AutoInvestMatch {
@@ -234,4 +276,14 @@ export interface InvestmentContract {
   availableSignatureMethod: 'CLICK_WRAP_MVP' | 'VNPT_SMART_CA';
   downloadPath: string;
   expiresAt: string;
+  /** Hợp đồng ký PAdES nhúng chữ ký vào chính tệp PDF (R5, W3C); false với hợp đồng ký kiểu cũ. */
+  padesSigned: boolean;
+  /** Số chữ ký đã nhúng trong tệp PDF. */
+  pdfSignatureCount: number;
+  /** Hash bản mới nhất của chuỗi chữ ký (`/signed-document`); null khi chưa bên nào ký số. */
+  signedPdfDocumentHash: string | null;
+  /** Hash trang biên nhận chữ ký (`/receipt`); chỉ có sau khi đủ chữ ký các bên. */
+  receiptDocumentHash: string | null;
+  signedDocumentPath: string;
+  receiptPath: string;
 }

@@ -1,6 +1,3 @@
-export const AML_NOTE =
-  'Chỉ rút về tài khoản ngân hàng chính chủ đã xác minh — quy tắc chống rửa tiền (AML)';
-
 export const TOPUP_NOTE =
   'Webhook từ payment gateway tự cộng ví sau ~5 giây · đối soát tự động cuối ngày';
 
@@ -51,3 +48,33 @@ export const TOPUP_FORM_NOTE =
 
 export const TOPUP_PAYMENT_NOTE =
   'Số dư chỉ được cộng khi cổng thanh toán gửi xác nhận hợp lệ, hoặc khi bấm giả lập ở bản demo.';
+
+/* ---------------- Rút tiền về ngân hàng (R4, W3B — 17/10/2026) ---------------- */
+
+/**
+ * Mức chọn nhanh dưới ô số tiền rút. Chỉ hiện mức nằm trong giới hạn rút được lúc này (tối thiểu, hạn mức
+ * còn lại hôm nay, số dư khả dụng); giới hạn đó lấy từ policy của Payment, app không tự đặt.
+ */
+export const WITHDRAW_QUICK_AMOUNTS = [100_000, 500_000, 1_000_000, 5_000_000] as const;
+
+/** Mỗi trang lịch sử rút tiền (backend cho tối đa 100). */
+export const WITHDRAWAL_PAGE_SIZE = 20;
+
+/** Provider giả lập gửi kết quả sau vài giây: hỏi lại mỗi 3 giây là thấy sớm mà không dồn request. */
+export const WITHDRAWAL_POLL_INTERVAL_MS = 3_000;
+
+/**
+ * Khung tự theo dõi một lệnh kể từ lúc mở màn (hoặc bấm kiểm tra lại). Lệnh rơi vào đối soát có thể mất lâu
+ * hơn nhiều; quá khung thì dừng tự hỏi và chờ người dùng bấm "Kiểm tra lại", không hỏi vô hạn.
+ */
+export const WITHDRAWAL_POLL_WINDOW_MS = 2 * 60_000;
+
+/** Hiện khi Payment báo provider chi tiền là bản giả lập (`simulatedProvider`). */
+export const WITHDRAW_DEMO_NOTE =
+  'Môi trường demo: tiền trong ví là tiền giả lập và lệnh rút do nhà cung cấp giả lập xử lý, không có tiền thật chuyển tới ngân hàng. Số tài khoản kết thúc bằng 0000 mô phỏng tài khoản không hợp lệ để thử trường hợp hoàn tiền.';
+
+export const WITHDRAW_DEMO_SHORT_NOTE =
+  'Môi trường demo: lệnh rút do nhà cung cấp giả lập xử lý, không có tiền thật chuyển tới ngân hàng.';
+
+export const WITHDRAW_FORM_NOTE =
+  'Tiền được trừ khỏi ví ngay khi lệnh được nhận. Nếu lệnh chi không thành công, toàn bộ số tiền được hoàn lại ví.';

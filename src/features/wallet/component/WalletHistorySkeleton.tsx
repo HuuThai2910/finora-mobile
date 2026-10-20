@@ -19,9 +19,16 @@ function CardSkeleton() {
 }
 
 /** Trạng thái đang tải lần đầu của danh sách giao dịch: tiêu đề tháng và vài thẻ giả. */
-export default function WalletHistorySkeleton({ cards = 4 }: { cards?: number }) {
+export default function WalletHistorySkeleton({
+  cards = 4,
+  label = 'Đang tải lịch sử ví',
+}: {
+  cards?: number;
+  /** Nhãn đọc màn hình, để màn lịch sử rút tiền nói đúng thứ đang tải. */
+  label?: string;
+}) {
   return (
-    <View style={styles.list} accessibilityLiveRegion="polite" accessibilityLabel="Đang tải lịch sử ví">
+    <View style={styles.list} accessibilityLiveRegion="polite" accessibilityLabel={label}>
       <Skeleton width={110} height={14} style={styles.month} />
       {Array.from({ length: cards }, (_, index) => (
         <CardSkeleton key={index} />

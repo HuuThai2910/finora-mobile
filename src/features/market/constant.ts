@@ -57,6 +57,18 @@ export const ESTIMATE_MASCOT: ImageSourcePropType = require('@/assets/mascot-coi
 /** Số tiền điền sẵn khi mở màn (giữ mức của màn cũ), tự kẹp vào khoảng đặt được của từng khoản. */
 export const DEFAULT_INVEST_AMOUNT = 5_000_000;
 
+/**
+ * Xác nhận của nhà đầu tư trước lệnh sơ cấp (D6, LEGAL-DISCLOSURE-02: Điều 22 khoản 8 điểm c Nghị định 94 yêu cầu
+ * cung cấp đủ thông tin khoản vay và có xác nhận của khách hàng). Backend lưu version và thời điểm xác nhận trên từng
+ * lệnh. Version phải khớp `finora.investment.risk-disclosure.version`; đổi nội dung thì tăng version ở cả hai nơi.
+ */
+export const RISK_DISCLOSURE_VERSION = 'INVESTOR_RISK_V1';
+
+export const RISK_DISCLOSURE_TEXT =
+  'Tôi xác nhận đã được cung cấp và đã xem thông tin khoản vay (số tiền, kỳ hạn, lãi suất, lịch trả) cùng hồ sơ người '
+  + 'vay ẩn danh trước khi góp vốn. Tôi hiểu khoản đầu tư không được bảo đảm vốn: người vay có thể trả chậm hoặc không '
+  + 'trả, khi đó tôi chỉ nhận phần tiền thu hồi được theo tỷ lệ Note đang nắm.';
+
 export const INVEST_NOTE =
   'Tiền được giữ tạm trong ví ngay khi đặt lệnh và chỉ chuyển đi khi khoản vay gọi đủ 100% vốn và các bên ký hợp đồng. Note bắt đầu sinh lãi khi khoản vay giải ngân.';
 
@@ -71,6 +83,23 @@ export const FUNDING_STATE_BADGE: Record<FundingState, { label: string; dot: str
 };
 
 const PICK_ANOTHER = 'Chọn khoản vay khác đang gọi vốn trên sàn.';
+
+/** Lý do Loan hủy đợt gọi vốn đã đủ vốn; mã lạ dùng câu chung thay vì hiện mã kỹ thuật. */
+const FUNDING_CANCELLATION_REASON: Record<string, string> = {
+  CONTRACT_DECLINED: 'hợp đồng bị từ chối ký',
+  CONTRACT_EXPIRED: 'hợp đồng hết hạn ký',
+  DISBURSEMENT_FAILED: 'giải ngân không thành công',
+};
+
+/**
+ * Lời giải thích cho đợt gọi vốn bị hủy. Hủy sau khi đủ vốn nghĩa là khoản vay không giải ngân;
+ * phần tiền nhà đầu tư đang giữ cho khoản này được trả lại ví, không bị trừ.
+ */
+export function cancelledListingHint(reasonCode: string | null): string {
+  if (!reasonCode) return INVEST_BLOCK_COPY.CANCELLED.hint;
+  const reason = FUNDING_CANCELLATION_REASON[reasonCode] ?? 'khoản vay không đủ điều kiện giải ngân';
+  return `Khoản vay không được giải ngân vì ${reason}. Tiền bạn đã giữ cho khoản này được trả lại ví. ${PICK_ANOTHER}`;
+}
 
 /** Thay chỗ ô nhập số tiền khi khoản vay không nhận lệnh mới nữa. */
 export const INVEST_BLOCK_COPY: Record<InvestBlock, { icon: IconName; title: string; hint: string }> = {

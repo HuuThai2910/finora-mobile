@@ -15,7 +15,7 @@ import type {
   TopUpInstruction,
   WalletBalance,
   WalletTransaction,
-  WithdrawQuote,
+  WithdrawalBank,
 } from '@/types/wallet';
 import type {
   AutoInvestConfig,
@@ -155,7 +155,13 @@ export const TOPUP: TopUpInstruction = {
   transferNote: 'tự sinh theo mã QR',
 };
 
-export const WITHDRAW_QUOTE: WithdrawQuote = { fee: 0, estimatedSeconds: 30, channel: 'Napas 247' };
+/** Vài ngân hàng trong danh sách demo của Payment (`WithdrawalBank`), đủ để thử bảng chọn ngân hàng. */
+export const WITHDRAWAL_BANKS: WithdrawalBank[] = [
+  { code: 'VCB', name: 'Vietcombank' },
+  { code: 'BIDV', name: 'BIDV' },
+  { code: 'TCB', name: 'Techcombank' },
+  { code: 'MB', name: 'MB Bank' },
+];
 
 export const DUE_INSTALLMENT: DueInstallment = {
   loanId: 'LN-1980',
@@ -226,7 +232,12 @@ const daysFromNow = (days: number): string => new Date(Date.now() + days * 86_40
  * Tham số sàn lấy theo giá trị khởi tạo của Investment (mệnh giá 1 triệu, tối thiểu một Note);
  * phần đã gọi luôn là bội số mệnh giá như dữ liệu thật.
  */
-const NOTE_TERMS = { noteDenomination: 1_000_000, minInvestmentAmount: 1_000_000, status: 'OPEN' } as const;
+const NOTE_TERMS = {
+  noteDenomination: 1_000_000,
+  minInvestmentAmount: 1_000_000,
+  status: 'OPEN',
+  cancellationReason: null,
+} as const;
 
 export const MARKET_LOANS: MarketLoan[] = [
   {
@@ -394,27 +405,28 @@ export const PORTFOLIO: PortfolioSummary = {
   pendingAmount: 20_000_000,
   principalRepaid: 3_600_000,
   interestReceived: 1_284_500,
-  totalReceived: 4_884_500,
+  prepaymentFeeReceived: 80_000,
+  totalReceived: 4_964_500,
   activeNoteCount: 50,
   positionCount: 3,
   averageRate: 14.62,
   positions: [
     {
-      loanId: 3041, listingId: 31, purpose: 'Mở rộng cửa hàng tạp hoá', grade: 'A', annualRate: 13.5,
+      loanId: 3041, status: 'ACTIVE', listingId: 31, purpose: 'Mở rộng cửa hàng tạp hoá', grade: 'A', annualRate: 13.5,
       termMonths: 12, noteCount: 20, principal: 20_000_000, outstanding: 16_400_000,
-      principalRepaid: 3_600_000, interestReceived: 812_000, sharePercent: 20,
+      principalRepaid: 3_600_000, interestReceived: 812_000, prepaymentFeeReceived: 80_000, sharePercent: 20,
       daysPastDue: 0, debtGroup: 1, overdueAmount: 0, servicingStatus: 'ACTIVE', maturityDate: null, riskDataAsOf: null,
     },
     {
-      loanId: 2044, listingId: 24, purpose: 'Học phí cao học', grade: 'B', annualRate: 15,
+      loanId: 2044, status: 'ACTIVE', listingId: 24, purpose: 'Học phí cao học', grade: 'B', annualRate: 15,
       termMonths: 9, noteCount: 20, principal: 20_000_000, outstanding: 20_000_000,
-      principalRepaid: 0, interestReceived: 472_500, sharePercent: 10,
+      principalRepaid: 0, interestReceived: 472_500, prepaymentFeeReceived: 0, sharePercent: 10,
       daysPastDue: 12, debtGroup: 2, overdueAmount: 1_250_000, servicingStatus: 'ACTIVE', maturityDate: null, riskDataAsOf: '2026-10-04T00:00:00Z',
     },
     {
-      loanId: 1877, listingId: 18, purpose: 'Sửa chữa nhà', grade: 'D', annualRate: 18,
+      loanId: 1877, status: 'ACTIVE', listingId: 18, purpose: 'Sửa chữa nhà', grade: 'D', annualRate: 18,
       termMonths: 6, noteCount: 10, principal: 10_000_000, outstanding: 10_000_000,
-      principalRepaid: 0, interestReceived: 0, sharePercent: 25,
+      principalRepaid: 0, interestReceived: 0, prepaymentFeeReceived: 0, sharePercent: 25,
       daysPastDue: 0, debtGroup: 1, overdueAmount: 0, servicingStatus: 'ACTIVE', maturityDate: null, riskDataAsOf: null,
     },
   ],
@@ -449,6 +461,13 @@ export const INVESTMENT_CONTRACT: InvestmentContract = {
   availableSignatureMethod: 'CLICK_WRAP_MVP',
   downloadPath: '/investor/loan-contracts/INV_1036EB_1779470224528/document',
   expiresAt: '2026-10-03T00:00:00Z',
+  // Bản giả lập là hợp đồng ký kiểu cũ, chưa có chữ ký số nào: không giả số chữ ký hay biên nhận PAdES.
+  padesSigned: false,
+  pdfSignatureCount: 0,
+  signedPdfDocumentHash: null,
+  receiptDocumentHash: null,
+  signedDocumentPath: '/investor/loan-contracts/INV_1036EB_1779470224528/signed-document',
+  receiptPath: '/investor/loan-contracts/INV_1036EB_1779470224528/receipt',
 };
 
 /* ---------------- Hồ sơ vay của tôi ---------------- */

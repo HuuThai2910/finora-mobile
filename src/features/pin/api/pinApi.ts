@@ -21,9 +21,12 @@ export const getPinStatus = (signal?: AbortSignal): Promise<PinStatus> =>
 export const createPin = (pin: string): Promise<PinStatus> =>
   authFetchWithToken<PinStatus>(BASE, send('POST', { pin }));
 
-/** Đổi mã PIN lấy token một lần cho đúng phạm vi thao tác sắp gọi. */
-export const verifyPin = (pin: string, scope: PinScope): Promise<PinVerification> =>
-  authFetchWithToken<PinVerification>(`${BASE}/verify`, send('POST', { pin, scope }));
+/**
+ * Đổi mã PIN lấy token cho đúng một thao tác sắp gọi: `requestKey` là `Idempotency-Key` của thao tác đó (D38),
+ * token dùng cho thao tác khác sẽ bị từ chối.
+ */
+export const verifyPin = (pin: string, scope: PinScope, requestKey: string): Promise<PinVerification> =>
+  authFetchWithToken<PinVerification>(`${BASE}/verify`, send('POST', { pin, scope, requestKey }));
 
 export const changePin = (currentPin: string, newPin: string): Promise<PinStatus> =>
   authFetchWithToken<PinStatus>(BASE, send('PUT', { currentPin, newPin }));

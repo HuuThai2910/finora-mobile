@@ -8,6 +8,7 @@ import {
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Skeleton } from '@/components/feedback';
+import { Checkbox } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import type { IconName } from '@/constants/icons';
 import { REPAYMENT_METHOD_LABEL } from '@/features/products';
@@ -16,7 +17,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { FontFamily, Radius, Spacing } from '@/theme';
 import type { InvestOrderResult, MarketLoan } from '@/types/invest';
 import { formatDong } from '@/utils/format';
-import { INVEST_BLOCK_COPY } from '../constant';
+import { INVEST_BLOCK_COPY, RISK_DISCLOSURE_TEXT, cancelledListingHint } from '../constant';
 import { useInvestForm } from '../hook/useInvestForm';
 import { useMarketLoan } from '../hook/useMarket';
 import { fundingState, investBlock } from '../investRules';
@@ -113,7 +114,7 @@ function LoanInvest({ loan, refreshing, onRefresh }: InvestProps) {
     <InvestBar
       label={form.error ? 'Đầu tư' : `Đầu tư ${formatDong(form.amount)}`}
       onPress={() => void form.submit()}
-      disabled={form.error !== null}
+      disabled={form.error !== null || !form.riskAccepted}
       loading={form.submitting}
     />
   );
@@ -133,7 +134,7 @@ function LoanInvest({ loan, refreshing, onRefresh }: InvestProps) {
         <LoanStatusCard
           icon={INVEST_BLOCK_COPY[block].icon}
           title={INVEST_BLOCK_COPY[block].title}
-          message={INVEST_BLOCK_COPY[block].hint}
+          message={block === 'CANCELLED' ? cancelledListingHint(loan.cancellationReason) : INVEST_BLOCK_COPY[block].hint}
           primary={{ label: 'Về sàn khoản vay', onPress: toMarket }}
         />
       ) : (
@@ -152,6 +153,15 @@ function LoanInvest({ loan, refreshing, onRefresh }: InvestProps) {
             termMonths={loan.termMonths}
             repaymentLabel={repaymentLabel}
           />
+          <View style={styles.riskBox}>
+            <Checkbox
+              checked={form.riskAccepted}
+              onChange={form.setRiskAccepted}
+              label="Tôi đã nhận đủ thông tin và hiểu rủi ro"
+            >
+              <Text style={styles.riskText}>{RISK_DISCLOSURE_TEXT}</Text>
+            </Checkbox>
+          </View>
           {form.submitError ? (
             <Text style={styles.submitError} accessibilityRole="alert" accessibilityLiveRegion="polite">
               {form.submitError}
@@ -236,6 +246,8 @@ function describeResult(order: InvestOrderResult, listingId: string): ResultView
 
 const styles = StyleSheet.create({
   skeleton: { gap: Spacing.xl },
+  riskBox: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.xs, borderRadius: Radius.md, backgroundColor: Colors.amberBg },
+  riskText: { fontFamily: FontFamily.medium, fontSize: 13, lineHeight: 19, color: Colors.tagAmberText },
   submitError: {
     padding: Spacing.lg,
     borderRadius: Radius.md,

@@ -6,6 +6,7 @@ import type {
   AutoInvestConfig,
   AutoInvestMatch,
   InvestmentContract,
+  InvestorRescheduleConsent,
   PortfolioSummary,
 } from '@/types/invest';
 import {
@@ -42,17 +43,28 @@ export const getAutoInvestMatches = async (signal?: AbortSignal): Promise<AutoIn
 
 /**
  * Lưu toàn bộ tiêu chí; bật lại sau khi tắt thì xuống cuối hàng chờ khớp lệnh.
- * Cần token PIN phạm vi `AUTO_INVEST` vì cấu hình này tự giữ tiền trong ví khi khớp.
+ * Cần token PIN phạm vi `AUTO_INVEST` vì cấu hình này tự giữ tiền trong ví khi khớp. Bật quy tắc phải kèm phiên bản
+ * công bố rủi ro người dùng vừa đọc (Q5); backend từ chối `RISK_DISCLOSURE_OUTDATED` nếu bản đã đổi.
  */
 export const saveAutoInvest = async (
   config: AutoInvestConfig,
+  idempotencyKey: string,
   pinToken: string,
+  riskAcknowledgementVersion?: string,
 ): Promise<AutoInvestConfig> => {
   if (isMocked('invest')) return investMock.saveAutoInvest(config);
   const dto = await investmentFetch<AutoInvestConfigDto>('/investments/auto-invest', {
     method: 'PUT',
-    headers: { [PIN_TOKEN_HEADER]: pinToken },
-    body: JSON.stringify(config),
+    // Token PIN gắn với đúng lần lưu này qua Idempotency-Key (D38).
+    headers: { 'Idempotency-Key': idempotencyKey, [PIN_TOKEN_HEADER]: pinToken },
+    body: JSON.stringify({
+      enabled: config.enabled,
+      grades: config.grades,
+      minAnnualRate: config.minAnnualRate,
+      maxTermMonths: config.maxTermMonths,
+      amountPerLoan: config.amountPerLoan,
+      riskAcknowledgementVersion: config.enabled ? riskAcknowledgementVersion : undefined,
+    }),
   });
   return toAutoInvestConfig(dto);
 };
@@ -111,3 +123,30 @@ export const refreshContractSignature = async (
   );
   return toInvestmentContract(refreshed);
 };
+
+/** Danh sách đề nghị cơ cấu mà tài khoản nhà đầu tư hiện tại có quyền biểu quyết. */
+type ConsentPage = { content: InvestorRescheduleConsent[] };
+
+export const getRescheduleConsents = async (signal?: AbortSignal): Promise<InvestorRescheduleConsent[]> => {
+  if (isMocked('invest')) return [];
+  const page = await investmentFetch<ConsentPage>('/investments/reschedule-consents?page=0&size=100', { signal });
+  return page.content;
+};
+
+/**
+ * Đồng ý hoặc từ chối đề nghị cơ cấu. Cùng một lần bấm phải giữ nguyên idempotency key
+ * để việc retry không tạo ra hai quyết định.
+ */
+export const decideRescheduleConsent = async (
+  requestId: string,
+  approve: boolean,
+  idempotencyKey: string,
+  comment?: string,
+): Promise<InvestorRescheduleConsent> => investmentFetch<InvestorRescheduleConsent>(
+  `/investments/reschedule-consents/${requestId}/${approve ? 'approve' : 'reject'}`,
+  {
+    method: 'POST',
+    headers: { 'Idempotency-Key': idempotencyKey },
+    body: JSON.stringify({ comment: comment?.trim() || null }),
+  },
+);

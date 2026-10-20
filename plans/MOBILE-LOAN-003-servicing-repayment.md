@@ -2,11 +2,11 @@
 
 ## Trạng thái
 
-`READY_FOR_REVIEW` — UI người vay và kết nối API thật hoàn tất ngày 2026-10-04.
+`READY_FOR_REVIEW` — UI người vay/nhà đầu tư và kết nối API thật cập nhật ngày 2026-10-16.
 
 ## Mục tiêu và actor
 
-- Actor chính: người vay đã đăng nhập.
+- Actor chính: người vay và nhà đầu tư đã đăng nhập.
 - Cho phép kiểm thử bằng giao diện toàn bộ servicing đã có contract backend: xem khoản vay/lịch thật,
   trả kỳ thường hoặc khắc phục quá hạn, trả trước một phần gốc, tất toán sớm và gửi yêu cầu cơ cấu.
 - Admin tiếp tục duyệt cơ cấu, theo dõi quá hạn và đối soát trên `finora-web`; mobile không giả quyền admin.
@@ -25,11 +25,11 @@
 2. Danh sách lấy `GET /loans/me`; chọn một khoản để xem số dư, kỳ tới, quá hạn và lịch thật.
 3. **Thanh toán kỳ/khắc phục quá hạn** gửi `POST /repayments`; số tiền mặc định lấy từ backend nhưng
    người dùng xác nhận trước khi thu ví.
-4. **Trả trước một phần** nhập số gốc, lấy quote rồi xác nhận quote bằng API riêng. Không dựng lịch giả;
-   sau thành công refetch lịch Fineract.
-5. **Tất toán sớm** lấy quote gồm gốc/lãi/phí/phạt, sau đó xác nhận bằng quote ID.
-6. **Cơ cấu/gia hạn** đọc policy, người dùng chọn loại, ngày áp dụng/số kỳ và gửi xác nhận; Admin duyệt
-   trên web hiện có.
+4. **Trả trước một phần** nhập số gốc, lấy quote rồi xác nhận quote bằng API riêng. UI công bố không
+   thu lãi tương lai, phí chia 80% nhà đầu tư/20% FINORA; khoản vay V3 ưu tiên rút ngắn kỳ.
+5. **Tất toán sớm** tự tải và hiện quote ngay; cảnh báo không hoàn tác chỉ xuất hiện ở lần xác nhận cuối.
+6. **Cơ cấu/gia hạn** dùng nhãn tiếng Việt rõ nghĩa; FINORA thẩm định trên web, sau đó nhà đầu tư vào
+   tab Ví → **Đề nghị cơ cấu cần đồng ý** để biểu quyết trước khi Fineract đổi lịch.
 
 ## API contract
 
@@ -39,6 +39,8 @@
 - Payment: `POST /repayments`, `GET /repayments/{id}`,
   `POST /repayments/partial-prepayment-quotes`, `POST /repayments/partial-prepayment`,
   `POST /repayments/early-settlement-quotes`, `POST /repayments/early-settlement`.
+- Investment: `GET /investments/reschedule-consents?page=0&size=100`,
+  `POST /investments/reschedule-consents/{requestId}/approve|reject`.
 - Mọi mutation tài chính gửi một `Idempotency-Key` ổn định trong suốt một lần bấm xác nhận.
 
 ## State và lỗi
@@ -55,6 +57,7 @@
 - `src/features/loan-servicing/{api,types,hooks,components,screens,index.ts}`.
 - `src/navigation/types.ts`, `src/navigation/MainTabs.tsx`.
 - `src/features/account/component/AccountScreen.tsx` để thêm lối vào UI mới.
+- `src/features/investment/component/RescheduleConsentsScreen.tsx` và lối vào trong tab Ví mới.
 - Giữ `wallet/PayInstallmentScreen` cho tương thích route cũ nhưng điều hướng về servicing thật.
 
 Hướng dẫn chạy happy case và từng cơ chế bằng UI: `docs/LOAN-SERVICING-UI-TEST.md`.
@@ -67,8 +70,8 @@ Hướng dẫn chạy happy case và từng cơ chế bằng UI: `docs/LOAN-SERV
 - Màn nhỏ, loading, empty, lỗi mạng, số dư thiếu và status lạ vẫn hiển thị an toàn.
 - Trả trước một phần chỉ hiển thị lịch mới sau khi Payment/Fineract hoàn tất.
 
-Kết quả kiểm tra ngày 2026-10-04:
+Kết quả kiểm tra gần nhất:
 
-- `npx tsc --noEmit`: đạt.
+- `npx tsc --noEmit`: đạt ngày 2026-10-17.
 - `npx expo export --platform web`: đạt, bundle 993 module.
 - Đối chiếu controller/DTO Loan và Payment: đúng path, body, response enum và idempotency header.

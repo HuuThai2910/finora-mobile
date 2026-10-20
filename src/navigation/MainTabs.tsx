@@ -22,9 +22,16 @@ import {
   PayInstallmentScreen,
   TopUpScreen,
   WalletHistoryScreen,
+  WithdrawalDetailScreen,
+  WithdrawalHistoryScreen,
   WithdrawScreen,
 } from '@/features/wallet';
-import { AutoInvestScreen, InvestContractScreen, PortfolioScreen } from '@/features/investment';
+import {
+  AutoInvestScreen,
+  InvestContractScreen,
+  PortfolioScreen,
+  RescheduleConsentsScreen,
+} from '@/features/investment';
 import {
   MyOrdersScreen,
   OrderBookScreen,
@@ -32,6 +39,7 @@ import {
   SecondaryMarketScreen,
 } from '@/features/secondary-market';
 import { AccountInfoScreen, AccountScreen } from '@/features/account';
+import { NotificationSettingsScreen } from '@/features/push-notifications';
 import {
   EkycCaptureScreen,
   EkycConsentScreen,
@@ -93,10 +101,13 @@ function WalletTab() {
       <WalletStack.Screen name="WalletHistory" component={WalletHistoryScreen} />
       <WalletStack.Screen name="TopUp" component={TopUpScreen} />
       <WalletStack.Screen name="Withdraw" component={WithdrawScreen} />
+      <WalletStack.Screen name="WithdrawalHistory" component={WithdrawalHistoryScreen} />
+      <WalletStack.Screen name="WithdrawalDetail" component={WithdrawalDetailScreen} />
       <WalletStack.Screen name="PayInstallment" component={PayInstallmentScreen} />
       <WalletStack.Screen name="Portfolio" component={PortfolioScreen} />
       <WalletStack.Screen name="AutoInvest" component={AutoInvestScreen} />
       <WalletStack.Screen name="InvestContract" component={InvestContractScreen} />
+      <WalletStack.Screen name="RescheduleConsents" component={RescheduleConsentsScreen} />
       <WalletStack.Screen name="SecondaryMarket" component={SecondaryMarketScreen} />
       <WalletStack.Screen name="OrderBook" component={OrderBookScreen} />
       <WalletStack.Screen name="PlaceBookOrder" component={PlaceOrderScreen} />
@@ -137,6 +148,7 @@ function ProfileTab() {
       <ProfileStack.Screen name="PartialPrepayment" component={PartialPrepaymentScreen} />
       <ProfileStack.Screen name="EarlySettlement" component={EarlySettlementScreen} />
       <ProfileStack.Screen name="RescheduleLoan" component={RescheduleLoanScreen} />
+      <ProfileStack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
       </ProfileStack.Navigator>
     </EkycSessionProvider>
   );

@@ -28,11 +28,31 @@ export type LoanContractStatus =
   | 'COMPLETED';
 
 export interface LoanContractPdfDocument {
-  artifactType: 'SIGNABLE' | 'SIGNED_RECEIPT';
+  /**
+   * `SIGNABLE` trong lúc các bên còn ký. Sau khi đủ chữ ký: `SIGNED_PDF` (bản PAdES có chữ ký mọi bên, R5) với hợp
+   * đồng ký PAdES, `SIGNED_RECEIPT` (bản xác nhận cũ) với hợp đồng lập trước R5.
+   */
+  artifactType: 'SIGNABLE' | 'SIGNED_PDF' | 'SIGNED_RECEIPT';
   documentVersion: string;
   contentType: 'application/pdf';
   contentHash: string;
   contentLength: number;
+  downloadPath: string;
+}
+
+/** Cách ký chốt khi lập hợp đồng: bằng chứng tách rời (trước R5) hoặc chữ ký PAdES-B-B nhúng vào chính tệp PDF. */
+export type ContractSignatureProfile = 'DETACHED_EVIDENCE' | 'PADES_B_B';
+
+/**
+ * Bản mới nhất của chuỗi chữ ký PAdES (`/signed-document`): `signatureCount` là số chữ ký đã nhúng trong tệp. Khi đủ
+ * chữ ký các bên, đây cũng là bản `/document` trả về.
+ */
+export interface LoanContractSignedPdfDocument {
+  signatureFormat: string;
+  signatureCount: number;
+  contentHash: string;
+  contentLength: number;
+  lastSignedAt: string;
   downloadPath: string;
 }
 
@@ -93,6 +113,12 @@ export interface LoanContractDetail extends LoanContractSummary {
   fineractLoanId: number | null;
   disbursedAt: string | null;
   updatedAt: string;
+  /** Các field R5 (W3C) là bổ sung; backend cũ không trả thì coi như hợp đồng ký kiểu bằng chứng tách rời. */
+  signatureProfile?: ContractSignatureProfile | null;
+  /** Null khi chưa bên nào ký số hoặc hợp đồng dùng bằng chứng tách rời. */
+  signedPdfDocument?: LoanContractSignedPdfDocument | null;
+  /** Trang biên nhận chữ ký (`/receipt`, PAdES) hoặc bản xác nhận cũ; null khi chưa đủ chữ ký. */
+  receiptDocument?: LoanContractPdfDocument | null;
 }
 
 export interface LoanContractHistory {

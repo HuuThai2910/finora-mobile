@@ -39,6 +39,17 @@ export function applicationJourneyStatus(
   termsStatus?: TermsConfirmationStatus,
   fundingStatus?: LoanFundingStatus,
 ): StatusMeta {
+  // Hủy gọi vốn phải được ưu tiên hơn trạng thái hợp đồng: khi giải ngân thất bại hợp đồng vẫn EFFECTIVE,
+  // nếu hiển thị theo hợp đồng người vay sẽ hiểu nhầm khoản vay sắp được giải ngân.
+  if (applicationStatus === 'APPROVED' && fundingStatus === 'CANCELLED') {
+    return {
+      tone: 'gray',
+      label: 'Dừng trước giải ngân',
+      icon: 'x',
+      meaning: 'Khoản vay không được giải ngân (hợp đồng bị từ chối, hết hạn ký hoặc giải ngân thất bại). Tiền nhà đầu tư đang giữ được trả lại; bạn có thể nộp hồ sơ mới.',
+      next: null,
+    };
+  }
   if (applicationStatus === 'APPROVED' && contractStatus) {
     return contractStatusMeta(contractStatus);
   }

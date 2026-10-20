@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Skeleton } from '@/components/feedback';
 import { Icon } from '@/components/ui';
 import { Colors } from '@/constants/colors';
-import { toUserMessage } from '@/lib/api';
+import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
 import { usePinGuard } from '@/features/pin';
 import { FontFamily, Radius, Spacing } from '@/theme';
 import type { AutoInvestConfig } from '@/types/invest';
+import { RISK_DISCLOSURE_TEXT, RISK_DISCLOSURE_VERSION } from '@/features/market/constant';
 import { saveAutoInvest } from '../api';
 import { toDraft, validateDraft, type Draft, type DraftErrors } from '../autoInvestDraft';
 import { AUTO_INVEST_FOOTNOTE, PORTFOLIO_MAX_WIDTH, PORTFOLIO_PADDING } from '../constant';
@@ -36,6 +37,8 @@ export default function AutoInvestScreen() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const { requirePin } = usePinGuard();
+  // Mỗi lần lưu là một thao tác có mã riêng, token PIN chỉ duyệt đúng lần lưu đó (D38).
+  const saveKey = useRef(generateIdempotencyKey());
 
   useEffect(() => {
     if (config.data) setSaved(config.data);
@@ -46,14 +49,31 @@ export default function AutoInvestScreen() {
     matches.reload();
   };
 
+  /**
+   * Bật Auto-Invest là uỷ quyền đặt lệnh thay mình (Q5): người dùng đọc lại công bố rủi ro như khi tự góp vốn rồi mới
+   * xác nhận. Đóng hộp thoại là không lưu.
+   */
+  const confirmRisk = (): Promise<boolean> => new Promise(resolve => {
+    Alert.alert('Xác nhận công bố rủi ro', RISK_DISCLOSURE_TEXT, [
+      { text: 'Để sau', style: 'cancel', onPress: () => resolve(false) },
+      { text: 'Tôi đã đọc và đồng ý', onPress: () => resolve(true) },
+    ], { cancelable: true, onDismiss: () => resolve(false) });
+  });
+
   /** Mọi lần lưu (bật/tắt hay sửa tiêu chí) đều hỏi PIN; đóng bảng PIN là không lưu, giữ bản nháp. */
   const persist = async (next: AutoInvestConfig): Promise<boolean> => {
+    // Hỏi lại khi chuyển tắt → bật, khi quy tắc đang tạm dừng hoặc khi bản đã xác nhận khác bản app đang hiển thị;
+    // sửa tiêu chí của quy tắc đang bật và đã xác nhận đúng bản này thì không hỏi lại.
+    const needsConfirmation = next.enabled && (!saved?.enabled || saved.pausedForRiskAcknowledgement
+      || saved.riskAcknowledgedVersion !== RISK_DISCLOSURE_VERSION);
+    if (needsConfirmation && !(await confirmRisk())) return false;
     setSaving(true);
     setSaveError(null);
     try {
-      const pinToken = await requirePin('AUTO_INVEST');
+      const pinToken = await requirePin('AUTO_INVEST', saveKey.current);
       if (!pinToken) return false;
-      setSaved(await saveAutoInvest(next, pinToken));
+      setSaved(await saveAutoInvest(next, saveKey.current, pinToken, RISK_DISCLOSURE_VERSION));
+      saveKey.current = generateIdempotencyKey();
       return true;
     } catch (e) {
       setSaveError(toUserMessage(e));
@@ -108,6 +128,14 @@ export default function AutoInvestScreen() {
     return (
       <>
         <AutoInvestToggleCard enabled={saved.enabled} saving={saving && !draft} onToggle={toggle} />
+        {saved.enabled && saved.pausedForRiskAcknowledgement ? (
+          <InvestStatusCard
+            icon="alert"
+            title="Auto-Invest đang tạm dừng"
+            hint="Công bố rủi ro đã được cập nhật. Hãy đọc và xác nhận lại để hệ thống tiếp tục đặt lệnh thay bạn."
+            action={{ label: 'Đọc và xác nhận', onPress: () => void persist({ ...saved, enabled: true }) }}
+          />
+        ) : null}
         {saveError ? (
           <View style={styles.error} accessibilityRole="alert">
             <Icon name="alert" size={18} color={Colors.tagRedText} />

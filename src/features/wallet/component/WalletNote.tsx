@@ -5,8 +5,11 @@ import { FontFamily, Radius, Spacing } from '@/theme';
 
 type Props = {
   text: string;
-  /** `danger`: lỗi của một thao tác (tạo lệnh, kiểm tra trạng thái), nền đỏ nhạt có biểu tượng cảnh báo. */
-  tone?: 'info' | 'danger';
+  /**
+   * `danger`: lỗi của một thao tác (tạo lệnh, kiểm tra trạng thái), nền đỏ nhạt có biểu tượng cảnh báo.
+   * `warn`: lưu ý cần đọc trước khi làm, như nhãn môi trường demo tiền giả lập ở các màn rút tiền.
+   */
+  tone?: 'info' | 'warn' | 'danger';
 };
 
 /**
@@ -22,6 +25,15 @@ export default function WalletNote({ text, tone = 'info' }: Props) {
       <View style={[styles.note, styles.danger]} accessibilityRole="alert" accessibilityLiveRegion="polite">
         <Icon name="alert" size={22} color={Colors.red} />
         <Text style={[styles.text, styles.dangerText]}>{body}</Text>
+      </View>
+    );
+  }
+
+  if (tone === 'warn') {
+    return (
+      <View style={[styles.note, styles.warn]}>
+        <Icon name="shieldAlert" size={22} color={Colors.tagAmberText} />
+        <Text style={[styles.text, styles.warnText]}>{body}</Text>
       </View>
     );
   }
@@ -50,6 +62,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.walletHistoryNote,
   },
   danger: { backgroundColor: Colors.redBg },
+  // Viền vàng để ô lưu ý vẫn tách khỏi nền sáng của màn ví; chữ `warnText` trên `amberBg` đủ tương phản.
+  warn: { backgroundColor: Colors.amberBg, borderWidth: 1, borderColor: Colors.warnBorder },
   icon: {
     width: 24,
     height: 24,
@@ -70,4 +84,5 @@ const styles = StyleSheet.create({
     color: Colors.authMuted,
   },
   dangerText: { fontFamily: FontFamily.medium, color: Colors.tagRedText },
+  warnText: { fontFamily: FontFamily.medium, color: Colors.warnText },
 });

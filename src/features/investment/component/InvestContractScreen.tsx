@@ -8,13 +8,15 @@ import { Icon } from '@/components/ui';
 import { CONTRACTS_WAVES } from '@/constants/backgrounds';
 import { Colors } from '@/constants/colors';
 import { useAuthenticatedPdf } from '@/hooks/useAuthenticatedPdf';
-import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
+import { generateIdempotencyKey } from '@/lib/api';
 import { usePinGuard } from '@/features/pin';
 import { FontFamily, Radius, Spacing } from '@/theme';
 import { signContract } from '../api';
 import { CONTRACT_ART_BOTTOM, CONTRACT_NOTE, PORTFOLIO_MAX_WIDTH, PORTFOLIO_PADDING } from '../constant';
 import { useInvestmentContract } from '../hook/useInvestment';
 import { useInvestorSmartCa } from '../hook/useInvestorSmartCa';
+import { toSignFailure } from '../signError';
+import ContractSignedFilesCard from './ContractSignedFilesCard';
 import ContractSignSteps from './ContractSignSteps';
 import ContractSummaryCard from './ContractSummaryCard';
 import InvestHeader from './InvestHeader';
@@ -37,8 +39,11 @@ export default function InvestContractScreen() {
   const { data, loading, error, reload } = useInvestmentContract();
   const [submitting, setSubmitting] = useState(false);
   const [signError, setSignError] = useState<string | null>(null);
+  // Lần ký vừa bị backend hủy (chữ ký không khớp chứng thư): nút bước 2 đổi thành "Ký lại".
+  const [resign, setResign] = useState(false);
   const [openedPdfHash, setOpenedPdfHash] = useState<string | null>(null);
-  // Retry cùng một thao tác ký phải giữ nguyên key; chỉ tạo key mới sau khi ký thành công.
+  // Retry cùng một thao tác ký phải giữ nguyên key; chỉ tạo key mới sau khi ký thành công hoặc khi backend đã hủy
+  // hẳn lần ký (chữ ký bị từ chối).
   const signKey = useRef(generateIdempotencyKey());
   const pdf = useAuthenticatedPdf({
     cacheKey: `${data?.reference ?? 'investment'}-${data?.pdfDocumentHash ?? 'pending'}`,
@@ -54,10 +59,11 @@ export default function InvestContractScreen() {
     setSignError(null);
     try {
       // Hỏi PIN sau khi đã bấm ký; đóng bảng PIN là thôi ký, không báo lỗi.
-      const pinToken = await requirePin('SIGN_CONTRACT');
+      const pinToken = await requirePin('SIGN_CONTRACT', signKey.current);
       if (!pinToken) return;
       const result = await signContract(data, signKey.current, pinToken);
       signKey.current = generateIdempotencyKey();
+      setResign(false);
       reload();
       if (result.status === 'SIGNING') {
         Alert.alert('Đã gửi yêu cầu SmartCA', 'Hãy mở ứng dụng VNPT SmartCA, xác nhận giao dịch rồi quay lại FINORA.');
@@ -67,7 +73,15 @@ export default function InvestContractScreen() {
         ]);
       }
     } catch (e) {
-      setSignError(toUserMessage(e));
+      // 409 phiên ký của bên khác: giữ key, chờ người dùng bấm lại; 503 chữ ký bị từ chối: lần ký đã đóng nên key
+      // mới, tải lại phần vốn (đã về chờ ký) và mời ký lại (D74).
+      const failure = toSignFailure(e);
+      setSignError(failure.message);
+      if (failure.attemptClosed) {
+        signKey.current = generateIdempotencyKey();
+        setResign(true);
+        reload();
+      }
     } finally {
       setSubmitting(false);
     }
@@ -123,10 +137,12 @@ export default function InvestContractScreen() {
           windowOpen={windowOpen}
           submitting={submitting}
           checking={smartCa.checking}
+          resign={resign || smartCa.rejected}
           onSign={() => void onSign()}
           onCheck={() => void smartCa.check()}
           error={signError ?? smartCa.error ?? pdf.error}
         />
+        {data.padesSigned ? <ContractSignedFilesCard contract={data} /> : null}
         <View style={styles.note}>
           <Icon name="info" size={20} color={Colors.authPrimary} />
           <Text style={styles.noteText}>{CONTRACT_NOTE}</Text>

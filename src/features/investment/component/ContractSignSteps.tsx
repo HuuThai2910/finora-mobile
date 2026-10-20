@@ -18,6 +18,8 @@ type Props = {
   windowOpen: boolean;
   submitting: boolean;
   checking: boolean;
+  /** Lần ký trước vừa bị từ chối (chữ ký không khớp chứng thư): nút ký đổi thành "Ký lại". */
+  resign?: boolean;
   onSign: () => void;
   onCheck: () => void;
   error: string | null;
@@ -59,7 +61,7 @@ export default function ContractSignSteps(props: Props) {
           <InvestButton label="Tôi đã xác nhận, kiểm tra kết quả" icon="check" onPress={props.onCheck} loading={props.checking} />
         ) : (
           <InvestButton
-            label={providerIsMock ? 'Xác nhận hợp đồng' : 'Gửi yêu cầu ký SmartCA'}
+            label={props.resign ? 'Ký lại' : providerIsMock ? 'Xác nhận hợp đồng' : 'Gửi yêu cầu ký SmartCA'}
             icon="pen"
             onPress={props.onSign}
             loading={props.submitting}

@@ -5,8 +5,14 @@ import { RESCHEDULE_TYPE_LABEL } from '../mappers/servicing';
 import type { RescheduleType } from '../types';
 
 const OPTIONS: readonly { value: RescheduleType; hint: string }[] = [
-  { value: 'TERM_EXTENSION', hint: 'Thêm kỳ trả để kéo dài thời hạn khoản vay.' },
-  { value: 'INSTALLMENT_ADJUSTMENT', hint: 'Dời ngày đến hạn của kỳ bạn chọn sang ngày khác.' },
+  {
+    value: 'TERM_EXTENSION',
+    hint: 'Thêm kỳ trả và lùi ngày đáo hạn cuối cùng của khoản vay.',
+  },
+  {
+    value: 'INSTALLMENT_ADJUSTMENT',
+    hint: 'Đổi ngày trả của một kỳ nhưng không kéo dài ngày đáo hạn cuối cùng.',
+  },
 ];
 
 const RADIO = 20;

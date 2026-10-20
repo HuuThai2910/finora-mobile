@@ -6,6 +6,7 @@ import { FontFamily, Radius, SoftShadow, Spacing } from '@/theme';
 type Props = {
   onOpenPortfolio: () => void;
   onOpenPendingContract: () => void;
+  onOpenRescheduleConsents: () => void;
 };
 
 /**
@@ -17,6 +18,7 @@ type Props = {
 export default function InvestorWalletActions({
   onOpenPortfolio,
   onOpenPendingContract,
+  onOpenRescheduleConsents,
 }: Props) {
   return (
     <View style={styles.section}>
@@ -35,6 +37,12 @@ export default function InvestorWalletActions({
           sub="Mở PDF và xác nhận phần vốn của bạn"
           icon="file"
           onPress={onOpenPendingContract}
+        />
+        <PItem
+          label="Đề nghị cơ cấu cần đồng ý"
+          sub="Xem ảnh hưởng và quyết định lịch trả mới"
+          icon="clock"
+          onPress={onOpenRescheduleConsents}
           last
         />
       </View>

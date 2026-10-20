@@ -11,6 +11,8 @@ type Props = {
   onPay: () => void;
   onPrepay: () => void;
   onSettle: () => void;
+  onReschedule: () => void;
+  canReschedule: boolean;
 };
 
 /**
@@ -18,13 +20,13 @@ type Props = {
  * quá hạn nếu có, không thì kỳ tới), nút trả chính, rồi hai lối trả trước. Số liệu đang chờ
  * đồng bộ thì khoá cả ba nút như màn cũ, vì thu tiền theo số cũ sẽ bị backend từ chối.
  */
-export default function LoanPaymentCard({ loan, onPay, onPrepay, onSettle }: Props) {
+export default function LoanPaymentCard({ loan, onPay, onPrepay, onSettle, onReschedule, canReschedule }: Props) {
   const overdue = loan.overdueAmount > 0;
   const amount = dueAmountOf(loan);
   const prepay = canPrepayLoan(loan);
 
   return (
-    <DetailCard title="Thanh toán" icon="wallet">
+    <DetailCard title="Thanh toán và điều chỉnh" icon="wallet">
       <View accessible accessibilityLabel={`${overdue ? 'Số tiền quá hạn' : 'Số tiền kỳ tới'} ${formatDong(amount)}`}>
         <View style={styles.amountRow}>
           <Text style={styles.amount} maxFontSizeMultiplier={1.2}>
@@ -53,6 +55,7 @@ export default function LoanPaymentCard({ loan, onPay, onPrepay, onSettle }: Pro
       ) : null}
 
       <View style={styles.actions}>
+        <Text style={styles.actionLabel}>THANH TOÁN KHOẢN VAY</Text>
         <DetailButton
           label={overdue ? 'Khắc phục quá hạn' : 'Thanh toán kỳ tới'}
           icon="wallet"
@@ -67,6 +70,19 @@ export default function LoanPaymentCard({ loan, onPay, onPrepay, onSettle }: Pro
               variant="row"
               icon="circleCheck"
               onPress={onSettle}
+              disabled={loan.stale}
+            />
+          </>
+        ) : null}
+        {canReschedule ? (
+          <>
+            <View style={styles.divider} />
+            <Text style={styles.actionLabel}>KHI CẦN THAY ĐỔI LỊCH TRẢ</Text>
+            <DetailButton
+              label="Đề nghị điều chỉnh kỳ hạn hoặc gia hạn"
+              variant="row"
+              icon="refreshCw"
+              onPress={onReschedule}
               disabled={loan.stale}
             />
           </>
@@ -92,5 +108,13 @@ const styles = StyleSheet.create({
   caption: { fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authMuted, ...tabularNums },
   overdue: { fontFamily: FontFamily.semibold, fontSize: 13, lineHeight: 19, color: Colors.tagRedText },
   actions: { gap: Spacing.md },
+  actionLabel: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 11,
+    lineHeight: 16,
+    letterSpacing: 0.5,
+    color: Colors.authMuted,
+  },
+  divider: { height: 1, marginVertical: Spacing.xs, backgroundColor: Colors.rowDivider },
   fine: { fontFamily: FontFamily.regular, fontSize: 12, lineHeight: 17, color: Colors.authMuted },
 });

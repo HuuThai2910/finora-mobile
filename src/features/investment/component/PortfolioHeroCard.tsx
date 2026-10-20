@@ -28,6 +28,9 @@ export default function PortfolioHeroCard({ summary, width }: { summary: Portfol
   const stats = [
     { label: 'Lãi suất bình quân', value: `${formatPercentValue(summary.averageRate)}/năm` },
     { label: 'Đã nhận về', value: formatDong(summary.totalReceived) },
+    ...(summary.prepaymentFeeReceived > 0
+      ? [{ label: 'Phí trả trước được chia', value: formatDong(summary.prepaymentFeeReceived) }]
+      : []),
     { label: 'Chờ giải ngân', value: formatDong(summary.pendingAmount) },
   ];
 
