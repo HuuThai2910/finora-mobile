@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import { PdfDocumentError, toPdfErrorMessage } from '@/hooks/useAuthenticatedPdf';
 import { apiFetchResponse } from '@/lib/api';
 import type { LoanContractDetail } from '@/types/contract';
 
@@ -31,7 +32,7 @@ export function useContractPdf(contract: LoanContractDetail): ContractPdfState {
 
   const requirePath = useCallback((): string => {
     if (!contract.pdfDocument) {
-      throw new Error('Hợp đồng cũ chưa có bản PDF từ máy chủ.');
+      throw new PdfDocumentError('Hợp đồng cũ chưa có bản PDF từ máy chủ.');
     }
     return contract.pdfDocument.downloadPath;
   }, [contract.pdfDocument]);
@@ -44,7 +45,7 @@ export function useContractPdf(contract: LoanContractDetail): ContractPdfState {
     });
     const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
     if (!contentType.includes('application/pdf')) {
-      throw new Error('Máy chủ không trả về tài liệu PDF hợp lệ.');
+      throw new PdfDocumentError('Máy chủ không trả về tài liệu PDF hợp lệ.');
     }
     return response;
   }, [requirePath]);
@@ -57,7 +58,7 @@ export function useContractPdf(contract: LoanContractDetail): ContractPdfState {
 
     const response = await fetchPdf();
     const bytes = new Uint8Array(await response.arrayBuffer());
-    if (bytes.byteLength === 0) throw new Error('Tài liệu PDF đang rỗng.');
+    if (bytes.byteLength === 0) throw new PdfDocumentError('Tài liệu PDF đang rỗng.');
 
     const hashSuffix = contract.pdfDocument?.contentHash.slice(0, 12) ?? 'missing';
     const target = new File(Paths.cache, `${contract.contractNumber}-${hashSuffix}.pdf`);
@@ -70,7 +71,7 @@ export function useContractPdf(contract: LoanContractDetail): ContractPdfState {
   const webBlobUrl = useCallback(async (): Promise<string> => {
     const response = await fetchPdf();
     const blob = await response.blob();
-    if (blob.size === 0) throw new Error('Tài liệu PDF đang rỗng.');
+    if (blob.size === 0) throw new PdfDocumentError('Tài liệu PDF đang rỗng.');
     return URL.createObjectURL(blob);
   }, [fetchPdf]);
 
@@ -101,7 +102,7 @@ export function useContractPdf(contract: LoanContractDetail): ContractPdfState {
       }
       return true;
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Không thể mở bản PDF hợp đồng.');
+      setError(toPdfErrorMessage(cause, 'Không mở được bản PDF hợp đồng, vui lòng thử lại.'));
       return false;
     } finally {
       setOpening(false);
@@ -129,7 +130,7 @@ export function useContractPdf(contract: LoanContractDetail): ContractPdfState {
       const file = await nativeFile();
       const sharingAvailable = await Sharing.isAvailableAsync();
       if (!sharingAvailable) {
-        throw new Error('Thiết bị không hỗ trợ lưu hoặc chia sẻ file.');
+        throw new PdfDocumentError('Thiết bị không hỗ trợ lưu hoặc chia sẻ file.');
       }
       await Sharing.shareAsync(file.uri, {
         mimeType: 'application/pdf',
@@ -137,7 +138,7 @@ export function useContractPdf(contract: LoanContractDetail): ContractPdfState {
         dialogTitle: `Lưu hợp đồng ${contract.contractNumber}`,
       });
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Không thể tải bản PDF hợp đồng.');
+      setError(toPdfErrorMessage(cause, 'Không tải được bản PDF hợp đồng, vui lòng thử lại.'));
     } finally {
       setSharing(false);
     }

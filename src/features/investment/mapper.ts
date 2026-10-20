@@ -3,6 +3,7 @@ import type {
   AutoInvestMatch,
   InvestmentContract,
   PortfolioPosition,
+  PortfolioPositionStatus,
   PortfolioSummary,
 } from '@/types/invest';
 
@@ -22,8 +23,9 @@ export interface PortfolioPositionDto {
   outstandingPrincipal: string;
   principalRepaid: string;
   interestReceived: string;
+  prepaymentFeeReceived: string;
   sharePercent: number;
-  /** `ACTIVE` hoặc `DEFAULTED` (khoản vay nợ xấu, nhóm nợ 3–5). */
+  /** `ACTIVE`, `DEFAULTED` (khoản vay nợ xấu, nhóm nợ 3–5) hoặc `CLOSED` (đã thu hồi đủ gốc). */
   status: string;
   daysPastDue: number;
   debtGroup: number;
@@ -38,6 +40,7 @@ export interface PortfolioDto {
   investedAmount: string;
   principalRepaid: string;
   interestReceived: string;
+  prepaymentFeeReceived: string;
   totalReceived: string;
   activeNoteCount: number;
   positionCount: number;
@@ -67,6 +70,11 @@ export interface InvestorContractDto {
   availableSignatureProvider: 'MOCK' | 'VNPT_SMART_CA';
   availableSignatureMethod: 'CLICK_WRAP_MVP' | 'VNPT_SMART_CA';
   expiresAt: string;
+  /** Các field PAdES (R5, W3C) là bổ sung; backend cũ không trả thì coi như chưa có chữ ký nào trong tệp. */
+  signatureProfile?: 'DETACHED_EVIDENCE' | 'PADES_B_B' | null;
+  pdfSignatureCount?: number;
+  signedPdfDocumentHash?: string | null;
+  receiptDocumentHash?: string | null;
 }
 
 const toNumber = (value: string): number => {
@@ -74,9 +82,12 @@ const toNumber = (value: string): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const POSITION_STATUSES: readonly PortfolioPositionStatus[] = ['ACTIVE', 'CLOSED', 'DEFAULTED'];
+
 function toPosition(dto: PortfolioPositionDto): PortfolioPosition {
   return {
     loanId: dto.loanId,
+    status: POSITION_STATUSES.find(status => status === dto.status) ?? 'UNKNOWN',
     listingId: dto.listingId,
     purpose: dto.purpose,
     grade: dto.creditGrade?.trim().toUpperCase() || null,
@@ -88,6 +99,7 @@ function toPosition(dto: PortfolioPositionDto): PortfolioPosition {
     outstanding: toNumber(dto.outstandingPrincipal),
     principalRepaid: toNumber(dto.principalRepaid),
     interestReceived: toNumber(dto.interestReceived),
+    prepaymentFeeReceived: toNumber(dto.prepaymentFeeReceived),
     sharePercent: Number(dto.sharePercent.toFixed(2)),
     daysPastDue: dto.daysPastDue ?? 0,
     debtGroup: dto.debtGroup ?? 1,
@@ -95,7 +107,6 @@ function toPosition(dto: PortfolioPositionDto): PortfolioPosition {
     servicingStatus: dto.servicingStatus ?? 'ACTIVE',
     maturityDate: dto.maturityDate,
     riskDataAsOf: dto.riskDataAsOf,
-    defaulted: dto.status === 'DEFAULTED',
   };
 }
 
@@ -105,6 +116,7 @@ export function toPortfolioSummary(dto: PortfolioDto): PortfolioSummary {
     pendingAmount: toNumber(dto.pendingAmount),
     principalRepaid: toNumber(dto.principalRepaid),
     interestReceived: toNumber(dto.interestReceived),
+    prepaymentFeeReceived: toNumber(dto.prepaymentFeeReceived),
     totalReceived: toNumber(dto.totalReceived),
     activeNoteCount: dto.activeNoteCount,
     positionCount: dto.positionCount,
@@ -137,6 +149,12 @@ export function toInvestmentContract(dto: InvestorContractDto): InvestmentContra
     availableSignatureMethod: dto.availableSignatureMethod,
     downloadPath: `/investor/loan-contracts/${dto.contractNumber}/document`,
     expiresAt: dto.expiresAt,
+    padesSigned: dto.signatureProfile === 'PADES_B_B',
+    pdfSignatureCount: dto.pdfSignatureCount ?? 0,
+    signedPdfDocumentHash: dto.signedPdfDocumentHash ?? null,
+    receiptDocumentHash: dto.receiptDocumentHash ?? null,
+    signedDocumentPath: `/investor/loan-contracts/${dto.contractNumber}/signed-document`,
+    receiptPath: `/investor/loan-contracts/${dto.contractNumber}/receipt`,
   };
 }
 
@@ -148,6 +166,10 @@ export interface AutoInvestConfigDto {
   maxTermMonths: number;
   amountPerLoan: string;
   enabledAt: string | null;
+  riskAcknowledgedVersion?: string | null;
+  riskAcknowledgedAt?: string | null;
+  riskDisclosureVersion?: string;
+  pausedForRiskAcknowledgement?: boolean;
 }
 
 export interface AutoInvestMatchDto {
@@ -168,6 +190,8 @@ export const toAutoInvestConfig = (dto: AutoInvestConfigDto): AutoInvestConfig =
   minAnnualRate: Number(dto.minAnnualRate),
   maxTermMonths: dto.maxTermMonths,
   amountPerLoan: Number(dto.amountPerLoan),
+  riskAcknowledgedVersion: dto.riskAcknowledgedVersion ?? null,
+  pausedForRiskAcknowledgement: dto.pausedForRiskAcknowledgement ?? false,
 });
 
 export const toAutoInvestMatch = (dto: AutoInvestMatchDto): AutoInvestMatch => ({

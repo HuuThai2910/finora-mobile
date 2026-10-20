@@ -85,9 +85,9 @@ export function usePinFlow(request: PinRequest, onFinish: (outcome: PinOutcome) 
 
   /** Xác nhận PIN lấy token; lỗi thì quay về bước nhập PIN theo mã lỗi backend. */
   const verify = useCallback(
-    async (pin: string, scope: PinScope) => {
+    async (pin: string, scope: PinScope, requestKey: string) => {
       try {
-        const { pinToken } = await verifyPin(pin, scope);
+        const { pinToken } = await verifyPin(pin, scope, requestKey);
         finish({ type: 'verified', pinToken });
       } catch (e) {
         if (!alive.current) return;
@@ -104,7 +104,7 @@ export function usePinFlow(request: PinRequest, onFinish: (outcome: PinOutcome) 
       try {
         switch (call.type) {
           case 'verify':
-            if (request.kind === 'guard') await verify(call.pin, request.scope);
+            if (request.kind === 'guard') await verify(call.pin, request.scope, request.requestKey);
             return;
           case 'change':
             await changePin(call.currentPin, call.newPin);
@@ -127,7 +127,7 @@ export function usePinFlow(request: PinRequest, onFinish: (outcome: PinOutcome) 
       // Tới đây là vừa tạo hoặc đặt lại PIN xong.
       const newPin = call.type === 'create' ? call.pin : call.newPin;
       if (request.kind === 'guard') {
-        await verify(newPin, request.scope);
+        await verify(newPin, request.scope, request.requestKey);
       } else {
         finish({ type: 'saved', action: call.type === 'create' ? 'created' : 'reset' });
       }

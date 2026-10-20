@@ -1,143 +1,88 @@
-import { useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Colors } from '@/constants/colors';
-import { Radius, Spacing, Text_ } from '@/theme';
-import { PHeader, PItem, Screen } from '@/components/phone';
-import { Button, Field, InfoNote, SectionLabel, Tag } from '@/components/ui';
-import { ErrorState, LoadingScreen } from '@/components/feedback';
-import { formatDong } from '@/utils/format';
-import { toUserMessage } from '@/lib/api';
-import { usePinGuard } from '@/features/pin';
-import { AML_NOTE } from '../constant';
-import { useBalance, useLinkedAccount, useWithdrawQuote } from '../hook/useWallet';
-import { withdraw } from '../api';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { WalletStackParamList } from '@/navigation/types';
+import type { CreateWithdrawalRequest } from '@/types/wallet';
+import { WITHDRAW_DEMO_NOTE } from '../constant';
+import { useCreateWithdrawal } from '../hook/useCreateWithdrawal';
+import { useWithdrawalPolicy } from '../hook/useWallet';
+import WalletAccountCard from './WalletAccountCard';
+import WalletButton from './WalletButton';
+import WalletHistorySkeleton from './WalletHistorySkeleton';
+import WalletHistoryStatus from './WalletHistoryStatus';
+import WalletNote from './WalletNote';
+import WalletScaffold from './WalletScaffold';
+import WithdrawForm from './WithdrawForm';
+import WithdrawPolicyCard from './WithdrawPolicyCard';
 
-/** Màn 24 — rút tiền về tài khoản chính chủ (quy tắc B1 chống rửa tiền). */
+type Nav = NativeStackNavigationProp<WalletStackParamList, 'Withdraw'>;
+
+/**
+ * Màn 24 — rút tiền từ ví về tài khoản ngân hàng (R4, W3B), cùng bộ với "Nạp tiền vào ví": số dư khả dụng, nhãn môi
+ * trường demo khi provider là bản giả lập, hạn mức theo policy của Payment, rồi form tài khoản nhận và số tiền.
+ *
+ * Gửi lệnh có xác nhận PIN; tạo được lệnh (tiền đã rời ví) thì chuyển sang màn trạng thái để theo dõi tới khi có kết
+ * quả cuối. Màn chỉ điều phối: form, PIN/idempotency và theo dõi trạng thái nằm ở component/hook riêng.
+ */
 export default function WithdrawScreen() {
-  const nav = useNavigation();
-  const balance = useBalance();
-  const account = useLinkedAccount();
-  const quote = useWithdrawQuote();
+  const nav = useNavigation<Nav>();
+  const policy = useWithdrawalPolicy();
+  const create = useCreateWithdrawal();
 
-  const [amount, setAmount] = useState('3.000.000');
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const { requirePin } = usePinGuard();
-
-  const loading = balance.loading || account.loading || quote.loading;
-  const loadError = balance.error ?? account.error ?? quote.error;
-  const reload = () => {
-    balance.reload();
-    account.reload();
-    quote.reload();
-  };
-
-  const parsed = Number(amount.replace(/\D/g, ''));
-
-  const onSubmit = async () => {
-    if (submitting) return;
-    if (!parsed) {
-      setError('Nhập số tiền cần rút.');
-      return;
-    }
-    if (balance.data && parsed > balance.data.available) {
-      setError('Số tiền vượt quá số dư khả dụng.');
-      return;
-    }
-    setError(null);
-    setSubmitting(true);
-    try {
-      // Rút tiền chưa có endpoint thật (`withdraw` vẫn là mock) nên token PIN chưa gửi đi đâu,
-      // nhưng vẫn bắt nhập PIN để luồng người dùng giống hệt khi nối API thật.
-      const pinToken = await requirePin('WITHDRAW');
-      if (!pinToken) return;
-      await withdraw();
-      Alert.alert('Đã gửi lệnh rút', 'Tiền về tài khoản trong khoảng 30 giây.', [
-        { text: 'Xong', onPress: () => nav.goBack() },
-      ]);
-    } catch (e) {
-      setError(toUserMessage(e));
-    } finally {
-      setSubmitting(false);
+  const submit = async (request: CreateWithdrawalRequest) => {
+    const outcome = await create.submit(request);
+    if (outcome.kind === 'created') {
+      // Thay chỗ form để nút quay lại không đưa về form vừa gửi; lệnh tiếp theo sẽ là một ý định mới.
+      nav.replace('WithdrawalDetail', { withdrawalId: outcome.withdrawal.withdrawalId });
+    } else if (outcome.kind === 'failed' && outcome.code?.startsWith('WITHDRAWAL_')) {
+      // Payment từ chối theo hạn mức hay số dư: tải lại policy để con số trên màn khớp lý do vừa báo. Dữ liệu cũ vẫn
+      // giữ trong lúc tải nên form đang nhập không bị gỡ.
+      policy.reload();
     }
   };
 
-  if (loading) return <Screen><LoadingScreen cards={2} /></Screen>;
-  if (loadError) return <Screen><ErrorState message={loadError} onRetry={reload} /></Screen>;
+  const renderBody = () => {
+    if (!policy.data) {
+      if (policy.loading) return <WalletHistorySkeleton cards={3} label="Đang tải hạn mức rút tiền" />;
+      return (
+        <WalletHistoryStatus
+          kind="error"
+          message={policy.error ?? 'Không tải được hạn mức rút tiền.'}
+          onRetry={policy.reload}
+        />
+      );
+    }
+    return (
+      <>
+        {policy.data.simulatedProvider ? <WalletNote tone="warn" text={WITHDRAW_DEMO_NOTE} /> : null}
+        <WithdrawPolicyCard policy={policy.data} />
+        <WithdrawForm
+          policy={policy.data}
+          submitting={create.submitting}
+          submitError={create.error}
+          onSubmit={request => void submit(request)}
+          onEdit={create.clearError}
+        />
+      </>
+    );
+  };
 
   return (
-    <Screen>
-      <PHeader
-        title="Rút tiền"
-        back
-        hint={balance.data ? `Số dư: ${formatDong(balance.data.available)}` : undefined}
+    // Kéo để làm mới policy (hạn mức còn lại, số dư) mà không gỡ form đang nhập.
+    <WalletScaffold title="Rút tiền" refreshing={policy.loading && !!policy.data} onRefresh={policy.reload}>
+      <WalletAccountCard
+        available={policy.data?.availableBalance ?? null}
+        held={null}
+        loading={policy.loading}
+        error={policy.error}
+        onRetry={policy.reload}
       />
-
-      <Field
-        label="Số tiền rút"
-        value={amount}
-        onChangeText={setAmount}
-        keyboardType="number-pad"
-        error={error ?? undefined}
-        required
+      {renderBody()}
+      <WalletButton
+        variant="text"
+        icon="receipt"
+        label="Lịch sử rút tiền"
+        onPress={() => nav.navigate('WithdrawalHistory')}
       />
-
-      <SectionLabel>Về tài khoản liên kết</SectionLabel>
-
-      {account.data ? (
-        <View style={styles.bank}>
-          <View style={styles.bankInfo}>
-            <Text style={styles.bankName}>{account.data.bank}</Text>
-            <Text style={styles.bankMeta}>
-              {account.data.maskedNumber} · {account.data.holder}
-            </Text>
-          </View>
-          {account.data.verified ? <Tag tone="green" small>Chính chủ ✓</Tag> : null}
-        </View>
-      ) : null}
-
-      {quote.data ? (
-        <>
-          <PItem label="Phí rút" value={formatDong(quote.data.fee)} />
-          <PItem
-            label="Thời gian"
-            value={`~${quote.data.estimatedSeconds} giây (${quote.data.channel})`}
-            last
-          />
-        </>
-      ) : null}
-
-      <Button
-        label="Xác nhận rút"
-        onPress={onSubmit}
-        loading={submitting}
-        style={styles.action}
-      />
-
-      <InfoNote tone="warn" style={styles.note}>
-        {AML_NOTE}
-      </InfoNote>
-    </Screen>
+    </WalletScaffold>
   );
 }
-
-const styles = StyleSheet.create({
-  bank: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.lg,
-    borderWidth: 2,
-    borderColor: Colors.brand,
-    borderRadius: Radius.lg,
-    backgroundColor: Colors.brand50,
-    padding: Spacing.xl,
-    marginBottom: Spacing.md,
-  },
-  bankInfo: { flexShrink: 1, gap: 2 },
-  bankName: { ...Text_.bodyBold, color: Colors.ink },
-  bankMeta: { ...Text_.micro, color: Colors.ink3 },
-  action: { marginTop: Spacing.xl },
-  note: { marginTop: Spacing.xl },
-});

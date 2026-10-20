@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
+import { SIGNATURE_REJECTED_CODE } from '@/constants/contractSignature';
 import type { LoanContractStatus } from '@/types/contract';
 import { useRefreshContractSignatureMutation } from '../api/applicationApi';
 import { toActionError } from '../mappers/apiError';
@@ -15,8 +16,11 @@ const MAX_POLLS = 12;
  *   foreground và không có lượt hỏi nào đang chạy; dừng ngay khi trạng thái
  *   thôi là `SIGNING` rồi gọi `reload` để màn lấy hợp đồng mới. Dọn timer khi
  *   rời màn hoặc trạng thái đổi.
- * - `check` cho người vay chủ động hỏi ngay; lỗi của lượt này hiện ra màn, còn
- *   lỗi của lượt hỏi nền thì bỏ qua để không làm phiền (nút vẫn báo lỗi chi tiết).
+ * - Lỗi mạng hoặc 5xx tạm thời của lượt hỏi nền được bỏ qua để không làm phiền (nút
+ *   kiểm tra thủ công vẫn báo lỗi chi tiết). Lỗi kết thúc phiên ký thì dừng hỏi và tải lại
+ *   hợp đồng (B72): lỗi nghiệp vụ, hoặc chữ ký bị từ chối (`rejected`, backend đã hủy lần
+ *   ký và trả hợp đồng về chờ ký nên màn mời ký lại).
+ * - `check` cho người vay chủ động hỏi ngay; lỗi của lượt này hiện ra màn.
  */
 export function useSmartCaSignature(
   contractNumber: string,
@@ -25,6 +29,7 @@ export function useSmartCaSignature(
 ) {
   const [refreshSignature, refreshState] = useRefreshContractSignatureMutation();
   const [error, setError] = useState<string | null>(null);
+  const [rejected, setRejected] = useState(false);
   // Giữ `reload` mới nhất cho vòng hỏi nền mà không phải khởi động lại vòng hỏi.
   const reloadRef = useRef(reload);
   reloadRef.current = reload;
@@ -35,12 +40,20 @@ export function useSmartCaSignature(
       await refreshSignature(contractNumber).unwrap();
       reload();
     } catch (caught) {
-      setError(toActionError(caught).message);
+      const actionError = toActionError(caught);
+      if (actionError.code === SIGNATURE_REJECTED_CODE) {
+        setRejected(true);
+        reload();
+        return;
+      }
+      setError(actionError.message);
     }
   };
 
   useEffect(() => {
     if (status !== 'SIGNING') return undefined;
+    // Một phiên ký mới bắt đầu: lời báo chữ ký bị từ chối của lần trước không còn đúng.
+    setRejected(false);
 
     let cancelled = false;
     let inFlight = false;
@@ -63,8 +76,14 @@ export function useSmartCaSignature(
           reloadRef.current();
           return;
         }
-      } catch {
-        // Poll nền không làm gián đoạn người dùng; nút kiểm tra thủ công vẫn hiển thị lỗi chi tiết.
+      } catch (caught) {
+        const actionError = toActionError(caught);
+        if (actionError.code === SIGNATURE_REJECTED_CODE || !actionError.retryable) {
+          // Báo từ chối kể cả khi trạng thái vừa đổi (vòng hỏi đã được dọn): đó chính là lý do hợp đồng về chờ ký.
+          if (actionError.code === SIGNATURE_REJECTED_CODE) setRejected(true);
+          reloadRef.current();
+          return;
+        }
       } finally {
         inFlight = false;
       }
@@ -78,5 +97,5 @@ export function useSmartCaSignature(
     };
   }, [contractNumber, status, refreshSignature]);
 
-  return { check, checking: refreshState.isLoading, error };
+  return { check, checking: refreshState.isLoading, error, rejected };
 }

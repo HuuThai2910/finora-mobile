@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { getRepayment } from '../api/servicingApi';
+import { isHeldUntilDueDate } from '../mappers/servicing';
 import type { RepaymentResult } from '../types';
 
 const TERMINAL: ReadonlySet<RepaymentResult['status']> = new Set([
-  'COMPLETED', 'FAILED', 'RECONCILIATION_REQUIRED',
+  'COMPLETED', 'FAILED', 'RECONCILIATION_REQUIRED', 'CANCELLED',
 ]);
+
+/** Khoản trả kỳ trước hạn đứng ở COLLECTED tới ngày đến hạn (D16): dừng theo dõi như trạng thái cuối. */
+const settled = (value: RepaymentResult): boolean => TERMINAL.has(value.status) || isHeldUntilDueDate(value);
 
 /**
  * Theo dõi lệnh thu nợ bất đồng bộ trong tối đa 60 giây. Polling dừng khi có
@@ -17,7 +21,7 @@ export function useRepaymentTracking(initial: RepaymentResult | null) {
 
   useEffect(() => {
     setData(initial);
-    if (!initial || TERMINAL.has(initial.status)) return undefined;
+    if (!initial || settled(initial)) return undefined;
 
     let alive = true;
     let attempts = 0;
@@ -36,7 +40,7 @@ export function useRepaymentTracking(initial: RepaymentResult | null) {
         const next = await getRepayment(initial.repaymentId, controller.signal);
         if (!alive) return;
         setData(next);
-        if (!TERMINAL.has(next.status)) schedule();
+        if (!settled(next)) schedule();
       } catch {
         // Lỗi mạng tạm thời không làm mất response đã thu tiền; thử lại có giới hạn.
         schedule();

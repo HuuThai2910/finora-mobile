@@ -9,7 +9,9 @@ import ApplicationTimelineCard from '../components/ApplicationTimelineCard';
 import ContractDetailScaffold from '../components/ContractDetailScaffold';
 import ContractDocumentCard from '../components/ContractDocumentCard';
 import { PdfViewer } from '@/components/feedback';
+import { SIGNATURE_REJECTED_MESSAGE } from '@/constants/contractSignature';
 import ContractPricingCard from '../components/ContractPricingCard';
+import ContractSignaturesCard from '../components/ContractSignaturesCard';
 import ContractSmartCaCard from '../components/ContractSmartCaCard';
 import ContractSummaryCard from '../components/ContractSummaryCard';
 import ContractDisbursementCard from '../components/ContractDisbursementCard';
@@ -109,6 +111,11 @@ function ContractDetailBody({
         <ContractSmartCaCard checking={smartCa.checking} error={smartCa.error} onCheck={smartCa.check} />
       ) : null}
 
+      {/* Thẻ SmartCA đã ẩn khi hợp đồng về chờ ký, nên lý do (chữ ký bị từ chối) hiện ở đây khi người vay còn ký được. */}
+      {smartCa.rejected && canRespond ? (
+        <DetailNote tone="warn">{SIGNATURE_REJECTED_MESSAGE}</DetailNote>
+      ) : null}
+
       <ContractDocumentCard
         confirmed={CONFIRMED_STATUSES.includes(contract.status)}
         hasPdf={Boolean(contract.pdfDocument)}
@@ -123,6 +130,8 @@ function ContractDetailBody({
       />
 
       {pdf.error ? <DetailNote tone="warn">{pdf.error}</DetailNote> : null}
+
+      {contract.signatureProfile === 'PADES_B_B' ? <ContractSignaturesCard contract={contract} /> : null}
 
       {canRespond && !contract.pdfDocument ? (
         <DetailNote tone="warn">
@@ -139,7 +148,13 @@ function ContractDetailBody({
       ) : null}
 
       {canRespond && openedCurrentPdf ? (
-        <InlineContractConsent contract={contract} countdown={countdown} onDone={reload} onStale={handleStale} />
+        <InlineContractConsent
+          contract={contract}
+          countdown={countdown}
+          signatureRejected={smartCa.rejected}
+          onDone={reload}
+          onStale={handleStale}
+        />
       ) : null}
 
       <ApplicationTimelineCard

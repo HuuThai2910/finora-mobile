@@ -49,6 +49,7 @@ export function skipLabel(reason?: string): string {
     case 'LISTING_CLOSED': return 'Đã đóng';
     case 'ALREADY_INVESTED': return 'Đã tự đầu tư';
     case 'BELOW_MINIMUM': return 'Dưới mức tối thiểu';
+    case 'RISK_ACKNOWLEDGEMENT_OUTDATED': return 'Chờ xác nhận rủi ro';
     default: return 'Bỏ qua';
   }
 }

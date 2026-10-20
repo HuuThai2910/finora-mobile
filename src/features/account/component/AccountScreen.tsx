@@ -129,7 +129,15 @@ export default function AccountScreen() {
               accessibilityHint="Mở bảng nhập mã PIN giao dịch"
             />
           </UpcomingGroup>
-          <UpcomingGroup icon="bell" title="Thông báo & Cài đặt" items={NOTIFICATION_SETTINGS} />
+          <UpcomingGroup icon="bell" title="Thông báo & Cài đặt" items={NOTIFICATION_SETTINGS}>
+            <SettingsRow
+              icon="bell"
+              title="Cài đặt thông báo"
+              subtitle="Thông báo đẩy và nhóm tin muốn nhận"
+              onPress={() => nav.navigate('NotificationSettings')}
+              accessibilityHint="Mở màn cài đặt thông báo đẩy"
+            />
+          </UpcomingGroup>
 
           <SettingsCard>
             <SettingsRow icon="logout" title="Đăng xuất" onPress={onLogout} danger />

@@ -50,6 +50,10 @@ export function applicationStage(
   termsStatus?: TermsConfirmationStatus,
   fundingStatus?: LoanFundingStatus,
 ): ApplicationStage {
+  // Cùng lý do với statusMeta: hợp đồng EFFECTIVE của khoản giải ngân thất bại không được xếp vào nhóm đang hiệu lực.
+  if (applicationStatus === 'APPROVED' && fundingStatus === 'CANCELLED') {
+    return 'stopped';
+  }
   if (applicationStatus === 'APPROVED' && contractStatus) {
     return CONTRACT_STAGE[contractStatus] ?? 'other';
   }

@@ -3,7 +3,7 @@ import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
 import { usePinGuard } from '@/features/pin';
 import type { InvestOrderResult, MarketLoan } from '@/types/invest';
 import { invest } from '../api';
-import { DEFAULT_INVEST_AMOUNT } from '../constant';
+import { DEFAULT_INVEST_AMOUNT, RISK_DISCLOSURE_VERSION } from '../constant';
 import { readableAmounts } from '../mapper';
 import {
   defaultInvestAmount,
@@ -28,6 +28,8 @@ export function useInvestForm(loan: MarketLoan) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [result, setResult] = useState<InvestOrderResult | null>(null);
+  // Nhà đầu tư phải tự tick xác nhận rủi ro cho từng lần đặt lệnh; không lưu sẵn trạng thái đã đồng ý.
+  const [riskAccepted, setRiskAccepted] = useState(false);
   const idempotencyKey = useRef(generateIdempotencyKey());
   const { requirePin } = usePinGuard();
 
@@ -40,14 +42,14 @@ export function useInvestForm(loan: MarketLoan) {
   };
 
   const submit = async () => {
-    if (error || submitting) return;
+    if (error || submitting || !riskAccepted) return;
     setSubmitError(null);
     setSubmitting(true);
     try {
       // Đóng bảng PIN là thôi đặt lệnh: không báo lỗi, giữ nguyên khoá cho lần bấm sau.
-      const pinToken = await requirePin('INVEST');
+      const pinToken = await requirePin('INVEST', idempotencyKey.current);
       if (!pinToken) return;
-      const order = await invest(loan.id, amount, idempotencyKey.current, pinToken);
+      const order = await invest(loan.id, amount, idempotencyKey.current, pinToken, RISK_DISCLOSURE_VERSION);
       if (order.status !== 'PENDING_FUNDS') idempotencyKey.current = generateIdempotencyKey();
       setResult(order);
     } catch (e) {
@@ -65,6 +67,8 @@ export function useInvestForm(loan: MarketLoan) {
     estimate: error ? null : estimateInvestment(amount, loan),
     change,
     submit,
+    riskAccepted,
+    setRiskAccepted,
     submitting,
     submitError,
     result,

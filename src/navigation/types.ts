@@ -46,10 +46,15 @@ export type WalletStackParamList = {
   WalletHistory: undefined;
   TopUp: undefined;
   Withdraw: undefined;
+  /** Lịch sử lệnh rút tiền về ngân hàng (R4). */
+  WithdrawalHistory: undefined;
+  /** Trạng thái một lệnh rút; màn tự đọc lại lệnh theo mã và theo dõi tới khi có kết quả cuối. */
+  WithdrawalDetail: { withdrawalId: string };
   PayInstallment: undefined;
   Portfolio: undefined;
   AutoInvest: undefined;
   InvestContract: undefined;
+  RescheduleConsents: undefined;
   /** Chợ Notes: danh sách khoản vay còn Note lưu hành, mỗi khoản một sổ lệnh Ask/Bid. */
   SecondaryMarket: undefined;
   /** Sổ lệnh của một đợt gọi vốn; `listingId` là mã đợt, không phải mã khoản vay. */
@@ -89,6 +94,8 @@ export type ProfileStackParamList = {
   PartialPrepayment: { loanNumber: string };
   EarlySettlement: { loanNumber: string };
   RescheduleLoan: { loanNumber: string };
+  /** Thông báo đẩy của thiết bị và bật/tắt push theo nhóm (finora-notification R7). */
+  NotificationSettings: undefined;
 };
 
 export type TabParamList = {

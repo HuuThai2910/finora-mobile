@@ -41,6 +41,11 @@ Borrower chấp thuận exact terms
 - Dữ liệu hợp đồng là server state; trạng thái đã mở PDF giữ local theo `pdfDocumentHash`.
 - Mutation khóa nút và gửi version/hash/idempotency key; retry cùng ý định giữ cùng key.
 - Có loading, empty, error, success, version/hash conflict, hết hạn và không thuộc contract party.
+- Cập nhật 2026-10-17 (contract `LoanFundingCancelled` v1): khi Loan trả `funding.status = CANCELLED`
+  (hợp đồng bị từ chối/hết hạn ký hoặc giải ngân thất bại), danh sách và chi tiết hồ sơ ưu tiên trạng thái
+  “Dừng trước giải ngân” hơn trạng thái Contract (giải ngân thất bại vẫn để Contract `EFFECTIVE`) và xếp vào nhóm
+  “stopped”; vẫn tải Contract để người vay xem lại. Màn khoản vay của nhà đầu tư đọc `cancellationReason` của
+  listing để báo khoản vay không giải ngân và tiền giữ đã trả lại ví.
 
 ## File dự kiến
 

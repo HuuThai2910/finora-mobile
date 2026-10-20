@@ -8,7 +8,7 @@ Tài khoản người vay có thể kiểm thử trên mobile mà không cần P
 2. Thanh toán kỳ tới hoặc khắc phục nghĩa vụ quá hạn.
 3. Trả trước một phần gốc, xem phí và xác nhận báo giá.
 4. Tất toán trước hạn, xem đầy đủ gốc/lãi/phí/phạt trước khi xác nhận.
-5. Gửi yêu cầu điều chỉnh kỳ hạn hoặc gia hạn; quản trị viên duyệt trên `finora-web`.
+5. Gửi yêu cầu điều chỉnh kỳ hạn hoặc gia hạn; FINORA thẩm định trên web và nhà đầu tư biểu quyết trên mobile.
 6. Nhà đầu tư theo dõi DPD, nhóm nợ và số tiền quá hạn trên đúng Note đang sở hữu.
 7. Nhà đầu tư nhận, đọc và quản lý thông báo servicing thật từ Notification Service.
 8. Hồ sơ vay mới phản ánh đúng trạng thái CIC hiện tại và giai đoạn phục hồi sau nợ xấu.
@@ -23,7 +23,7 @@ cập chéo tài khoản phải lưu thêm evidence theo runbook backend
 - `finora-payment` tại URL trong `EXPO_PUBLIC_PAYMENT_API_URL`.
 - Fineract và database tương ứng.
 - Kafka để phát sự kiện trả nợ; `finora-investment` để Note/danh mục nhà đầu tư nhận cập nhật.
-- `cic-service`, `finora-ai` và worker chấm điểm để thử điều kiện nợ xấu/phục hồi.
+- CIC Node tại `https://cic-service-node.vercel.app/`, `finora-ai` và worker chấm điểm để thử điều kiện nợ xấu/phục hồi.
 - `finora-notification` và database Notification để thử danh sách, badge và trạng thái đã đọc.
 - Gateway/User/Keycloak cho phiên đăng nhập thật.
 
@@ -61,6 +61,7 @@ Mở **Hồ sơ → Khoản vay → chọn khoản vay**. Màn chi tiết hiển
 Đường đi của nhà đầu tư:
 
 - **Ví → Danh mục đầu tư**: mở Note đang sở hữu để quan sát cảnh báo quá hạn.
+- **Ví → Đề nghị cơ cấu cần đồng ý**: xem phần vốn bị ảnh hưởng và đồng ý/từ chối lịch mới.
 - **Trang chủ → biểu tượng chuông**: mở trung tâm thông báo, xem badge và đánh dấu đã đọc.
 
 Đường đi của quản trị viên:
@@ -74,8 +75,8 @@ Mở **Hồ sơ → Khoản vay → chọn khoản vay**. Màn chi tiết hiển
 - Thanh toán hiển thị lần lượt trạng thái đã thu, đang ghi core, hoàn tất hoặc cần đối soát.
 - Nếu cần đối soát, không bấm trả lại cùng nghĩa vụ; xử lý ở web quản trị.
 - Sau `COMPLETED`, quay về chi tiết để mobile tải lại dư nợ và lịch từ Loan/Fineract.
-- Với cơ cấu, trạng thái đầu tiên là **Chờ thẩm định**. Sau khi admin duyệt, worker cập nhật Fineract;
-  mobile kéo làm mới để thấy **Đã áp dụng** và lịch mới.
+- Với cơ cấu, trạng thái đầu tiên là **Chờ thẩm định**. Sau khi FINORA thẩm định đạt, trạng thái là
+  **Chờ nhà đầu tư đồng ý**; chỉ khi mọi nhà đầu tư đồng ý, worker mới cập nhật Fineract.
 - Nếu số dư không đủ, mobile chặn xác nhận trước khi gọi API thanh toán.
 - Danh mục nhà đầu tư chỉ hiển thị dữ liệu risk từ Investment; mobile không tự tính DPD/nhóm nợ.
 - Badge thông báo giảm sau khi đánh dấu đã đọc và quay lại Trang chủ.
@@ -118,32 +119,37 @@ Mở **Hồ sơ → Khoản vay → chọn khoản vay**. Màn chi tiết hiển
 
 - Nút dùng toàn bộ nghĩa vụ quá hạn hiện tại, không cho người dùng tự sửa sai số tiền.
 - Sau `COMPLETED`, `overdueAmount=0`, `daysPastDue=0` và collection case chuyển `CURED`.
-- Loan phát `LoanDelinquencyChanged.v1`; CIC mock thêm một phiên bản lịch sử mới.
+- Loan phát `LoanDelinquencyChanged.v1`; CIC Node thêm một phiên bản lịch sử mới.
 - Nếu khoản vay trước đó là `DEFAULTED`, trả đủ quá hạn làm Loan quay lại `ACTIVE`.
 
 ### TC04 — Trả trước một phần gốc
 
-**Điều kiện:** Product/Fineract V2 dùng `PROGRESSIVE`, advanced payment allocation và
-`REAMORTIZATION`; ví đủ tổng báo giá.
+**Điều kiện:** hồ sơ mới dùng Product/Fineract V3 (`PROGRESSIVE`, advanced payment allocation,
+`NEXT_INSTALLMENT`); ví đủ tổng báo giá. V2 cũ vẫn test được nhưng sẽ `REAMORTIZATION`.
 
 **Thao tác:** nhập phần gốc trả thêm → **Lập báo giá → Xác nhận trả trước**.
 
 **Mong đợi:**
 
-- Báo giá hiển thị nghĩa vụ kỳ hiện tại, phần gốc trả thêm, phí và tổng trừ ví.
+- Báo giá hiển thị nghĩa vụ kỳ hiện tại, phần gốc trả thêm, tổng phí, phần nhà đầu tư 80%, phần FINORA
+  20% và tổng trừ ví; không có lãi tháng tương lai.
 - Số nhập phải lớn hơn 0 và nhỏ hơn gốc còn lại; khoản V1 bị backend từ chối trước khi trừ ví.
-- Sau `COMPLETED`, gốc giảm đúng phần trả thêm và lịch còn lại do Fineract tái phân bổ.
+- Sau `COMPLETED`, gốc giảm đúng phần trả thêm. V3 ưu tiên giảm các kỳ gần nhất/rút ngắn kỳ; V2 cũ
+  tái phân bổ số tiền các kỳ còn lại.
+- Danh mục nhà đầu tư tăng đúng mục **Phí trả trước được chia** theo phần dư nợ Note.
 - Mobile không dựng lịch dự kiến giả trước khi core hoàn tất.
 
 ### TC05 — Tất toán trước hạn
 
 **Điều kiện:** khoản vay còn dư nợ và ví đủ tổng báo giá.
 
-**Thao tác:** **Tất toán toàn bộ trước hạn → Lập báo giá → Xác nhận tất toán**.
+**Thao tác:** mở **Tất toán toàn bộ trước hạn**; màn tự tải và hiện báo giá. Kiểm tra số tiền rồi bấm
+**Xác nhận tất toán**; cảnh báo không hoàn tác chỉ xuất hiện tại bước xác nhận cuối.
 
 **Mong đợi:**
 
-- Báo giá tách rõ gốc, lãi tới ngày tất toán, phí/phạt core và phí tất toán.
+- Báo giá tách rõ gốc, lãi đã phát sinh tới ngày tất toán, phí/phạt core, tổng phí tất toán và cách chia
+  80/20; không thu lãi của các tháng tương lai.
 - Quote hết hạn/đã dùng hoặc ví thiếu tiền không được debit.
 - Sau `COMPLETED`, `totalOutstanding=0`; Payment account, Loan và Note đóng idempotently.
 - Mobile hiển thị khoản vay `Đã tất toán` và không còn nút trả nợ.
@@ -152,15 +158,19 @@ Mở **Hồ sơ → Khoản vay → chọn khoản vay**. Màn chi tiết hiển
 
 **Điều kiện:** Loan ở `ACTIVE` hoặc `DEFAULTED`.
 
-**Thao tác:** chọn loại đề nghị, nhập ngày/số kỳ/lý do, chấp nhận điều khoản và gửi; admin mở
-**Vận hành khoản vay → Yêu cầu cơ cấu** trên web để duyệt hoặc từ chối.
+**Thao tác:** người vay chọn một trong hai loại có mô tả rõ nghĩa, nhập kỳ/ngày hoặc số kỳ, lý do và gửi;
+admin mở **Vận hành khoản vay → Yêu cầu cơ cấu** để thẩm định. Nếu đạt, mỗi nhà đầu tư mở
+**Ví → Đề nghị cơ cấu cần đồng ý** và quyết định.
 
 **Mong đợi:**
 
 - Trước duyệt: request là `Chờ thẩm định`, lịch cũ vẫn có hiệu lực.
 - Từ chối: request là `Đã từ chối`, lịch và dư nợ không đổi.
-- Duyệt: worker tạo/duyệt request trên Fineract; chỉ khi core thành công mới thành `Đã áp dụng`,
+- FINORA thẩm định đạt: request là **Chờ nhà đầu tư đồng ý**, Loan và lịch cũ chưa đổi.
+- Một nhà đầu tư từ chối: request là **Nhà đầu tư từ chối**, lịch và dư nợ không đổi.
+- Tất cả đồng ý: Loan mới chuyển sang xử lý Fineract; chỉ khi core thành công mới thành **Đã áp dụng**,
   phát `LoanRescheduled.v1` và mobile đọc được lịch mới.
+- Thử đồng ý/từ chối hai lần: không tạo hai quyết định hoặc hai lần gọi Fineract.
 
 ### TC07 — Default/nợ xấu nội bộ
 
@@ -179,7 +189,7 @@ Mở **Hồ sơ → Khoản vay → chọn khoản vay**. Màn chi tiết hiển
 - Worker Loan đọc snapshot Fineract và tự chuyển khoản vay sang `DEFAULTED`.
 - Mobile hiển thị `Nợ xấu`, số ngày/số tiền quá hạn; vẫn cho khắc phục quá hạn và gửi đề nghị cơ cấu.
 - Web quản trị, tab **Quá hạn & thu hồi**, hiển thị stage `NPL`, nhóm 3 và cho ghi nhận hành động liên hệ.
-- `LoanDelinquencyChanged.v1` được phát; CIC mock ghi phiên bản lịch sử với nhóm cao nhất tương ứng.
+- `LoanDelinquencyChanged.v1` được phát; CIC Node ghi phiên bản lịch sử với nhóm cao nhất tương ứng.
 - Trả đủ quá hạn đưa DPD về 0, đóng collection case là `CURED` và Loan quay lại `ACTIVE`.
 
 Không có API chỉnh tay DPD/debt group vì nguồn sự thật phải là Fineract. Để demo TC07 mà không chờ
@@ -190,7 +200,7 @@ trong UI hiện tại.
 vẫn còn số tiền chưa trả trên lịch Fineract:
 
 - Kỳ 1 trễ 5 ngày rồi trả đủ, DPD trở về 0; kỳ 2 sau đó trễ 10 ngày thì DPD hiện tại là 10, không phải 15.
-- CIC mock ghi nhận hai lần trễ riêng và `soNgayTreDaiNhat=10`; không biến thành nhóm 3 chỉ vì cộng lịch sử.
+- CIC Node ghi nhận hai lần trễ riêng và `soNgayTreDaiNhat=10`; không biến thành nhóm 3 chỉ vì cộng lịch sử.
 - Nếu kỳ 1 chưa trả hết khi kỳ 2 đã quá hạn 10 ngày, DPD vẫn chạy từ ngày đến hạn của kỳ 1. Với lịch
   tháng, giá trị có thể khoảng 40 ngày tùy khoảng cách hai kỳ, không phải phép cộng 5 + 10.
 - Khoản vay thông thường chỉ vào nhóm 3 theo mốc ngày khi DPD liên tục đạt 91; các trường hợp cơ cấu,
@@ -301,7 +311,8 @@ thử API bổ sung, dùng JWT A gọi `POST /notifications/{id-của-B}/read`.
 
 ## Trạng thái tích hợp hiện tại
 
-Loan, CIC mock và Investment đã consume `LoanDelinquencyChanged.v1`; Investment cập nhật risk read
+Loan, CIC Node và Investment đã consume `LoanDelinquencyChanged.v1`; Loan/Investment đã nối hai event
+đồng thuận cơ cấu và UI biểu quyết nhà đầu tư. Investment cập nhật risk read
 model và phát `InvestorNoteServicingChanged.v1`; Notification lưu in-app notification có dedup. Schema,
 consumer, API và UI đã nối local nhưng vẫn mang trạng thái `IMPLEMENTED_LOCAL_PENDING_FULL_E2E` cho tới
 khi TC09–TC14 được chạy trên cùng bộ database/Kafka tích hợp.

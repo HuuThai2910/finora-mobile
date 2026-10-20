@@ -7,6 +7,7 @@ import type {
   PartialPrepaymentQuote,
   RepaymentResult,
   ReschedulePolicy,
+  ScheduledDue,
   RescheduleRequest,
   ServicingLoanSummary,
   ServicingSchedule,
@@ -23,6 +24,13 @@ export const getServicingSchedule = (loanNumber: string, signal?: AbortSignal): 
 
 export const getLoanApplication = (applicationNumber: string, signal?: AbortSignal): Promise<LoanApplication> =>
   apiFetch<LoanApplication>(`/loan-applications/${encodeURIComponent(applicationNumber)}`, { signal });
+
+/** Đọc nghĩa vụ hiện tại từ Fineract qua Payment; chỉ đọc, không cần PIN. */
+export const getScheduledDue = (loanApplicationId: number, signal?: AbortSignal): Promise<ScheduledDue> =>
+  paymentFetch<ScheduledDue>(
+    `/repayments/scheduled-due?loanApplicationId=${encodeURIComponent(String(loanApplicationId))}`,
+    { signal },
+  );
 
 /**
  * Ba lệnh trừ ví trả nợ dưới đây cần token PIN phạm vi `REPAYMENT` lấy ngay trước khi gửi;
@@ -42,6 +50,21 @@ export const createScheduledRepayment = (
 
 export const getRepayment = (repaymentId: string, signal?: AbortSignal): Promise<RepaymentResult> =>
   paymentFetch<RepaymentResult>(`/repayments/${encodeURIComponent(repaymentId)}`, { signal });
+
+/**
+ * Hủy khoản trả kỳ trước hạn đang chờ ghi nhận; tiền hoàn về ví. Cần PIN `REPAYMENT` vì hủy nhầm làm kỳ có thể bị
+ * quá hạn. Gọi lại với khoản đã hủy trả nguyên kết quả cũ.
+ */
+export const cancelPendingRepayment = (
+  repaymentId: string,
+  idempotencyKey: string,
+  pinToken: string,
+): Promise<RepaymentResult> =>
+  paymentFetch<RepaymentResult>(`/repayments/${encodeURIComponent(repaymentId)}/cancel`, {
+    method: 'POST',
+    headers: { 'Idempotency-Key': idempotencyKey, [PIN_TOKEN_HEADER]: pinToken },
+    timeoutMs: 30_000,
+  });
 
 export const createPartialPrepaymentQuote = (
   loanApplicationId: number,

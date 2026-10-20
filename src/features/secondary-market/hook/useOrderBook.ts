@@ -40,7 +40,7 @@ export function usePlaceOrder(listingId: number) {
       setSubmitting(true);
       setError(null);
       try {
-        const pinToken = await requirePin('ORDER');
+        const pinToken = await requirePin('ORDER', key);
         if (!pinToken) return null;
         const order = await placeBookOrder(listingId, input, key, pinToken);
         // Đã thành: lần bấm sau — kể cả cùng nội dung — là một lệnh mới, cần khóa mới.

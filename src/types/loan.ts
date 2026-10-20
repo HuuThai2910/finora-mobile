@@ -173,7 +173,7 @@ export interface LoanApplication {
   updatedAt: string;
 }
 
-export type LoanFundingStatus = 'REQUESTED' | 'FULLY_FUNDED' | 'EXPIRED';
+export type LoanFundingStatus = 'REQUESTED' | 'FULLY_FUNDED' | 'EXPIRED' | 'CANCELLED';
 
 export interface LoanFunding {
   status: LoanFundingStatus;
@@ -185,6 +185,10 @@ export interface LoanFunding {
   fullyFundedAt: string | null;
   /** Có khi `status = EXPIRED`: đợt gọi vốn hết hạn mà chưa đủ vốn. */
   expiredAt?: string | null;
+  /** Có khi `status = CANCELLED`: đã đủ vốn nhưng khoản vay không giải ngân, tiền giữ được trả lại. */
+  cancelledAt?: string | null;
+  /** `CONTRACT_DECLINED`, `CONTRACT_EXPIRED` hoặc `DISBURSEMENT_FAILED` do Loan quyết định. */
+  cancelReason?: string | null;
 }
 
 export interface ConfirmLoanTermsRequest {

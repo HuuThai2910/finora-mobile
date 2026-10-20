@@ -8,9 +8,9 @@ import { PORTFOLIO_MASCOT } from '../constant';
 
 /**
  * Thẻ tổng quan danh mục, cùng dáng thẻ ví ở trang chủ: nền xanh đậm dần, robot cầm đồng xu ở
- * góc phải. Con số lớn là vốn đang nằm trong các Note đang trả bình thường; hàng dưới là ba con số
+ * góc phải. Con số lớn là vốn còn nằm trong các Note (gồm cả khoản nợ xấu); hàng dưới là ba con số
  * người đầu tư hỏi tiếp theo — lãi suất bình quân, đã nhận về bao nhiêu, đang chờ giải ngân bao
- * nhiêu — cộng dòng "Đang nợ xấu" khi danh mục có khoản nợ xấu.
+ * nhiêu — cộng dòng "Đang nợ xấu" (phần của con số lớn đang nằm trong khoản nợ xấu) khi có.
  */
 /** Bề rộng thẻ trong mockup (màn 393pt trừ lề hai bên). */
 const DESIGN_WIDTH = 361;
@@ -22,7 +22,7 @@ const DESIGN_WIDTH = 361;
  */
 const unitFor = (width: number) => Math.min(1.1, Math.max(0.8, width / DESIGN_WIDTH));
 
-/** Số Note và khoản vay đang trả bình thường; khoản nợ xấu đếm riêng vì không nằm trong số vốn ở trên. */
+/** Số Note còn hoạt động trên số khoản trong danh mục; nêu thêm bao nhiêu khoản trong đó đang nợ xấu. */
 const subline = (s: PortfolioSummary) => {
   const base = `${s.activeNoteCount} Note trên ${s.positionCount} khoản vay`;
   return s.defaultedPositionCount > 0 ? `${base} · ${s.defaultedPositionCount} khoản nợ xấu` : base;
@@ -35,8 +35,11 @@ export default function PortfolioHeroCard({ summary, width }: { summary: Portfol
   const stats = [
     { label: 'Lãi suất bình quân', value: `${formatPercentValue(summary.averageRate)}/năm` },
     { label: 'Đã nhận về', value: formatDong(summary.totalReceived) },
+    ...(summary.prepaymentFeeReceived > 0
+      ? [{ label: 'Phí trả trước được chia', value: formatDong(summary.prepaymentFeeReceived) }]
+      : []),
     { label: 'Chờ giải ngân', value: formatDong(summary.pendingAmount) },
-    // Dư nợ nợ xấu tách khỏi "Vốn đang đầu tư"; chỉ thêm dòng khi có, để thẻ không hiện "0 đ" thừa.
+    // Phần vốn ở trên đang nằm trong khoản nợ xấu; chỉ thêm dòng khi có, để thẻ không hiện "0 đ" thừa.
     ...(summary.defaultedAmount > 0
       ? [{ label: 'Đang nợ xấu', value: formatDong(summary.defaultedAmount) }]
       : []),

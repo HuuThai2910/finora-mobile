@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { FontFamily, FontSize, IconSize, Spacing, lh } from '@/theme';
 import { Icon } from '@/components/ui';
@@ -11,6 +11,8 @@ type Props = {
   submitting: boolean;
   /** Lỗi từ máy chủ ở lần nộp gần nhất; lỗi từng ô nằm tại ô đó. */
   error: string | null;
+  /** Có khi backend báo chưa xác minh eKYC: hiện nút mở luồng eKYC ngay dưới lỗi. */
+  onStartEkyc?: () => void;
 };
 
 /**
@@ -20,7 +22,7 @@ type Props = {
  * Nút luôn bấm được như màn cũ: bấm khi còn thiếu thông tin thì form báo lỗi tại
  * từng ô. Lỗi máy chủ đặt ngay trên nút để luôn thấy dù đang cuộn ở đâu.
  */
-export default function ApplyFormSubmitBar({ onPress, submitting, error }: Props) {
+export default function ApplyFormSubmitBar({ onPress, submitting, error, onStartEkyc }: Props) {
   return (
     <LoanStepFooter>
       {error ? (
@@ -28,6 +30,12 @@ export default function ApplyFormSubmitBar({ onPress, submitting, error }: Props
           <Icon name="alert" size={IconSize.xs} color={Colors.tagRedText} />
           <Text style={styles.errorText}>{error}</Text>
         </View>
+      ) : null}
+      {onStartEkyc ? (
+        <Pressable onPress={onStartEkyc} accessibilityRole="button" hitSlop={8} style={styles.ekycLink}>
+          <Icon name="scanFace" size={IconSize.xs} color={Colors.authPrimary} />
+          <Text style={styles.ekycLinkText}>Xác minh eKYC ngay</Text>
+        </Pressable>
       ) : null}
       <LoanPrimaryButton label="Nộp hồ sơ" onPress={onPress} loading={submitting} />
     </LoanStepFooter>
@@ -51,5 +59,18 @@ const styles = StyleSheet.create({
     fontSize: FontSize.micro,
     lineHeight: lh(FontSize.micro, 1.45),
     color: Colors.tagRedText,
+  },
+  ekycLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+    paddingVertical: Spacing.xs,
+  },
+  ekycLinkText: {
+    fontFamily: FontFamily.semibold,
+    fontSize: FontSize.micro,
+    color: Colors.authPrimary,
   },
 });

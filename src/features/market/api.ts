@@ -67,13 +67,15 @@ export const invest = async (
   amount: number,
   idempotencyKey: string,
   pinToken: string,
+  riskAcknowledgementVersion: string,
 ): Promise<InvestOrderResult> => {
   if (isMocked('invest')) return investMock.invest(listingId, amount);
 
   const order = await investmentFetch<InvestOrderDto>(`/investments/listings/${listingId}/orders`, {
     method: 'POST',
     headers: { 'Idempotency-Key': idempotencyKey, [PIN_TOKEN_HEADER]: pinToken },
-    body: JSON.stringify({ amount: amount.toFixed(2) }),
+    // Backend từ chối lệnh sơ cấp thiếu xác nhận hoặc version công bố cũ (RISK_DISCLOSURE_OUTDATED).
+    body: JSON.stringify({ amount: amount.toFixed(2), riskAcknowledgementVersion }),
   });
   return toInvestOrderResult(order);
 };

@@ -127,6 +127,7 @@ export default function WalletHistoryScreen() {
             <InvestorWalletActions
               onOpenPortfolio={() => nav.navigate('Portfolio')}
               onOpenPendingContract={() => nav.navigate('InvestContract')}
+              onOpenRescheduleConsents={() => nav.navigate('RescheduleConsents')}
             />
           ) : null}
           <View style={styles.list}>{renderBody()}</View>
