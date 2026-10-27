@@ -97,13 +97,13 @@ export default function PartialPrepaymentScreen() {
         </>
       ) : quote ? (
         <>
-          <DetailCard title="Báo giá trả trước" icon="coins">
+          <DetailCard title="Số tiền cần thanh toán" icon="coins">
             <FinancialRows rows={[
-              { label: 'Khoản của kỳ gần nhất', value: quote.scheduledDue },
+              { label: 'Số tiền kỳ gần nhất cần trả', value: quote.scheduledDue },
               { label: 'Gốc trả trước thêm', value: quote.prepaidPrincipal },
               ...feeRows('Tổng phí trả trước', quote),
               { label: 'Tổng trừ từ ví', value: quote.totalAmount, emphasis: true },
-              { label: 'Báo giá có hiệu lực đến', value: formatDateTime(quote.expiresAt) },
+              { label: 'Số tiền này có hiệu lực đến', value: formatDateTime(quote.expiresAt) },
             ]} />
           </DetailCard>
           <DetailNote>{prepaymentAllocationNote(quote.allocationStrategy)}</DetailNote>

@@ -1,7 +1,5 @@
 import { formatMoneyRange } from '@/utils/format';
-
-/** Dạng ngày bước 2 gửi thẳng cho backend trong `expectedDisbursementDate`. */
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+import { localTodayIso, normalizeDisbursementDate } from '../mappers/disbursementDate';
 
 /**
  * Số tiền phải nằm trong [minAmount, maxAmount] của Product. Chỉ để báo sớm cho
@@ -13,16 +11,15 @@ export function validateAmount(amount: number, minAmount: number, maxAmount: num
 }
 
 /**
- * Ngày giải ngân dự kiến phải đúng dạng YYYY-MM-DD và không trước hôm nay.
- *
- * Giữ nguyên quy tắc của màn cũ: chỉ kiểm tra dạng chuỗi (không kiểm tra ngày có
- * thật trên lịch) và "hôm nay" là ngày UTC, so theo thứ tự chuỗi ISO. Backend
- * kiểm tra lại khi tính lịch trả.
+ * Ngày giải ngân dự kiến phải là một ngày có thật và không trước ngày tại thiết
+ * bị. Backend vẫn kiểm tra lại; frontend chỉ báo sớm bằng câu dễ hiểu.
  */
 export function validateDisbursementDate(
   date: string,
-  today: string = new Date().toISOString().slice(0, 10),
+  today: string = localTodayIso(),
 ): string | null {
-  if (ISO_DATE.test(date) && date >= today) return null;
+  const normalized = normalizeDisbursementDate(date, today);
+  if (normalized && normalized >= today) return null;
+  if (!normalized) return 'Nhập ngày đúng định dạng ngày/tháng/năm, ví dụ 01/11/2026.';
   return 'Ngày giải ngân dự kiến phải là hôm nay hoặc một ngày trong tương lai.';
 }

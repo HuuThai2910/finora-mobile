@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { FontFamily, Spacing } from '@/theme';
 import type { LoanApplication } from '@/types/loan';
-import { formatDate, formatDong, formatPercentValue } from '@/utils/format';
+import { formatDate, formatDong, formatLocalDate, formatPercentValue } from '@/utils/format';
 import {
   EDUCATION_LEVEL_OPTIONS,
   HOME_OWNERSHIP_OPTIONS,
@@ -47,7 +47,7 @@ export default function DeclaredInfoSection({ application }: { application: Loan
           label="Phương thức trả"
           value={REPAYMENT_LABELS[product.repaymentMethod] ?? product.repaymentMethod}
         />
-        <InfoRow label="Ngày giải ngân mong muốn" value={formatDate(application.expectedDisbursementDate)} />
+        <InfoRow label="Ngày giải ngân mong muốn" value={formatLocalDate(application.expectedDisbursementDate)} />
         <InfoRow label="Ngày nộp hồ sơ" value={formatDate(application.submittedAt)} />
       </InfoGroup>
 

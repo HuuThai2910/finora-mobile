@@ -29,8 +29,8 @@ export default function RescheduleActiveCard({ request, justSubmitted, onBack }:
     >
       <RescheduleRequestItem request={request} hideStatus />
       <DetailNote>
-        FINORA sẽ thẩm định trước. Nếu đạt, toàn bộ nhà đầu tư đang nắm Note phải đồng ý rồi Fineract mới
-        áp dụng lịch mới. Trong thời gian chờ, lịch trả hiện tại vẫn có hiệu lực.
+        FINORA sẽ thẩm định trước. Nếu đạt, toàn bộ nhà đầu tư đang sở hữu khoản đầu tư này phải đồng ý,
+        sau đó hệ thống mới áp dụng lịch trả nợ mới. Trong thời gian chờ, lịch hiện tại vẫn có hiệu lực.
       </DetailNote>
       {justSubmitted ? (
         <View style={styles.action}>

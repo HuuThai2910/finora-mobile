@@ -44,8 +44,8 @@ export default function ContractDocumentCard({
             {confirmed ? 'Bản PDF xác nhận' : 'Hợp đồng và lịch trả nợ'}
           </Text>
           <Text style={styles.body}>
-            Mở toàn văn PDF do Loan Service phát hành. Lịch từng kỳ và tổng nghĩa vụ chỉ nằm trong
-            tài liệu này để tránh hiển thị lặp.
+            Mở toàn văn hợp đồng PDF. Lịch từng kỳ và tổng số tiền phải trả được trình bày đầy đủ
+            trong tài liệu này.
           </Text>
         </View>
         <PdfArt />

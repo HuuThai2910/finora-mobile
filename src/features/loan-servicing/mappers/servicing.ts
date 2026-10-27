@@ -142,7 +142,7 @@ export const repaymentStatusLabel = (value: RepaymentResult['status']): string =
   CORE_POSTING: 'Đang ghi nhận vào khoản vay',
   CORE_POSTED: 'Đã ghi nhận, đang phân phối',
   COMPLETED: 'Hoàn tất',
-  RECONCILIATION_REQUIRED: 'Cần đối soát',
+  RECONCILIATION_REQUIRED: 'Đang kiểm tra giao dịch',
   FAILED: 'Không thành công',
   CANCELLED: 'Đã hủy, tiền về ví',
 })[value] ?? value;
@@ -178,7 +178,7 @@ export function prepaymentAllocationNote(strategy: string): string {
   if (strategy.endsWith('/NEXT_INSTALLMENT')) {
     return 'Khoản trả thêm được phân bổ vào các kỳ gần nhất để ưu tiên rút ngắn thời gian vay.';
   }
-  return 'Số tiền các kỳ tương lai được tính lại sau khi Fineract ghi nhận giao dịch.';
+  return 'Lịch trả nợ các kỳ tiếp theo sẽ được hệ thống tính lại sau khi ghi nhận giao dịch.';
 }
 
 /**
@@ -195,7 +195,7 @@ const RESCHEDULE_STATUS: Record<RescheduleStatus, StatusLook> = {
   APPROVAL_PENDING: { label: 'Đang áp dụng lịch mới', tone: 'blue', icon: 'refreshCw' },
   APPROVING: { label: 'Đang áp dụng lịch mới', tone: 'blue', icon: 'refreshCw' },
   COMPLETED: { label: 'Đã áp dụng', tone: 'green', icon: 'circleCheck' },
-  RECONCILIATION_REQUIRED: { label: 'Đang đối soát', tone: 'amber', icon: 'clockAlert' },
+  RECONCILIATION_REQUIRED: { label: 'Đang kiểm tra kết quả', tone: 'amber', icon: 'clockAlert' },
   MANUAL_REVIEW: { label: 'Đang kiểm tra thêm', tone: 'amber', icon: 'clockAlert' },
 };
 

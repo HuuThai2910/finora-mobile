@@ -3,6 +3,7 @@ import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { FontFamily, FontSize, IconSize, MIN_TOUCH, Radius, Spacing } from '@/theme';
 import { Icon } from '@/components/ui';
+import { displayDisbursementDate, normalizeDisbursementDate } from '../mappers/disbursementDate';
 import { loanFieldStyles } from './loanFieldStyles';
 
 type Props = {
@@ -11,15 +12,15 @@ type Props = {
   onChange: (value: string) => void;
 };
 
-const HELPER = 'Ngày này được dùng để tính lịch trả dự kiến ở bước tiếp theo.';
+const HELPER = 'Mặc định là hôm nay. Nhập ngày/tháng/năm, ví dụ 01/11/2026.';
 
 /**
- * Ngày giải ngân dự kiến. Giữ cách nhập của màn cũ: gõ tay theo dạng YYYY-MM-DD
- * (đúng dạng backend nhận ở bước 2), chưa có bộ chọn lịch nên biểu tượng lịch
- * chỉ để nhận diện và không chặn chạm vào ô. Lỗi thay chỗ dòng gợi ý.
+ * Ngày giải ngân dự kiến hiển thị theo cách người dùng Việt Nam đọc. State vẫn
+ * được chuẩn hóa sang ISO trước khi sang bước tiếp theo để đúng contract backend.
  */
 export default function DisbursementDateField({ value, error, onChange }: Props) {
   const [focused, setFocused] = useState(false);
+  const shown = displayDisbursementDate(value);
 
   return (
     <View style={loanFieldStyles.section}>
@@ -30,16 +31,21 @@ export default function DisbursementDateField({ value, error, onChange }: Props)
 
       <View style={[styles.box, focused && styles.boxFocused, !!error && styles.boxInvalid]}>
         <TextInput
-          value={value}
+          value={shown}
           onChangeText={onChange}
           onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder="YYYY-MM-DD"
+          onBlur={() => {
+            setFocused(false);
+            const normalized = normalizeDisbursementDate(value);
+            if (normalized) onChange(normalized);
+          }}
+          placeholder="DD/MM/YYYY"
           placeholderTextColor={Colors.authControl}
           autoCorrect={false}
           autoCapitalize="none"
           returnKeyType="done"
-          accessibilityLabel="Ngày giải ngân dự kiến, bắt buộc, dạng năm-tháng-ngày"
+          keyboardType="numbers-and-punctuation"
+          accessibilityLabel="Ngày giải ngân dự kiến, bắt buộc, dạng ngày-tháng-năm"
           accessibilityHint={HELPER}
           style={styles.input}
         />

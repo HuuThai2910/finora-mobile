@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { FontFamily, Spacing, tabularNums } from '@/theme';
-import { formatDate, formatDong } from '@/utils/format';
+import { formatDong, formatLocalDate } from '@/utils/format';
 import DetailButton from './DetailButton';
 import DetailCard from './DetailCard';
 
@@ -94,7 +94,7 @@ export default function RepaymentSummary({
           </Text>
         </View>
         <Text style={styles.fine}>
-          Lịch trả tính từ ngày giải ngân dự kiến {formatDate(expectedDisbursementDate)}.
+          Lịch trả tính từ ngày giải ngân dự kiến {formatLocalDate(expectedDisbursementDate)}.
         </Text>
         <Text style={styles.fine}>{estimate ? NOTES.estimate : NOTES.approved}</Text>
       </View>

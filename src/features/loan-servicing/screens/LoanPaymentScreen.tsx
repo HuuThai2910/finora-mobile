@@ -50,7 +50,7 @@ export default function LoanPaymentScreen() {
   if ((state.loading && !state.data) || (balance.loading && !balance.data) || (due.loading && !due.data)) return <Screen><PHeader title="Thanh toán khoản vay" back /><LoadingScreen cards={3} /></Screen>;
   if (state.error || !state.data) return <Screen><PHeader title="Thanh toán khoản vay" back /><ErrorState message={state.error ?? 'Không tải được khoản vay.'} onRetry={state.reload} /></Screen>;
   // Số tiền phải lấy từ Payment/Fineract: lệnh trả nợ chỉ được chấp nhận khi khớp đúng nghĩa vụ hiện tại.
-  if (due.error || !due.data) return <Screen><PHeader title="Thanh toán khoản vay" back /><ErrorState message={due.error ?? 'Chưa đọc được số tiền phải trả từ hệ thống lõi.'} onRetry={due.reload} /></Screen>;
+  if (due.error || !due.data) return <Screen><PHeader title="Thanh toán khoản vay" back /><ErrorState message={due.error ?? 'Chưa tải được số tiền cần thanh toán.'} onRetry={due.reload} /></Screen>;
 
   const data = state.data;
   const loan = data.loan;
@@ -114,12 +114,12 @@ export default function LoanPaymentScreen() {
           <Card style={styles.hero}>
             <Text style={styles.heroLabel}>{pending.postOn ? 'ĐÃ THANH TOÁN, CHỜ GHI NHẬN' : 'ĐANG GHI NHẬN THANH TOÁN'}</Text>
             <Text style={styles.heroAmount}>{formatDong(pending.amount)}</Text>
-            <Text style={styles.heroHint}>{pending.postOn ? `Ghi nhận vào kỳ ngày ${formatLocalDate(pending.postOn)}` : 'Đang ghi nhận vào sổ nợ'}</Text>
+            <Text style={styles.heroHint}>{pending.postOn ? `Ghi nhận vào kỳ ngày ${formatLocalDate(pending.postOn)}` : 'Đang cập nhật khoản vay'}</Text>
           </Card>
           <InfoNote>
             {pending.postOn
               ? 'Bạn đã thanh toán kỳ này trước ngày đến hạn. Khoản tiền được ghi nhận đúng ngày đến hạn nên lãi của kỳ giữ nguyên theo lịch; bạn không cần thanh toán thêm cho kỳ này.'
-              : 'Khoản thanh toán trước đang được ghi nhận vào sổ nợ. Không thanh toán lại; hãy quay lại sau ít phút.'}
+              : 'Khoản thanh toán đang được cập nhật vào khoản vay. Không thanh toán lại; hãy quay lại sau ít phút.'}
           </InfoNote>
           {error ? <Text style={styles.error}>{error}</Text> : null}
           {pending.cancellable ? (
@@ -148,8 +148,8 @@ export default function LoanPaymentScreen() {
               { label: 'Số dư ví khả dụng', value: available },
               { label: 'Dư nợ hiện tại', value: loan.totalOutstanding },
               ...(overdue ? [{ label: 'Trong đó quá hạn', value: scheduled.overdueAmount }] : []),
-              { label: 'Nguồn số tiền', value: overdue ? 'Nghĩa vụ quá hạn từ Fineract' : 'Kỳ đến hạn từ Fineract' },
-              ...(scheduled.postOn ? [{ label: 'Ghi nhận vào sổ nợ', value: formatLocalDate(scheduled.postOn) }] : []),
+              { label: 'Khoản cần thanh toán', value: overdue ? 'Phần quá hạn cần thanh toán' : 'Kỳ trả nợ hiện tại' },
+              ...(scheduled.postOn ? [{ label: 'Ghi nhận vào khoản vay', value: formatLocalDate(scheduled.postOn) }] : []),
             ]} />
           </Card>
           {payOldest ? (
@@ -164,10 +164,10 @@ export default function LoanPaymentScreen() {
           ) : null}
           {notice ? <InfoNote tone="success">{notice}</InfoNote> : null}
           {insufficient ? <InfoNote tone="warn">Số dư ví chưa đủ. Hãy nạp thêm tiền trước khi xác nhận.</InfoNote> : null}
-          {loan.stale ? <InfoNote tone="warn">Dữ liệu khoản vay đang cũ. Hãy quay lại và làm mới trước khi thanh toán.</InfoNote> : null}
+          {loan.stale ? <InfoNote tone="warn">Thông tin khoản vay vừa thay đổi. Hãy quay lại và làm mới trước khi thanh toán.</InfoNote> : null}
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <Button label="Xác nhận thanh toán từ ví" loading={submitting} disabled={insufficient || amount <= 0 || loan.stale} onPress={submit} style={styles.button} />
-          <InfoNote>Backend chỉ chấp nhận đúng nghĩa vụ hiện tại từ Fineract; giao dịch sai số tiền sẽ bị từ chối trước khi trừ ví.</InfoNote>
+          <InfoNote>Số tiền được lấy từ lịch trả nợ hiện tại. Hệ thống sẽ kiểm tra lại trước khi trừ tiền trong ví.</InfoNote>
         </>
       )}
     </Screen>

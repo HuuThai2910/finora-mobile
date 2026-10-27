@@ -7,6 +7,7 @@ import {
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  type ScrollViewInstance,
 } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { FontFamily, tabularNums } from '@/theme';
@@ -37,7 +38,7 @@ const clampIndex = (index: number, length: number) => Math.min(Math.max(index, 0
  * điều chỉnh (vuốt lên/xuống để tăng/giảm).
  */
 export default function WheelColumn({ label, items, value, onChange }: Props) {
-  const ref = useRef<ScrollView>(null);
+  const ref = useRef<ScrollViewInstance>(null);
   const selectedIndex = Math.max(0, items.findIndex(item => item.value === value));
   const [centerIndex, setCenterIndex] = useState(selectedIndex);
   const offset = useRef(0);

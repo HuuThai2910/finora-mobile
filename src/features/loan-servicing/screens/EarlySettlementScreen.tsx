@@ -93,7 +93,7 @@ export default function EarlySettlementScreen() {
   );
 
   if (state.loading && !state.data) {
-    return <ServicingScaffold title="Tất toán trước hạn"><LoanDetailSkeleton label="Đang lập báo giá tất toán" /></ServicingScaffold>;
+    return <ServicingScaffold title="Tất toán trước hạn"><LoanDetailSkeleton label="Đang tính số tiền tất toán" /></ServicingScaffold>;
   }
   if (state.error || !state.data) {
     return <ServicingScaffold title="Tất toán trước hạn"><ApplicationDetailError message={state.error ?? 'Không tải được khoản vay.'} retrying={state.loading} onRetry={state.reload} /></ServicingScaffold>;
@@ -117,10 +117,10 @@ export default function EarlySettlementScreen() {
             <FinancialRows rows={[
               { label: 'Gốc còn lại', value: quote.principalPortion },
               { label: 'Lãi phát sinh đến hôm nay', value: quote.interestPortion },
-              { label: 'Phí/phạt nghĩa vụ hiện tại', value: quote.coreFeePortion + quote.penaltyPortion },
+              { label: 'Phí và khoản phạt đã phát sinh', value: quote.coreFeePortion + quote.penaltyPortion },
               ...feeRows('Tổng phí tất toán', quote),
               { label: 'Tổng trừ từ ví', value: quote.totalAmount, emphasis: true },
-              { label: 'Báo giá có hiệu lực đến', value: formatDateTime(quote.expiresAt) },
+              { label: 'Số tiền này có hiệu lực đến', value: formatDateTime(quote.expiresAt) },
             ]} />
           </DetailCard>
           <DetailNote>Không thu lãi của các tháng tương lai. Phí tất toán được tính trên gốc còn lại theo thời gian đã sử dụng khoản vay.</DetailNote>
@@ -128,12 +128,12 @@ export default function EarlySettlementScreen() {
           {insufficient ? <DetailNote tone="warn">Số dư ví không đủ cho tổng báo giá.</DetailNote> : null}
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <DetailButton label="Xác nhận tất toán" onPress={askConfirm} loading={busy} disabled={insufficient || quote.status !== 'ACTIVE'} />
-          <DetailButton label="Lấy báo giá mới" variant="outline" disabled={busy} onPress={() => void requestQuote()} />
+          <DetailButton label="Cập nhật số tiền" variant="outline" disabled={busy} onPress={() => void requestQuote()} />
         </>
       ) : (
         <>
-          {error ? null : <LoanDetailSkeleton label="Đang lập báo giá tất toán" />}
-          {stale ? <DetailNote tone="warn">Số liệu đang chờ đồng bộ. Hãy quay lại làm mới khoản vay.</DetailNote> : null}
+          {error ? null : <LoanDetailSkeleton label="Đang tính số tiền tất toán" />}
+          {stale ? <DetailNote tone="warn">Thông tin khoản vay đang được cập nhật. Hãy quay lại và làm mới.</DetailNote> : null}
           {blocked ? (
             <DetailNote tone="warn">{error ?? ''}</DetailNote>
           ) : pendingInstallment ? (
@@ -143,7 +143,7 @@ export default function EarlySettlementScreen() {
               <DetailButton label="Thử lại" variant="outline" onPress={() => void requestQuote()} disabled={busy || stale} />
             </DetailCard>
           ) : error ? (
-            <DetailCard title="Chưa lấy được báo giá" icon="alert">
+            <DetailCard title="Chưa tính được số tiền tất toán" icon="alert">
               <Text style={styles.error}>{error}</Text>
               <DetailButton label="Thử lại" variant="outline" onPress={() => void requestQuote()} disabled={busy || stale} />
             </DetailCard>

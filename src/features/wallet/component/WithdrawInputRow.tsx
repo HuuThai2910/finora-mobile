@@ -1,5 +1,15 @@
 import { useId, useRef, useState } from 'react';
-import { InputAccessoryView, Keyboard, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  InputAccessoryView,
+  Keyboard,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type TextInputInstance,
+} from 'react-native';
 import { Colors } from '@/constants/colors';
 import type { IconName } from '@/constants/icons';
 import { FontFamily, FontSize, MIN_TOUCH, Spacing, lh } from '@/theme';
@@ -36,7 +46,7 @@ export default function WithdrawInputRow({
   helper,
   error,
 }: Props) {
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
   const [focused, setFocused] = useState(false);
   // `useId` của React 19 có dấu «» và :, lọc bỏ để `nativeID` chỉ còn ký tự an toàn.
   const accessoryId = `withdraw-input-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;

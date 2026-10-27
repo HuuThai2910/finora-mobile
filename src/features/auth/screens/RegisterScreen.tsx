@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { StyleSheet, Text, type TextInput } from 'react-native';
+import { StyleSheet, Text, type TextInputInstance } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '@/constants/colors';
@@ -41,9 +41,9 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const phoneRef = useRef<TextInput>(null);
-  const passwordRef = useRef<TextInput>(null);
-  const confirmRef = useRef<TextInput>(null);
+  const phoneRef = useRef<TextInputInstance>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
+  const confirmRef = useRef<TextInputInstance>(null);
   const { errors, validateField, clearField, validateSubmit } = useFieldErrors(validateRegister);
   const { submit, submitting, error } = useRegistration();
 

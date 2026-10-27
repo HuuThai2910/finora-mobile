@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react';
+import { useId, useState } from 'react';
 import {
   InputAccessoryView,
   Keyboard,
@@ -48,7 +48,8 @@ const toDigits = (text: string): string => text.replace(/\D/g, '').replace(/^0+(
 
 /**
  * Dòng nhập chữ/số của bước 3/3: ô nhập thật nằm trong dòng (không có mũi tên),
- * chạm vào bất kỳ đâu trên dòng cũng đưa con trỏ vào ô.
+ * `TextInput` nhận chạm trực tiếp. Không bọc dòng nhập bằng `Pressable` vì lớp
+ * cha có thể giành responder của bàn phím trên một số bản React Native.
  *
  * Bàn phím số của iOS không có phím Return nên kèm thanh phụ có nút "Xong"
  * giống `Field` dùng chung; mỗi ô một id thanh phụ, nếu không nút "Xong" của ô
@@ -66,14 +67,15 @@ export default function ApplyFormInputRow({
   helper,
   error,
 }: Props) {
-  const inputRef = useRef<TextInput>(null);
   const [focused, setFocused] = useState(false);
   const [contentHeight, setContentHeight] = useState<number | null>(null);
   // `useId` của React 19 có dấu «» và :, lọc bỏ để `nativeID` chỉ còn ký tự an toàn.
   const accessoryId = `apply-form-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const numeric = kind !== 'text';
   const withDoneBar = Platform.OS === 'ios' && numeric;
-  const shown = kind === 'money' ? groupThousands(value) : value;
+  // Không chèn dấu phân cách trong lúc gõ: TextInput điều khiển trên iOS/Android
+  // có thể đưa con trỏ về cuối sau mỗi ký tự và làm người dùng không nhập được.
+  const shown = kind === 'money' && !focused ? groupThousands(value) : value;
 
   const change = (text: string) => onChangeText(kind === 'money' ? toDigits(text) : text);
 
@@ -95,15 +97,14 @@ export default function ApplyFormInputRow({
             </Text>
           ) : null
         }
-        pressable={{ onPress: () => inputRef.current?.focus(), accessible: false }}
       >
         <TextInput
-          ref={inputRef}
           value={shown}
           onChangeText={change}
           placeholder={placeholder}
           placeholderTextColor={Colors.ink3}
           keyboardType={numeric ? 'number-pad' : 'default'}
+          selectTextOnFocus={kind === 'money' && value === '0'}
           multiline={multiline}
           autoCorrect={false}
           // Ô một dòng: phím Return đóng bàn phím thay vì chèn xuống dòng.

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type TextInputInstance } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '@/constants/colors';
@@ -42,7 +42,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [demoOpen, setDemoOpen] = useState(false);
-  const passwordRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
   const { errors, validateField, clearField, validateSubmit } = useFieldErrors(validateLogin);
   const { submit, submitting, error } = useLogin();
 
