@@ -15,8 +15,8 @@ type NoteCopy = { text: string; action?: string };
 /**
  * Lời ghi chú đổi theo trạng thái định danh: chỉ khi đã định danh mới được nói
  * thông tin "lấy từ hồ sơ eKYC"; chưa định danh thì nói thẳng là chưa có và mời
- * đi định danh. Hai trạng thái chờ duyệt / bị từ chối backend chưa trả (xem
- * `KycStatus`) nên chỉ nêu đúng trạng thái, không hứa thêm quy trình duyệt.
+ * đi định danh. Chờ duyệt / bị từ chối đến từ `ekycStatus` của hồ sơ (duyệt tay
+ * trên web admin) — chỉ nêu đúng trạng thái, không hứa thời hạn duyệt.
  */
 const NOTE: Record<KycStatus, NoteCopy> = {
   KYC_VERIFIED: {
@@ -53,7 +53,7 @@ export default function AccountInfoNote({ status, onStartEkyc }: Props) {
             hitSlop={{ top: 12, bottom: 12 }}
             accessibilityRole="button"
             accessibilityLabel={copy.action}
-            accessibilityHint="Mở màn chụp căn cước công dân để định danh"
+            accessibilityHint="Bắt đầu định danh điện tử: đọc điều khoản, chụp CCCD, kiểm tra khuôn mặt"
             style={({ pressed }) => [styles.action, pressed && styles.pressed]}
           >
             <Text style={styles.actionText}>{copy.action}</Text>

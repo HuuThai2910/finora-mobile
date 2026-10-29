@@ -7,9 +7,9 @@
  */
 
 /**
- * Trạng thái eKYC hiển thị trên UI. Backend hiện chỉ trả cờ `profileCompleted`
- * nên chỉ hai giá trị đầu là có thật; hai giá trị còn lại giữ chỗ cho khi
- * `finora-user` bổ sung trạng thái duyệt hồ sơ.
+ * Trạng thái eKYC hiển thị trên UI, suy từ `ekycStatus` của `finora-user`
+ * (`PENDING` → chưa định danh, `MANUAL_REVIEW` → chờ duyệt, `VERIFIED`, `FAILED` → bị từ chối),
+ * xem `features/auth/mappers/profile.ts`.
  */
 export type KycStatus = 'NOT_STARTED' | 'PENDING_REVIEW' | 'KYC_VERIFIED' | 'REJECTED';
 

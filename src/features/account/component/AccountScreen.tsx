@@ -10,11 +10,13 @@ import { useAuth } from '@/providers/AuthProvider';
 import type { ProfileStackParamList } from '@/navigation/types';
 import {
   COMING_SOON,
+  EKYC_ROW_SUBTITLE,
   LOGOUT_CONFIRM_BODY,
   LOGOUT_CONFIRM_TITLE,
   NOTIFICATION_SETTINGS,
   PROFILE_MAX_WIDTH,
   SECURITY_SETTINGS,
+  canStartEkyc,
   type UpcomingSetting,
 } from '../constant';
 import { useMyProfile } from '../hook/useAccount';
@@ -46,7 +48,9 @@ export default function AccountScreen() {
   const pin = usePinSetting();
 
   const openInfo = () => nav.navigate('AccountInfo');
-  const startEkyc = () => nav.navigate('EkycCapture', { side: 'front' });
+  // Luôn vào qua màn điều khoản; đã đồng ý bản hiện hành thì màn đó tự chuyển sang chụp thẻ.
+  const startEkyc = () => nav.navigate('EkycConsent');
+  const openEkycPrivacy = () => nav.navigate('EkycPrivacy');
 
   const onLogout = () =>
     Alert.alert(LOGOUT_CONFIRM_TITLE, LOGOUT_CONFIRM_BODY, [
@@ -102,13 +106,14 @@ export default function AccountScreen() {
 
         <View style={styles.groups}>
           <SettingsCard icon="user" title="Tài khoản">
-            {/* Chỉ còn hiện khi còn việc phải làm; đã định danh thì nhãn ở đầu trang đã đủ. */}
+            {/* Chỉ còn hiện khi còn việc phải làm; đã định danh thì nhãn ở đầu trang đã đủ.
+                Đang chờ duyệt thì dòng hiện mờ, không bấm được: chưa có việc gì để làm. */}
             {!verified ? (
               <SettingsRow
                 icon="scan"
                 title="Xác thực eKYC"
-                subtitle="Chụp mặt trước và mặt sau CCCD"
-                onPress={startEkyc}
+                subtitle={EKYC_ROW_SUBTITLE[p.kycStatus]}
+                onPress={canStartEkyc(p.kycStatus) ? startEkyc : undefined}
               />
             ) : null}
             <SettingsRow
@@ -136,6 +141,13 @@ export default function AccountScreen() {
               subtitle="Thông báo đẩy và nhóm tin muốn nhận"
               onPress={() => nav.navigate('NotificationSettings')}
               accessibilityHint="Mở màn cài đặt thông báo đẩy"
+            />
+            <SettingsRow
+              icon="shieldCheck"
+              title="Quyền riêng tư eKYC"
+              subtitle="Điều khoản đã đồng ý, rút lại đồng ý"
+              onPress={openEkycPrivacy}
+              accessibilityHint="Mở màn quyền riêng tư của định danh điện tử"
             />
           </UpcomingGroup>
 

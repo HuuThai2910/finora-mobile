@@ -117,12 +117,16 @@ async function send(baseUrl: string, path: string, init: ApiRequestInit): Promis
       }, timeoutMs)
     : undefined;
 
+  // Thân multipart phải để fetch tự đặt `multipart/form-data; boundary=…`. Ghi đè bằng
+  // Content-Type JSON (hay multipart thiếu boundary) thì server không tách được các phần.
+  const multipart = typeof FormData !== 'undefined' && rest.body instanceof FormData;
+
   try {
     return await fetch(`${baseUrl}${path}`, {
       ...rest,
       signal: controller.signal,
       headers: {
-        'Content-Type': 'application/json',
+        ...(multipart ? {} : { 'Content-Type': 'application/json' }),
         ...MOBILE_CLIENT_HEADERS,
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(headers as Record<string, string>),
@@ -199,8 +203,23 @@ export const authFetch = <T>(path: string, init?: RequestInit): Promise<T> =>
   request<T>(AUTH_BASE_URL, path, init ?? {});
 
 /** Gọi endpoint của `finora-user` cần đăng nhập, ví dụ `GET /users/me`. */
-export const authFetchWithToken = <T>(path: string, init?: RequestInit): Promise<T> =>
+export const authFetchWithToken = <T>(path: string, init?: ApiRequestInit): Promise<T> =>
   request<T>(AUTH_BASE_URL, path, { ...init, authenticated: true });
+
+/**
+ * Gửi `multipart/form-data` có token tới `finora-user` — dùng cho video/khung hình eKYC,
+ * nơi tệp vài MB không thể đi qua JSON base64.
+ *
+ * Gặp 401 thì làm mới token rồi gửi lại đúng `FormData` này: FormData của React Native chỉ
+ * giữ đường dẫn tệp (`uri`) và đọc lại từ đĩa mỗi lần gửi, nên dùng lại được. Nên luôn đặt
+ * `timeoutMs` vì upload qua mạng di động chậm có thể treo rất lâu.
+ */
+export const authUploadWithToken = <T>(
+  path: string,
+  form: FormData,
+  init: Omit<ApiRequestInit, 'body' | 'authenticated'> = {},
+): Promise<T> =>
+  request<T>(AUTH_BASE_URL, path, { method: 'POST', ...init, body: form, authenticated: true });
 
 /** Gọi Investment Service qua gateway; mọi endpoint đều cần phiên đăng nhập. */
 export const investmentFetch = <T>(path: string, init?: RequestInit): Promise<T> =>

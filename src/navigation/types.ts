@@ -69,13 +69,21 @@ export type ProfileStackParamList = {
   /** Toàn bộ thông tin `GET /users/me` của tài khoản đang đăng nhập, chỉ đọc. */
   AccountInfo: undefined;
   /**
-   * eKYC là chức năng tuỳ chọn mở từ tab Hồ sơ, không ép sau đăng nhập.
-   * Chụp một mặt CCCD; mặc định mặt trước — màn tự push chính nó với
-   * `side: 'back'`, ảnh đi qua EkycSession chứ không qua params.
+   * eKYC là chức năng tuỳ chọn mở từ tab Hồ sơ, không ép sau đăng nhập. Luôn vào qua màn
+   * điều khoản; đã đồng ý đúng phiên bản hiện hành thì màn này tự chuyển sang chụp thẻ.
+   */
+  EkycConsent: undefined;
+  /**
+   * Chụp một mặt CCCD; mặc định mặt trước. Đăng ký kèm `getId` theo `side` nên mỗi mặt là
+   * một màn riêng trong stack; ảnh đi qua EkycSession chứ không qua params.
    */
   EkycCapture: { side?: 'front' | 'back' } | undefined;
-  /** Bản nháp thông tin OCR chờ người dùng soát — xác nhận mới lưu vào hồ sơ. */
+  /** Kiểm tra khuôn mặt (liveness) bằng video camera trước theo thử thách của server. */
+  EkycLiveness: undefined;
+  /** Soát bản nháp (nhãn nguồn từng trường) và xác nhận, hoặc kết quả cuối của luồng. */
   EkycResult: undefined;
+  /** Cài đặt › Quyền riêng tư eKYC: xem điều khoản đã đồng ý, rút lại đồng ý. */
+  EkycPrivacy: undefined;
   MyApplications: undefined;
   ApplicationDetail: { applicationNumber: string };
   MyContracts: undefined;

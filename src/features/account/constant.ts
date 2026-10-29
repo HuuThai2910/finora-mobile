@@ -19,6 +19,21 @@ export const KYC_LABEL: Record<KycStatus, string> = {
   REJECTED: 'BỊ TỪ CHỐI',
 };
 
+/**
+ * Trạng thái còn phải (hoặc được phép) làm eKYC: chưa định danh, hoặc bị từ chối sau duyệt tay
+ * (người dùng làm lại được). Đang chờ duyệt thì không mở lại luồng — server sẽ chỉ trả
+ * "đang được duyệt" sau khi người dùng đã mất công chụp thẻ.
+ */
+export const canStartEkyc = (status: KycStatus): boolean => status === 'NOT_STARTED' || status === 'REJECTED';
+
+/** Chữ phụ của dòng "Xác thực eKYC" theo trạng thái. */
+export const EKYC_ROW_SUBTITLE: Record<KycStatus, string> = {
+  NOT_STARTED: 'Chụp CCCD và kiểm tra khuôn mặt',
+  PENDING_REVIEW: 'Hồ sơ đang chờ FINORA duyệt',
+  KYC_VERIFIED: 'Đã định danh',
+  REJECTED: 'Hồ sơ chưa được duyệt — định danh lại',
+};
+
 export const GENDER_LABEL: Record<Gender, string> = {
   MALE: 'Nam',
   FEMALE: 'Nữ',

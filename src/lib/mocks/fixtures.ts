@@ -8,7 +8,8 @@
  * Mọi số tiền là số nguyên đồng.
  */
 import type { UserProfile } from '@/types/auth';
-import type { EkycVerifyResult } from '@/types/ekyc';
+import type { EkycConsent, EkycResultResponse } from '@/types/ekyc';
+import { EKYC_CONSENT_BODY } from './ekycConsentText';
 import type {
   DueInstallment,
   TopUpInstruction,
@@ -71,18 +72,65 @@ export const PROFILE_MENU = [
 
 /* ---------------- eKYC ---------------- */
 
-export const EKYC_DRAFT_RESULT: EkycVerifyResult = {
+/** Điều khoản hiện hành, chưa đồng ý. `textSha256` là giá trị giả — mock chỉ so khớp chuỗi. */
+export const EKYC_CONSENT: EkycConsent = {
+  version: 'ekyc-2026-10',
+  title: 'Điều khoản xử lý dữ liệu khi xác minh danh tính (eKYC)',
+  body: EKYC_CONSENT_BODY,
+  consentLabel: 'Tôi đã đọc và đồng ý với Điều khoản xử lý dữ liệu khi xác minh danh tính.',
+  purposes: ['ID_DOCUMENT', 'FACE_BIOMETRIC', 'STORAGE_ABROAD', 'OWN_DOCUMENT'],
+  textSha256: 'mock0000000000000000000000000000000000000000000000000000000000ab',
+  accepted: false,
+  acceptedAt: null,
+};
+
+/**
+ * Quét đạt, thẻ CCCD 2021 đọc được cả QR lẫn MRZ: mọi trường từ nguồn tất định, không trường
+ * nào cho sửa, không cần duyệt tay. Quê quán/nơi đăng ký khai sinh không thu (`null`).
+ */
+export const EKYC_DRAFT_RESULT: EkycResultResponse = {
   status: 'PENDING',
   resultCode: 'DRAFT_READY',
+  message: 'Đã đọc xong thẻ. Tiếp theo là bước kiểm tra khuôn mặt.',
   ocrWarnings: [],
-  message: 'Kiểm tra thông tin đọc được từ CCCD rồi xác nhận',
+  cardType: 'CCCD_CHIP_2021',
+  reviewRequired: false,
+  retake: [],
   draft: {
-    idNumber: '036094001234',
-    fullName: 'TRẦN VĂN HÙNG',
-    dateOfBirth: '12/06/1994',
-    gender: 'Nam',
-    placeOfOrigin: 'Nam Định',
-    address: '25 Nguyễn Trãi, Thanh Xuân, Hà Nội',
+    idNumber: { value: '036094001234', sources: ['QR', 'MRZ'], editable: false },
+    fullName: { value: 'TRẦN VĂN HÙNG', sources: ['QR'], editable: false },
+    dateOfBirth: { value: '12/06/1994', sources: ['QR', 'MRZ'], editable: false },
+    gender: { value: 'Nam', sources: ['QR', 'MRZ'], editable: false },
+    address: { value: '25 Nguyễn Trãi, Thanh Xuân, Hà Nội', sources: ['QR'], editable: false },
+    placeOfOrigin: null,
+    birthRegistrationPlace: null,
+    issueDate: { value: '01/07/2021', sources: ['QR'], editable: false },
+    expiryDate: { value: '12/06/2034', sources: ['MRZ'], editable: false },
+  },
+  nextStep: 'LIVENESS',
+  attemptsLeft: null,
+  liveness: null,
+};
+
+/**
+ * Quét đạt nhưng không có QR: số, ngày sinh, giới tính, hạn thẻ từ MRZ; họ tên có dấu và địa
+ * chỉ do AI đọc nên được sửa, hồ sơ sẽ vào duyệt tay sau khi xác nhận.
+ */
+export const EKYC_DRAFT_AI_RESULT: EkycResultResponse = {
+  ...EKYC_DRAFT_RESULT,
+  ocrWarnings: ['ID_PROVINCE_UNKNOWN'],
+  cardType: 'CAN_CUOC_2024',
+  reviewRequired: true,
+  draft: {
+    idNumber: { value: '036094001234', sources: ['MRZ'], editable: false },
+    fullName: { value: 'TRẦN VĂN HÙNG', sources: ['AI'], editable: true },
+    dateOfBirth: { value: '12/06/1994', sources: ['MRZ'], editable: false },
+    gender: { value: 'Nam', sources: ['MRZ'], editable: false },
+    address: { value: '25 Nguyễn Trãi, Thanh Xuân, Hà Nội', sources: ['AI'], editable: true },
+    placeOfOrigin: null,
+    birthRegistrationPlace: { value: 'UBND phường Thanh Xuân Bắc, Hà Nội', sources: ['AI'], editable: true },
+    issueDate: { value: '15/08/2024', sources: ['OCR'], editable: false },
+    expiryDate: { value: '12/06/2034', sources: ['MRZ'], editable: false },
   },
 };
 
