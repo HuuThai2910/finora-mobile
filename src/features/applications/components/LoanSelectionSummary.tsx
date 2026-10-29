@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { FontFamily, FontSize, Radius, SoftShadow, Spacing, lh, tabularNums } from '@/theme';
-import { formatAnnualRate, formatDate, formatDong } from '@/utils/format';
+import { formatAnnualRate, formatDong, formatLocalDate } from '@/utils/format';
 
 type Props = {
   productName: string;
@@ -32,7 +32,7 @@ export default function LoanSelectionSummary({
     { label: 'Số tiền vay', value: formatDong(amount), accent: true },
     { label: 'Kỳ hạn', value: `${termMonths} tháng` },
     { label: 'Lãi suất cơ sở ban đầu', value: formatAnnualRate(annualInterestRate) },
-    { label: 'Ngày giải ngân dự kiến', value: formatDate(expectedDisbursementDate) },
+    { label: 'Ngày giải ngân dự kiến', value: formatLocalDate(expectedDisbursementDate) },
   ];
 
   return (

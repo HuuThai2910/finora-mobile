@@ -12,8 +12,8 @@ export default function ScheduleEmptyNote() {
     <View style={styles.box} accessibilityLiveRegion="polite">
       <Text style={styles.title}>Chưa nhận được lịch trả từng kỳ</Text>
       <Text style={styles.body}>
-        Hãy tải lại sau khi Loan Service đã được cập nhật. Các số “kỳ đầu” và “kỳ cao nhất” phía
-        trên chỉ là số liệu tóm tắt, không thay thế lịch đầy đủ.
+        Chưa tải được chi tiết từng kỳ. Hãy thử tải lại; số tiền kỳ đầu và kỳ cao nhất phía trên
+        vẫn là kết quả hệ thống đã tính.
       </Text>
     </View>
   );

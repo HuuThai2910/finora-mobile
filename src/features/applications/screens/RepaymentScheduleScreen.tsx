@@ -6,7 +6,7 @@ import { Card, InfoNote } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import type { ProfileStackParamList } from '@/navigation/types';
 import { Spacing, Text_, tabularNums } from '@/theme';
-import { formatDate, formatDong } from '@/utils/format';
+import { formatDong, formatLocalDate } from '@/utils/format';
 import SchedulePeriodRow from '../components/SchedulePeriodRow';
 import { useRepaymentSchedule, type ScheduleView } from '../hook/useRepaymentSchedule';
 
@@ -64,7 +64,7 @@ export default function RepaymentScheduleScreen() {
           <EmptyState
             icon="clock"
             title="Chưa có lịch trả từng kỳ"
-            hint="Loan Service chưa trả về chi tiết các kỳ. Kéo xuống để tải lại."
+            hint="Chưa tải được chi tiết các kỳ trả nợ. Kéo xuống để thử lại."
           />
         }
         contentContainerStyle={styles.content}
@@ -94,7 +94,7 @@ function ScheduleSummary({ view }: { view: ScheduleView }) {
           <Cell label="Kỳ cao nhất" value={formatDong(view.maximumInstallment)} />
         </View>
         <Text style={styles.disbursement}>
-          Tính theo ngày giải ngân {formatDate(view.expectedDisbursementDate)}
+          Tính theo ngày giải ngân {formatLocalDate(view.expectedDisbursementDate)}
         </Text>
       </Card>
 

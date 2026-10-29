@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Alert, type TextInput } from 'react-native';
+import { Alert, type TextInputInstance } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '@/navigation/types';
@@ -31,7 +31,7 @@ export default function ResetPasswordScreen() {
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const confirmRef = useRef<TextInput>(null);
+  const confirmRef = useRef<TextInputInstance>(null);
   const { errors, validateField, clearField, validateSubmit } = useFieldErrors(validateResetPassword);
   const reset = useResetPassword(email);
 

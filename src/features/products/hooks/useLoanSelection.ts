@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { LoanProductCatalog } from '@/types/loan';
 import type { MarketStackParamList } from '@/navigation/types';
 import { DEFAULT_LOAN_AMOUNT, defaultDisbursementDate } from '../constant';
+import { normalizeDisbursementDate } from '../mappers/disbursementDate';
 import { validateAmount, validateDisbursementDate } from '../schemas/loanSelection';
 
 /** Trường có thể sai ở bước 1; kỳ hạn luôn hợp lệ vì chỉ chọn được trong biên. */
@@ -60,18 +61,21 @@ export function useLoanSelection(product: LoanProductCatalog | undefined) {
     if (!product) return null;
     const nextAmountError = validateAmount(amount, product.minAmount, product.maxAmount);
     const nextDateError = validateDisbursementDate(disbursementDate);
+    const normalizedDate = normalizeDisbursementDate(disbursementDate);
     setAmountError(nextAmountError);
     setDateError(nextDateError);
 
     if (nextAmountError) return { ok: false, field: 'amount', message: nextAmountError };
-    if (nextDateError) return { ok: false, field: 'date', message: nextDateError };
+    if (nextDateError || !normalizedDate) {
+      return { ok: false, field: 'date', message: nextDateError ?? 'Ngày giải ngân không hợp lệ.' };
+    }
     return {
       ok: true,
       params: {
         productId: product.id,
         amount,
         termMonths,
-        expectedDisbursementDate: disbursementDate,
+        expectedDisbursementDate: normalizedDate,
       },
     };
   };

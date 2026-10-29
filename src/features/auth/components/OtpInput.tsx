@@ -8,6 +8,7 @@ import {
   Text,
   TextInput,
   View,
+  type TextInputInstance,
 } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { FontFamily, MIN_TOUCH, Spacing } from '@/theme';
@@ -28,7 +29,7 @@ type Props = {
  * hành vi xoá lùi chuẩn, thứ mà nhiều ô rời rạc rất dễ làm hỏng.
  */
 export default function OtpInput({ value, onChange, length = OTP_LENGTH, autoFocus = true }: Props) {
-  const input = useRef<TextInput>(null);
+  const input = useRef<TextInputInstance>(null);
   const [focused, setFocused] = useState(false);
   // Bàn phím số iOS không có phím Return; nhập thiếu số thì không tự đóng được.
   // Lọc id của `useId` vì React 19 chèn dấu «» và : vào đó.

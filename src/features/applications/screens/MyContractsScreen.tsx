@@ -99,7 +99,9 @@ export default function MyContractsScreen() {
         <RefreshControl
           // Lần tải đầu đã có khung giả; vòng xoay chỉ dành cho kéo làm mới.
           refreshing={query.isFetching && !query.isLoading}
-          onRefresh={query.refetch}
+          onRefresh={() => {
+            void query.refetch();
+          }}
           // iOS đọc `tintColor`, Android đọc `colors`.
           tintColor={Colors.authPrimary}
           colors={[Colors.authPrimary]}

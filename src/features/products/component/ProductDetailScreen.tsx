@@ -1,5 +1,13 @@
 import { useRef } from 'react';
-import { AccessibilityInfo, Platform, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import {
+  AccessibilityInfo,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+  type ScrollViewInstance,
+} from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -41,7 +49,7 @@ export default function ProductDetailScreen() {
 
   // Vị trí hai trường có thể sai trong vùng cuộn, để bấm "Tiếp tục" mà sai thì
   // cuộn tới đúng trường (trường số tiền có thể đã trôi khỏi màn).
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const fieldOffsets = useRef<Record<LoanSelectionField, number>>({ amount: 0, date: 0 });
   const trackField = (field: LoanSelectionField) => (event: LayoutChangeEvent) => {
     fieldOffsets.current[field] = event.nativeEvent.layout.y;

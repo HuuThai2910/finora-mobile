@@ -1,4 +1,5 @@
 import type { ImageSourcePropType } from 'react-native';
+import { localTodayIso } from './mappers/disbursementDate';
 
 /**
  * Nhãn tiếng Việt cho enum `repaymentMethod` của backend — mockup hiển thị ở
@@ -6,15 +7,11 @@ import type { ImageSourcePropType } from 'react-native';
  */
 export const REPAYMENT_METHOD_LABEL: Record<string, string> = {
   ANNUITY: 'Trả góp đều',
-  EQUAL_PRINCIPAL: 'Dư nợ giảm dần',
+  EQUAL_PRINCIPAL: 'Gốc trả đều, lãi giảm dần',
 };
 
-/** Ngày giải ngân dự kiến mặc định khi tính thử lịch trả nợ: 30 ngày tới. */
-export const defaultDisbursementDate = (): string => {
-  const d = new Date();
-  d.setDate(d.getDate() + 30);
-  return d.toISOString().slice(0, 10);
-};
+/** Ngày giải ngân dự kiến mặc định là ngày người vay lập hồ sơ. */
+export const defaultDisbursementDate = (): string => localTodayIso();
 
 /**
  * Sinh danh sách kỳ hạn cho nhóm chip chọn — mockup hiển thị 6 mốc

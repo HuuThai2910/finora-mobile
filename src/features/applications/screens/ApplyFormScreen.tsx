@@ -7,6 +7,7 @@ import {
   StyleSheet,
   View,
   type LayoutChangeEvent,
+  type ScrollViewInstance,
 } from 'react-native';
 import {
   useNavigation,
@@ -70,7 +71,7 @@ export default function ApplyFormScreen() {
 
   // Vị trí từng nhóm trong vùng cuộn: nút nộp ghim đáy nên khi thiếu thông tin
   // ở nhóm đầu, người dùng không thấy lỗi nếu màn không tự cuộn lên.
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const sectionOffsets = useRef<Partial<Record<SectionKey, number>>>({});
   const trackSection = (section: SectionKey) => (event: LayoutChangeEvent) => {
     sectionOffsets.current[section] = event.nativeEvent.layout.y;

@@ -21,8 +21,8 @@ export function feeRows(label: string, quote: FeeQuote): FinancialRow[] {
   const share = (part: number) => formatPercentValue((part / quote.platformFee) * 100, 0);
   return [
     { label: `${label} (${formatPercentValue(quote.feeRate * 100)})`, value: quote.platformFee },
-    { label: `Trong phí: bù nhà đầu tư (${share(quote.investorFeeShare)})`, value: quote.investorFeeShare },
-    { label: `Trong phí: FINORA (${share(quote.finoraFeeShare)})`, value: quote.finoraFeeShare },
+    { label: `Phần bù cho nhà đầu tư (${share(quote.investorFeeShare)})`, value: quote.investorFeeShare },
+    { label: `Phí dịch vụ FINORA (${share(quote.finoraFeeShare)})`, value: quote.finoraFeeShare },
   ];
 }
 
@@ -30,5 +30,5 @@ export function feeRows(label: string, quote: FeeQuote): FinancialRow[] {
 export function feePolicyNote(policyVersion: string): string {
   return policyVersion === NO_FEE_DISCLOSED
     ? 'Hợp đồng của bạn không quy định phí trả trước nên FINORA không thu phí này.'
-    : `Phí tính theo biểu phí ghi trong hợp đồng của bạn (${policyVersion}).`;
+    : 'Phí được tính theo biểu phí ghi trong hợp đồng của bạn.';
 }

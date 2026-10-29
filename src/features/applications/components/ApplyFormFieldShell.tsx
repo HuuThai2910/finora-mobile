@@ -25,7 +25,7 @@ type Props = {
    * Thuộc tính chạm/trợ năng của cả dòng. Dòng chọn đặt vai trò nút; dòng gõ chữ
    * để `accessible={false}` cho trình đọc màn hình đọc thẳng ô nhập bên trong.
    */
-  pressable: Omit<PressableProps, 'style' | 'children'>;
+  pressable?: Omit<PressableProps, 'style' | 'children'>;
   /** Nhãn nhìn thấy đã có trong nhãn đọc của dòng/ô nhập; ẩn đi để không đọc hai lần. */
   hideLabelFromReader?: boolean;
   /** Mờ nhẹ khi nhấn — phản hồi cho dòng mở bảng chọn; dòng gõ chữ thì không cần. */
@@ -54,33 +54,42 @@ export default function ApplyFormFieldShell({
   pressFeedback = false,
   children,
 }: Props) {
+  const content = (
+    <>
+      <View style={styles.tile}>
+        <Icon name={icon} size={IconSize.sm} color={Colors.authPrimary} strokeWidth={1.9} />
+      </View>
+      <View style={styles.body}>
+        <Text
+          style={styles.label}
+          accessibilityElementsHidden={hideLabelFromReader}
+          importantForAccessibility={hideLabelFromReader ? 'no-hide-descendants' : 'auto'}
+        >
+          {label}
+          {required ? <Text style={styles.required}> *</Text> : null}
+        </Text>
+        {children}
+      </View>
+      {trailing}
+    </>
+  );
+  const rowStyle = [styles.row, focused && styles.rowFocused, !!error && styles.rowError];
+
   return (
     <View>
-      <Pressable
-        {...pressable}
-        style={({ pressed }) => [
-          styles.row,
-          focused && styles.rowFocused,
-          !!error && styles.rowError,
-          pressFeedback && pressed && styles.pressed,
-        ]}
-      >
-        <View style={styles.tile}>
-          <Icon name={icon} size={IconSize.sm} color={Colors.authPrimary} strokeWidth={1.9} />
-        </View>
-        <View style={styles.body}>
-          <Text
-            style={styles.label}
-            accessibilityElementsHidden={hideLabelFromReader}
-            importantForAccessibility={hideLabelFromReader ? 'no-hide-descendants' : 'auto'}
-          >
-            {label}
-            {required ? <Text style={styles.required}> *</Text> : null}
-          </Text>
-          {children}
-        </View>
-        {trailing}
-      </Pressable>
+      {pressable ? (
+        <Pressable
+          {...pressable}
+          style={({ pressed }) => [
+            ...rowStyle,
+            pressFeedback && pressed && styles.pressed,
+          ]}
+        >
+          {content}
+        </Pressable>
+      ) : (
+        <View style={rowStyle}>{content}</View>
+      )}
 
       {error ? (
         <Text style={styles.error} accessibilityLiveRegion="polite">

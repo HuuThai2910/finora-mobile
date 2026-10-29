@@ -10,6 +10,7 @@ import {
   View,
   type KeyboardTypeOptions,
   type StyleProp,
+  type TextInputInstance,
   type TextInputProps,
   type ViewStyle,
 } from 'react-native';
@@ -42,7 +43,7 @@ type Props = {
   returnKeyType?: TextInputProps['returnKeyType'];
   onSubmitEditing?: () => void;
   /** Để màn chuyển con trỏ sang ô kế tiếp khi bấm phím Return. */
-  inputRef?: React.Ref<TextInput>;
+  inputRef?: React.Ref<TextInputInstance>;
   style?: StyleProp<ViewStyle>;
 };
 

@@ -84,7 +84,9 @@ export default function ProductListScreen() {
         refreshControl={
           <RefreshControl
             refreshing={loading && !!data}
-            onRefresh={reload}
+            onRefresh={() => {
+              void reload();
+            }}
             tintColor={Colors.authPrimary}
             colors={[Colors.authPrimary]}
           />
