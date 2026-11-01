@@ -138,6 +138,7 @@ export default function ApplicationDetailScreen() {
           submitting={state.withdraw.submitting}
           error={state.withdraw.error}
           clearError={state.withdraw.clearError}
+          fundingWithdrawal={application.status === 'APPROVED' && application.funding?.status === 'REQUESTED'}
         />
       ) : null}
     </ApplicationDetailScaffold>

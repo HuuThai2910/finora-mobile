@@ -34,7 +34,9 @@ Borrower chấp thuận exact terms
   `PENDING_LENDER_SIGNATURES` và `PENDING_BORROWER_SIGNATURE`.
 - Mobile không dựng PDF, không tự tính exact terms và không coi `LoanContractActivated` là đã giải ngân.
 - Provider `MOCK` hiển thị rõ là thử nghiệm; khi backend trả `VNPT_SMART_CA`, investor gửi yêu cầu,
-  xác nhận trong ứng dụng SmartCA và mobile poll kết quả theo từng bên ký.
+  FINORA thử mở ứng dụng SmartCA bằng scheme cấu hình theo môi trường, người dùng xác nhận trong
+  SmartCA rồi mobile poll kết quả theo từng bên ký. Màn chờ luôn giữ nút mở lại ứng dụng; bản web
+  không giả lập hành vi chuyển ứng dụng native.
 
 ## State và failure path
 

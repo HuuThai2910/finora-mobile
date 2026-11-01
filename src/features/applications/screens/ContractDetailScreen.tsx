@@ -69,7 +69,7 @@ function ContractDetailBody({
   reload: () => void;
 }) {
   const navigation = useNavigation<Nav>();
-  const { contract, pricingApplication, timeline, timelineFailed, countdown, canRespond, expiredWhileWaiting } =
+  const { contract, pricingApplication, timeline, timelineFailed, countdown, canRespond, canDecline, expiredWhileWaiting } =
     view;
   const pdf = useContractPdf(contract);
   const smartCa = useSmartCaSignature(contract.contractNumber, contract.status, reload);
@@ -149,6 +149,16 @@ function ContractDetailBody({
           contract={contract}
           countdown={countdown}
           signatureRejected={smartCa.rejected}
+          onDone={reload}
+          onStale={handleStale}
+        />
+      ) : null}
+
+      {canDecline && !canRespond ? (
+        <InlineContractConsent
+          contract={contract}
+          countdown={countdown}
+          declineOnly
           onDone={reload}
           onStale={handleStale}
         />

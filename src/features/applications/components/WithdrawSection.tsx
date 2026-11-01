@@ -12,6 +12,8 @@ type Props = {
   submitting: boolean;
   error: ActionError | null;
   clearError: () => void;
+  /** Hồ sơ đã duyệt nhưng listing còn mở: hủy gọi vốn và nhả tiền nhà đầu tư thay vì xóa quyết định duyệt. */
+  fundingWithdrawal?: boolean;
 };
 
 /**
@@ -19,14 +21,22 @@ type Props = {
  * hành động chính, và phải qua một bước xác nhận trước khi gọi backend. Thẻ giữ
  * giọng trầm (không nền đỏ); chỉ nút mới mang màu đỏ để báo đây là thao tác phá huỷ.
  */
-export default function WithdrawSection({ onWithdraw, submitting, error, clearError }: Props) {
+export default function WithdrawSection({
+  onWithdraw,
+  submitting,
+  error,
+  clearError,
+  fundingWithdrawal = false,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
 
   const confirm = () => {
     Alert.alert(
       'Rút hồ sơ vay?',
-      'FINORA sẽ dừng xử lý hồ sơ này và bạn không thể khôi phục lại. Nếu vẫn cần vay, bạn sẽ phải nộp hồ sơ mới.',
+      fundingWithdrawal
+        ? 'FINORA sẽ hủy đợt gọi vốn đang mở và trả tiền đang giữ cho các nhà đầu tư. Hồ sơ này không thể tiếp tục giải ngân.'
+        : 'FINORA sẽ dừng xử lý hồ sơ này và bạn không thể khôi phục lại. Nếu vẫn cần vay, bạn sẽ phải nộp hồ sơ mới.',
       [
         { text: 'Giữ hồ sơ', style: 'cancel' },
         {
@@ -48,7 +58,9 @@ export default function WithdrawSection({ onWithdraw, submitting, error, clearEr
   return (
     <DetailCard title="Không còn nhu cầu vay?" style={styles.card}>
       <Text style={styles.body}>
-        Bạn có thể rút hồ sơ trong lúc FINORA còn đang xử lý. Sau khi rút, hồ sơ này dừng lại vĩnh viễn.
+        {fundingWithdrawal
+          ? 'Bạn có thể dừng đợt gọi vốn trước khi hợp đồng được lập. Các khoản tiền đang giữ sẽ được trả về ví nhà đầu tư.'
+          : 'Bạn có thể rút hồ sơ trong lúc FINORA còn đang xử lý. Sau khi rút, hồ sơ này dừng lại vĩnh viễn.'}
       </Text>
 
       {open ? (
@@ -88,7 +100,11 @@ export default function WithdrawSection({ onWithdraw, submitting, error, clearEr
           </View>
         </>
       ) : (
-        <DetailButton label="Rút hồ sơ vay" variant="danger" onPress={() => setOpen(true)} />
+        <DetailButton
+          label={fundingWithdrawal ? 'Hủy đợt gọi vốn' : 'Rút hồ sơ vay'}
+          variant="danger"
+          onPress={() => setOpen(true)}
+        />
       )}
     </DetailCard>
   );

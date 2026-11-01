@@ -20,6 +20,8 @@ export type ContractDetailView = {
   countdown: Countdown;
   /** Còn ký hoặc từ chối được: đúng trạng thái chờ ký và chưa quá hạn. */
   canRespond: boolean;
+  /** Borrower chưa ký nên còn quyền từ chối, kể cả lúc đang chờ lender hoặc SmartCA đang xử lý. */
+  canDecline: boolean;
   /** Đang chờ ký nhưng đã quá hạn — backend sẽ tự chuyển `EXPIRED`. */
   expiredWhileWaiting: boolean;
 };
@@ -59,6 +61,9 @@ export function useContractDetail(contractNumber: string): ContractDetailState {
 
   const waitingSignature = contract?.status === 'PENDING_SIGNATURE'
     || contract?.status === 'PENDING_BORROWER_SIGNATURE';
+  const declineWindow = waitingSignature
+    || contract?.status === 'PENDING_LENDER_SIGNATURES'
+    || contract?.status === 'SIGNING';
 
   const view: ContractDetailView | null = contract
     ? {
@@ -69,7 +74,8 @@ export function useContractDetail(contractNumber: string): ContractDetailState {
         timelineFailed: Boolean(historyQuery.error),
         countdown,
         canRespond: waitingSignature && !countdown.expired,
-        expiredWhileWaiting: waitingSignature && countdown.expired,
+        canDecline: declineWindow && !countdown.expired,
+        expiredWhileWaiting: declineWindow && countdown.expired,
       }
     : null;
 

@@ -6,6 +6,7 @@ import type {
   AutoInvestConfig,
   AutoInvestMatch,
   InvestmentContract,
+  InvestmentCommitment,
   InvestorRescheduleConsent,
   PortfolioSummary,
 } from '@/types/invest';
@@ -17,7 +18,9 @@ import {
   type AutoInvestConfigDto,
   type AutoInvestMatchDto,
   type InvestorContractDto,
+  type InvestmentCommitmentDto,
   type PortfolioDto,
+  toInvestmentCommitment,
 } from './mapper';
 
 export const getPortfolio = async (): Promise<PortfolioSummary> => {
@@ -82,6 +85,43 @@ export const getInvestmentContract = async (signal?: AbortSignal): Promise<Inves
       && item.contractStatus === 'PENDING_LENDER_SIGNATURES')
     ?? contracts[0];
   return selected ? toInvestmentContract(selected) : null;
+};
+
+export const getInvestmentCommitments = async (
+  signal?: AbortSignal,
+): Promise<InvestmentCommitment[]> => {
+  if (isMocked('invest')) return [];
+  const items = await investmentFetch<InvestmentCommitmentDto[]>('/investments/commitments', { signal });
+  return items.map(toInvestmentCommitment);
+};
+
+/** Hủy lệnh sơ cấp khi listing còn OPEN; backend nhả hold sau commit và worker sẽ retry nếu Payment tạm lỗi. */
+export const cancelInvestmentCommitment = async (
+  commitment: InvestmentCommitment,
+): Promise<void> => {
+  if (!commitment.orderReference) throw new Error('Phần vốn chưa có mã lệnh để hủy.');
+  await investmentFetch(`/investments/orders/${commitment.orderReference}/cancel`, { method: 'POST' });
+};
+
+export const declineInvestmentContract = async (
+  contract: InvestmentContract,
+  idempotencyKey: string,
+  reasonDetail?: string,
+): Promise<InvestmentContract> => {
+  if (isMocked('signature')) return { ...contract, status: 'DECLINED', contractStatus: 'DECLINED' };
+  const declined = await apiFetch<InvestorContractDto>(
+    `/investor/loan-contracts/${contract.reference}/decline`,
+    {
+      method: 'POST',
+      headers: { 'Idempotency-Key': idempotencyKey },
+      body: JSON.stringify({
+        version: contract.version,
+        reasonCode: 'INVESTOR_CHANGED_MIND',
+        reasonDetail: reasonDetail?.trim() || null,
+      }),
+    },
+  );
+  return toInvestmentContract(declined);
 };
 
 /**

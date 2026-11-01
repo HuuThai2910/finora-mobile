@@ -266,7 +266,7 @@ export interface InvestmentContract {
   amount: number;
   noteCount: number;
   termMonths: number;
-  status: 'PENDING_SIGNATURE' | 'SIGNING' | 'SIGNED';
+  status: 'PENDING_SIGNATURE' | 'SIGNING' | 'SIGNED' | 'DECLINED';
   contractStatus: string;
   version: number;
   documentHash: string;
@@ -286,4 +286,19 @@ export interface InvestmentContract {
   receiptDocumentHash: string | null;
   signedDocumentPath: string;
   receiptPath: string;
+}
+
+/** Phần vốn sơ cấp đang giữ tiền trước khi phát hành Note. */
+export interface InvestmentCommitment {
+  commitmentId: number;
+  listingId: number;
+  loanId: number | null;
+  amount: number;
+  noteCount: number;
+  sharePercent: number;
+  status: 'ACTIVE' | 'FINALIZED';
+  orderReference: string | null;
+  listingStatus: 'OPEN' | 'FULLY_FUNDED' | 'CANCELLED' | 'CLOSED' | null;
+  cancelAllowed: boolean;
+  createdAt: string;
 }

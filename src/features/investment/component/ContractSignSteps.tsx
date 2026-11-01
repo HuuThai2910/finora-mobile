@@ -21,6 +21,7 @@ type Props = {
   /** Lần ký trước vừa bị từ chối (chữ ký không khớp chứng thư): nút ký đổi thành "Ký lại". */
   resign?: boolean;
   onSign: () => void;
+  onOpenSmartCa: () => void;
   onCheck: () => void;
   error: string | null;
 };
@@ -58,7 +59,16 @@ export default function ContractSignSteps(props: Props) {
 
       <Step index={2} state={signState} title={providerIsMock ? 'Xác nhận hợp đồng' : 'Ký số VNPT SmartCA'} hint={signHint}>
         {signed ? null : signing ? (
-          <InvestButton label="Tôi đã xác nhận, kiểm tra kết quả" icon="check" onPress={props.onCheck} loading={props.checking} />
+          <View style={styles.signingActions}>
+            <InvestButton label="Mở VNPT SmartCA" icon="pen" onPress={props.onOpenSmartCa} />
+            <InvestButton
+              label="Tôi đã xác nhận, kiểm tra kết quả"
+              icon="check"
+              variant="outline"
+              onPress={props.onCheck}
+              loading={props.checking}
+            />
+          </View>
         ) : (
           <InvestButton
             label={props.resign ? 'Ký lại' : providerIsMock ? 'Xác nhận hợp đồng' : 'Gửi yêu cầu ký SmartCA'}
@@ -133,6 +143,7 @@ const styles = StyleSheet.create({
   stepTitleTodo: { color: Colors.authMuted },
   stepHint: { fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authMuted },
   stepAction: { marginTop: Spacing.md },
+  signingActions: { gap: Spacing.md },
   error: {
     flexDirection: 'row',
     alignItems: 'flex-start',

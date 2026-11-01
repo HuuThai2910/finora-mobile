@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,12 +12,14 @@ import type { WalletStackParamList } from '@/navigation/types';
 import { FontFamily, Radius, Spacing } from '@/theme';
 import { formatDong } from '@/utils/format';
 import { PENDING_NOTE, PORTFOLIO_MAX_WIDTH, PORTFOLIO_PADDING } from '../constant';
-import { usePortfolio } from '../hook/useInvestment';
+import { cancelInvestmentCommitment } from '../api';
+import { useInvestmentCommitments, usePortfolio } from '../hook/useInvestment';
 import InvestHeader from './InvestHeader';
 import InvestStatusCard from './InvestStatusCard';
 import PortfolioHeroCard from './PortfolioHeroCard';
 import PortfolioShortcuts, { type PortfolioShortcut } from './PortfolioShortcuts';
 import PositionCard from './PositionCard';
+import PendingCommitmentCard from './PendingCommitmentCard';
 
 type Nav = NativeStackNavigationProp<WalletStackParamList, 'Portfolio'>;
 
@@ -34,6 +36,33 @@ export default function PortfolioScreen() {
   // Nội dung cao ít nhất bằng khung cuộn để lớp sóng đáy sát đáy màn.
   const [viewportHeight, setViewportHeight] = useState(0);
   const { data, loading, error, reload } = usePortfolio();
+  const commitments = useInvestmentCommitments();
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
+
+  const cancelCommitment = (commitment: NonNullable<typeof commitments.data>[number]) => {
+    Alert.alert(
+      'Rút lệnh góp vốn?',
+      `FINORA sẽ hủy phần vốn ${formatDong(commitment.amount)} và trả tiền đang giữ về số dư khả dụng.`,
+      [
+        { text: 'Giữ lệnh', style: 'cancel' },
+        {
+          text: 'Rút vốn',
+          style: 'destructive',
+          onPress: () => {
+            setCancellingId(commitment.commitmentId);
+            void cancelInvestmentCommitment(commitment)
+              .then(() => {
+                Alert.alert('Đã rút lệnh góp vốn', 'Tiền giữ sẽ trở lại số dư khả dụng; nếu nhà cung cấp tạm lỗi, hệ thống sẽ tự thử lại.');
+                commitments.reload();
+                reload();
+              })
+              .catch(() => Alert.alert('Chưa rút được vốn', 'Trạng thái khoản vay có thể vừa thay đổi. Hãy tải lại và thử lại.'))
+              .finally(() => setCancellingId(null));
+          },
+        },
+      ],
+    );
+  };
 
   const shortcuts: readonly PortfolioShortcut[] = [
     { icon: 'layers', label: 'Chợ Notes', onPress: () => nav.navigate('SecondaryMarket') },
@@ -79,6 +108,22 @@ export default function PortfolioScreen() {
           </View>
         ) : null}
 
+        {(commitments.data?.length ?? 0) > 0 ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle} accessibilityRole="header" maxFontSizeMultiplier={1.4}>
+              Phần vốn đang chờ
+            </Text>
+            {commitments.data?.map(commitment => (
+              <PendingCommitmentCard
+                key={commitment.commitmentId}
+                commitment={commitment}
+                cancelling={cancellingId === commitment.commitmentId}
+                onCancel={() => cancelCommitment(commitment)}
+              />
+            ))}
+          </View>
+        ) : null}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle} accessibilityRole="header" maxFontSizeMultiplier={1.4}>
             Khoản vay đang nắm Note
@@ -113,8 +158,8 @@ export default function PortfolioScreen() {
       refreshControl={
         <RefreshControl
           // Lần tải đầu đã có khung giả; vòng xoay chỉ dành cho kéo làm mới.
-          refreshing={loading && !!data}
-          onRefresh={reload}
+          refreshing={(loading && !!data) || (commitments.loading && !!commitments.data)}
+          onRefresh={() => { reload(); commitments.reload(); }}
           tintColor={Colors.authPrimary}
           colors={[Colors.authPrimary]}
         />

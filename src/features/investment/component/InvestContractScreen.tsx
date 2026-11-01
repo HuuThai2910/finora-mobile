@@ -8,10 +8,11 @@ import { Icon } from '@/components/ui';
 import { CONTRACTS_WAVES } from '@/constants/backgrounds';
 import { Colors } from '@/constants/colors';
 import { useAuthenticatedPdf } from '@/hooks/useAuthenticatedPdf';
-import { generateIdempotencyKey } from '@/lib/api';
+import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
+import { openSmartCaApp, smartCaOpenFailureMessage } from '@/lib/smartCaApp';
 import { usePinGuard } from '@/features/pin';
 import { FontFamily, Radius, Spacing } from '@/theme';
-import { signContract } from '../api';
+import { declineInvestmentContract, signContract } from '../api';
 import { CONTRACT_ART_BOTTOM, CONTRACT_NOTE, PORTFOLIO_MAX_WIDTH, PORTFOLIO_PADDING } from '../constant';
 import { useInvestmentContract } from '../hook/useInvestment';
 import { useInvestorSmartCa } from '../hook/useInvestorSmartCa';
@@ -19,6 +20,7 @@ import { toSignFailure } from '../signError';
 import ContractSignedFilesCard from './ContractSignedFilesCard';
 import ContractSignSteps from './ContractSignSteps';
 import ContractSummaryCard from './ContractSummaryCard';
+import ContractDeclineCard from './ContractDeclineCard';
 import InvestHeader from './InvestHeader';
 import InvestStatusCard from './InvestStatusCard';
 
@@ -39,12 +41,15 @@ export default function InvestContractScreen() {
   const { data, loading, error, reload } = useInvestmentContract();
   const [submitting, setSubmitting] = useState(false);
   const [signError, setSignError] = useState<string | null>(null);
+  const [declining, setDeclining] = useState(false);
+  const [declineError, setDeclineError] = useState<string | null>(null);
   // Lần ký vừa bị backend hủy (chữ ký không khớp chứng thư): nút bước 2 đổi thành "Ký lại".
   const [resign, setResign] = useState(false);
   const [openedPdfHash, setOpenedPdfHash] = useState<string | null>(null);
   // Retry cùng một thao tác ký phải giữ nguyên key; chỉ tạo key mới sau khi ký thành công hoặc khi backend đã hủy
   // hẳn lần ký (chữ ký bị từ chối).
   const signKey = useRef(generateIdempotencyKey());
+  const declineKey = useRef(generateIdempotencyKey());
   const pdf = useAuthenticatedPdf({
     cacheKey: `${data?.reference ?? 'investment'}-${data?.pdfDocumentHash ?? 'pending'}`,
     fileName: data?.reference ?? 'investment-contract',
@@ -66,7 +71,13 @@ export default function InvestContractScreen() {
       setResign(false);
       reload();
       if (result.status === 'SIGNING') {
-        Alert.alert('Đã gửi yêu cầu SmartCA', 'Hãy mở ứng dụng VNPT SmartCA, xác nhận giao dịch rồi quay lại FINORA.');
+        const openResult = await openSmartCaApp();
+        const openFailure = smartCaOpenFailureMessage(openResult);
+        Alert.alert(
+          'Đã gửi yêu cầu SmartCA',
+          openFailure
+            ?? 'FINORA đã chuyển sang VNPT SmartCA. Sau khi xác nhận, hãy quay lại FINORA để kiểm tra kết quả.',
+        );
       } else {
         Alert.alert('Đã ký hợp đồng', 'Chữ ký của bạn đã được ghi nhận trên đúng bản PDF hợp đồng.', [
           { text: 'Xong', onPress: () => nav.goBack() },
@@ -84,6 +95,27 @@ export default function InvestContractScreen() {
       }
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const onDecline = async (detail: string) => {
+    if (!data || declining) return;
+    setDeclining(true);
+    setDeclineError(null);
+    try {
+      await declineInvestmentContract(data, declineKey.current, detail);
+      declineKey.current = generateIdempotencyKey();
+      Alert.alert(
+        'Đã từ chối ký hợp đồng',
+        'Đợt vay đã được hủy. Tiền đang giữ của các nhà đầu tư sẽ được trả về ví theo quy trình tự động.',
+        [{ text: 'Đã hiểu', onPress: () => nav.goBack() }],
+      );
+      reload();
+    } catch (error) {
+      setDeclineError(toUserMessage(error));
+      reload();
+    } finally {
+      setDeclining(false);
     }
   };
 
@@ -139,9 +171,18 @@ export default function InvestContractScreen() {
           checking={smartCa.checking}
           resign={resign || smartCa.rejected}
           onSign={() => void onSign()}
+          onOpenSmartCa={() => {
+            void openSmartCaApp().then(result => {
+              const message = smartCaOpenFailureMessage(result);
+              if (message) Alert.alert('Không mở được SmartCA', message);
+            });
+          }}
           onCheck={() => void smartCa.check()}
           error={signError ?? smartCa.error ?? pdf.error}
         />
+        {windowOpen && data.status !== 'SIGNED' && data.status !== 'DECLINED' ? (
+          <ContractDeclineCard declining={declining} error={declineError} onDecline={onDecline} />
+        ) : null}
         {data.padesSigned ? <ContractSignedFilesCard contract={data} /> : null}
         <View style={styles.note}>
           <Icon name="info" size={20} color={Colors.authPrimary} />

@@ -2,6 +2,7 @@ import type {
   AutoInvestConfig,
   AutoInvestMatch,
   InvestmentContract,
+  InvestmentCommitment,
   PortfolioPosition,
   PortfolioPositionStatus,
   PortfolioSummary,
@@ -69,6 +70,21 @@ export interface InvestorContractDto {
   receiptDocumentHash?: string | null;
 }
 
+export interface InvestmentCommitmentDto {
+  commitmentId: number;
+  listingId: number;
+  loanId: number | null;
+  amount: string;
+  noteCount: number;
+  noteDenomination: string;
+  sharePercent: number;
+  status: 'ACTIVE' | 'FINALIZED';
+  orderReference: string | null;
+  listingStatus: 'OPEN' | 'FULLY_FUNDED' | 'CANCELLED' | 'CLOSED' | null;
+  cancelAllowed: boolean;
+  createdAt: string;
+}
+
 const toNumber = (value: string): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -126,9 +142,13 @@ export function toInvestmentContract(dto: InvestorContractDto): InvestmentContra
     amount: Number(dto.investorAmount),
     noteCount: dto.allocationCount,
     termMonths: dto.termMonths,
-    status: dto.partyStatus === 'SIGNED'
-      ? 'SIGNED'
-      : dto.partyStatus === 'SIGNING' ? 'SIGNING' : 'PENDING_SIGNATURE',
+    // Một Contract dùng chung cho toàn allocation. Nếu bất kỳ bên chưa ký nào từ chối thì Contract bị đóng;
+    // các nhà đầu tư còn lại cũng phải thấy "đã hủy", dù party riêng của họ vẫn là PENDING_SIGNATURE.
+    status: dto.contractStatus === 'DECLINED' || dto.partyStatus === 'DECLINED'
+      ? 'DECLINED'
+      : dto.partyStatus === 'SIGNED'
+        ? 'SIGNED'
+        : dto.partyStatus === 'SIGNING' ? 'SIGNING' : 'PENDING_SIGNATURE',
     contractStatus: dto.contractStatus,
     version: dto.contractVersion,
     documentHash: dto.documentHash,
@@ -146,6 +166,20 @@ export function toInvestmentContract(dto: InvestorContractDto): InvestmentContra
     receiptPath: `/investor/loan-contracts/${dto.contractNumber}/receipt`,
   };
 }
+
+export const toInvestmentCommitment = (dto: InvestmentCommitmentDto): InvestmentCommitment => ({
+  commitmentId: dto.commitmentId,
+  listingId: dto.listingId,
+  loanId: dto.loanId,
+  amount: toNumber(dto.amount),
+  noteCount: dto.noteCount,
+  sharePercent: Number(dto.sharePercent.toFixed(2)),
+  status: dto.status,
+  orderReference: dto.orderReference,
+  listingStatus: dto.listingStatus,
+  cancelAllowed: dto.cancelAllowed,
+  createdAt: dto.createdAt,
+});
 
 /** Tiền và lãi suất đi dạng chuỗi để không mất chính xác khi parse JSON. */
 export interface AutoInvestConfigDto {

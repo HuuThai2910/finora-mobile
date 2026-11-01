@@ -134,7 +134,8 @@ export function useApplicationDetail(applicationNumber: string): ApplicationDeta
         decision: decisionDateOf(application, historyQuery.data?.data ?? []),
         timeline: buildApplicationTimeline(historyQuery.data?.data ?? [], application.status),
         timelineFailed: Boolean(historyQuery.error),
-        canWithdraw: WITHDRAWABLE_STATUSES.includes(application.status),
+        canWithdraw: WITHDRAWABLE_STATUSES.includes(application.status)
+          || (application.status === 'APPROVED' && application.funding?.status === 'REQUESTED'),
         periodCount: displayedSchedule.periods?.length ?? 0,
         contract,
       }

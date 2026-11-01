@@ -8,6 +8,7 @@ const STATUS: Record<InvestmentContract['status'], { label: string; bg: string; 
   PENDING_SIGNATURE: { label: 'Chờ bạn ký', bg: Colors.amberBg, fg: Colors.tagAmberText },
   SIGNING: { label: 'Đang xác nhận SmartCA', bg: Colors.blueBg, fg: Colors.tagBlueText },
   SIGNED: { label: 'Bạn đã ký', bg: Colors.greenBg, fg: Colors.tagGreenText },
+  DECLINED: { label: 'Hợp đồng đã hủy', bg: Colors.redBg, fg: Colors.tagRedText },
 };
 
 /**

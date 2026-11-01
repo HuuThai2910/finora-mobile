@@ -3,6 +3,7 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 import { Checkbox } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import { padesLegalNotice, SIGNATURE_REJECTED_CODE } from '@/constants/contractSignature';
+import { openSmartCaApp, smartCaOpenFailureMessage } from '@/lib/smartCaApp';
 import { FontFamily, Spacing } from '@/theme';
 import type { LoanContractDetail } from '@/types/contract';
 import type { DeclineReasonCode } from '../constant';
@@ -21,6 +22,8 @@ type Props = {
   signatureRejected?: boolean;
   onDone: () => void;
   onStale: () => void;
+  /** Chỉ cho rút/từ chối khi borrower chưa tới lượt ký hoặc đang có phiên SmartCA chưa hoàn tất. */
+  declineOnly?: boolean;
 };
 
 /**
@@ -34,9 +37,10 @@ export default function InlineContractConsent({
   signatureRejected = false,
   onDone,
   onStale,
+  declineOnly = false,
 }: Props) {
   const consent = useContractConsent(contract);
-  const [mode, setMode] = useState<'sign' | 'decline'>('sign');
+  const [mode, setMode] = useState<'sign' | 'decline'>(declineOnly ? 'decline' : 'sign');
   const [accepted, setAccepted] = useState(false);
   const [reason, setReason] = useState<DeclineReasonCode>('TERMS_NOT_ACCEPTED');
   const [reasonDetail, setReasonDetail] = useState('');
@@ -52,10 +56,13 @@ export default function InlineContractConsent({
     const outcome = await consent.sign();
     if (outcome.ok) {
       const smartCa = contract.availableSignatureMethod === 'VNPT_SMART_CA';
+      const openResult = smartCa ? await openSmartCaApp() : null;
+      const openFailure = openResult ? smartCaOpenFailureMessage(openResult) : null;
       Alert.alert(
         smartCa ? 'Đã gửi yêu cầu ký số' : 'Đã xác nhận hợp đồng',
         smartCa
-          ? 'Hãy mở ứng dụng VNPT SmartCA để xác nhận. Sau đó quay lại FINORA kiểm tra kết quả.'
+          ? openFailure
+            ?? 'FINORA đã chuyển sang VNPT SmartCA. Sau khi xác nhận, hãy quay lại FINORA để kiểm tra kết quả.'
           : pades
             ? 'FINORA đã nhúng chữ ký số của bạn vào tệp PDF hợp đồng. Chữ ký dùng chứng thư demo nên không có giá trị pháp lý.'
             : 'FINORA đã ghi nhận xác nhận click-wrap của bạn và tạo bản PDF xác nhận.',
@@ -88,6 +95,11 @@ export default function InlineContractConsent({
           onDetailChange={setReasonDetail}
           error={consent.error?.message}
         />
+        {declineOnly ? (
+          <DetailNote tone="warn">
+            Hủy lúc này sẽ đóng hợp đồng dùng chung và trả các khoản tiền đang giữ về ví nhà đầu tư.
+          </DetailNote>
+        ) : null}
         <View style={styles.actions}>
           <DetailButton
             label="Xác nhận từ chối"
@@ -96,15 +108,17 @@ export default function InlineContractConsent({
             disabled={!declineReady || consent.busy}
             loading={consent.declining}
           />
-          <DetailButton
-            label="Quay lại xác nhận"
-            variant="outline"
-            onPress={() => {
-              consent.clearError();
-              setMode('sign');
-            }}
-            disabled={consent.busy}
-          />
+          {!declineOnly ? (
+            <DetailButton
+              label="Quay lại xác nhận"
+              variant="outline"
+              onPress={() => {
+                consent.clearError();
+                setMode('sign');
+              }}
+              disabled={consent.busy}
+            />
+          ) : null}
         </View>
       </DetailCard>
     );
