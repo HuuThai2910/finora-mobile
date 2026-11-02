@@ -51,6 +51,7 @@ export default function RegisterOtpScreen() {
     // Mã cũ hết hiệu lực ngay khi backend cấp mã mới — xoá ô nhập để tránh gửi nhầm
     setCode('');
     setCodeError(null);
+    verification.clearError();
     countdown.reset();
   };
 
