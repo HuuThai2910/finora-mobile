@@ -52,7 +52,8 @@ export type WalletStackParamList = {
   PayInstallment: undefined;
   Portfolio: undefined;
   AutoInvest: undefined;
-  InvestContract: undefined;
+  InvestorContracts: undefined;
+  InvestContract: { contractNumber?: string } | undefined;
   RescheduleConsents: undefined;
   /** Chợ Notes: danh sách khoản vay còn Note lưu hành, mỗi khoản một sổ lệnh Ask/Bid. */
   SecondaryMarket: undefined;

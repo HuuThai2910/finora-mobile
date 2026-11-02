@@ -3,6 +3,7 @@ import type { LoanContractDetail } from '@/types/contract';
 import { formatRecentTime } from '@/utils/format';
 import DetailCard from './DetailCard';
 import DetailNote from './DetailNote';
+import DisclosureSection from './DisclosureSection';
 
 export default function ContractDisbursementCard({ contract }: { contract: LoanContractDetail }) {
   if (!contract.disbursementStatus) return null;
@@ -13,8 +14,6 @@ export default function ContractDisbursementCard({ contract }: { contract: LoanC
   return (
     <DetailCard>
       <PItem label="Giải ngân" value={statusLabel(contract.disbursementStatus)} />
-      {contract.paymentReference ? <PItem label="Mã thanh toán" value={contract.paymentReference} /> : null}
-      {contract.fineractLoanId ? <PItem label="Mã khoản vay hệ thống" value={String(contract.fineractLoanId)} /> : null}
       {contract.disbursedAt ? <PItem label="Hoàn tất lúc" value={formatRecentTime(contract.disbursedAt)} last /> : null}
       {completed ? (
         <DetailNote>Khoản vay đã được ghi nhận trên hệ thống quản lý và hoàn tất giải ngân.</DetailNote>
@@ -25,6 +24,12 @@ export default function ContractDisbursementCard({ contract }: { contract: LoanC
       ) : (
         <DetailNote>Hệ thống đang tự động xử lý giải ngân. Bạn không cần ký hoặc gửi lại yêu cầu.</DetailNote>
       )}
+      {contract.paymentReference || contract.fineractLoanId ? (
+        <DisclosureSection title="Mã đối chiếu" hint="Chỉ cần khi liên hệ hỗ trợ">
+          {contract.paymentReference ? <PItem label="Mã thanh toán" value={contract.paymentReference} /> : null}
+          {contract.fineractLoanId ? <PItem label="Mã khoản vay hệ thống" value={String(contract.fineractLoanId)} last /> : null}
+        </DisclosureSection>
+      ) : null}
     </DetailCard>
   );
 }

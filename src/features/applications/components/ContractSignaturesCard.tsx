@@ -4,12 +4,12 @@ import { PItem } from '@/components/phone';
 import { Colors } from '@/constants/colors';
 import { padesLegalNotice } from '@/constants/contractSignature';
 import { useAuthenticatedPdf } from '@/hooks/useAuthenticatedPdf';
-import { FontFamily } from '@/theme';
+import { FontFamily, Spacing } from '@/theme';
 import type { LoanContractDetail } from '@/types/contract';
 import { formatRecentTime } from '@/utils/format';
 import DetailButton from './DetailButton';
-import DetailCard from './DetailCard';
 import DetailNote from './DetailNote';
+import DisclosureSection from './DisclosureSection';
 
 /**
  * "Chữ ký số trong PDF" của hợp đồng ký PAdES (R5, W3C): số chữ ký đã nhúng vào chính tệp hợp đồng, bản đang ký
@@ -39,11 +39,15 @@ export default function ContractSignaturesCard({ contract }: { contract: LoanCon
   const pdfError = signedPdf.error ?? receiptPdf.error;
 
   return (
-    <DetailCard title="Chữ ký số trong PDF" icon="shieldCheck">
-      <View>
-        <PItem label="Đã nhúng vào tệp" value={count > 0 ? `${count} chữ ký` : 'Chưa có chữ ký'} last={!signed} />
-        {signed ? <PItem label="Lần ký gần nhất" value={formatRecentTime(signed.lastSignedAt)} last /> : null}
-      </View>
+    <DisclosureSection
+      title="Chữ ký và biên nhận"
+      hint={count > 0 ? `${count} chữ ký đã được nhúng vào PDF` : 'Chưa có chữ ký trong PDF'}
+    >
+      <View style={styles.content}>
+        <View>
+          <PItem label="Đã nhúng vào tệp" value={count > 0 ? `${count} chữ ký` : 'Chưa có chữ ký'} last={!signed} />
+          {signed ? <PItem label="Lần ký gần nhất" value={formatRecentTime(signed.lastSignedAt)} last /> : null}
+        </View>
 
       <Text style={styles.body}>
         {receipt
@@ -92,10 +96,12 @@ export default function ContractSignaturesCard({ contract }: { contract: LoanCon
         onShare={receiptPdf.sharePdf}
         sharing={receiptPdf.sharing}
       />
-    </DetailCard>
+      </View>
+    </DisclosureSection>
   );
 }
 
 const styles = StyleSheet.create({
+  content: { gap: Spacing.lg, paddingVertical: Spacing.lg },
   body: { fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authMuted },
 });

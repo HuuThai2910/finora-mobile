@@ -1,19 +1,20 @@
 import { useRef, useState } from 'react';
-import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { Alert, RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PdfViewer, Skeleton } from '@/components/feedback';
 import { WaveBackdrop } from '@/components/phone';
-import { Icon } from '@/components/ui';
 import { CONTRACTS_WAVES } from '@/constants/backgrounds';
 import { Colors } from '@/constants/colors';
+import type { WalletStackParamList } from '@/navigation/types';
 import { useAuthenticatedPdf } from '@/hooks/useAuthenticatedPdf';
 import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
 import { openSmartCaApp, smartCaOpenFailureMessage } from '@/lib/smartCaApp';
 import { usePinGuard } from '@/features/pin';
-import { FontFamily, Radius, Spacing } from '@/theme';
+import { Radius, Spacing } from '@/theme';
 import { declineInvestmentContract, signContract } from '../api';
-import { CONTRACT_ART_BOTTOM, CONTRACT_NOTE, PORTFOLIO_MAX_WIDTH, PORTFOLIO_PADDING } from '../constant';
+import { CONTRACT_ART_BOTTOM, PORTFOLIO_MAX_WIDTH, PORTFOLIO_PADDING } from '../constant';
 import { useInvestmentContract } from '../hook/useInvestment';
 import { useInvestorSmartCa } from '../hook/useInvestorSmartCa';
 import { toSignFailure } from '../signError';
@@ -33,12 +34,13 @@ import InvestStatusCard from './InvestStatusCard';
  */
 export default function InvestContractScreen() {
   const nav = useNavigation();
+  const route = useRoute<RouteProp<WalletStackParamList, 'InvestContract'>>();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const width = Math.min(windowWidth, PORTFOLIO_MAX_WIDTH);
   const [viewportHeight, setViewportHeight] = useState(0);
 
-  const { data, loading, error, reload } = useInvestmentContract();
+  const { data, loading, error, reload } = useInvestmentContract(route.params?.contractNumber);
   const [submitting, setSubmitting] = useState(false);
   const [signError, setSignError] = useState<string | null>(null);
   const [declining, setDeclining] = useState(false);
@@ -155,39 +157,56 @@ export default function InvestContractScreen() {
     const openPdf = async () => {
       if (await pdf.openPdf()) setOpenedPdfHash(data.pdfDocumentHash);
     };
+    const terminal = data.status === 'SIGNED' || data.status === 'DECLINED' || data.status === 'EXPIRED';
+    const terminalCopy = data.status === 'SIGNED'
+      ? {
+          icon: 'shieldCheck' as const,
+          title: 'Bạn đã ký phần vốn này',
+          hint: data.contractStatus === 'EFFECTIVE'
+            ? 'Hợp đồng đã đủ chữ ký và đang có hiệu lực.'
+            : 'FINORA đang chờ các bên còn lại hoàn tất chữ ký.',
+        }
+      : data.status === 'DECLINED'
+        ? { icon: 'x' as const, title: 'Hợp đồng đã dừng', hint: 'Phần vốn này không tiếp tục giải ngân.' }
+        : { icon: 'clock' as const, title: 'Đã hết hạn ký', hint: 'Hợp đồng này không còn nhận chữ ký mới.' };
 
     return (
       <>
         <ContractSummaryCard contract={data} />
-        <ContractSignSteps
-          pdfOpened={openedPdfHash === data.pdfDocumentHash}
-          openingPdf={pdf.opening}
-          onOpenPdf={() => void openPdf()}
-          providerIsMock={data.availableSignatureProvider === 'MOCK'}
-          signed={data.status === 'SIGNED'}
-          signing={data.status === 'SIGNING'}
-          windowOpen={windowOpen}
-          submitting={submitting}
-          checking={smartCa.checking}
-          resign={resign || smartCa.rejected}
-          onSign={() => void onSign()}
-          onOpenSmartCa={() => {
-            void openSmartCaApp().then(result => {
-              const message = smartCaOpenFailureMessage(result);
-              if (message) Alert.alert('Không mở được SmartCA', message);
-            });
-          }}
-          onCheck={() => void smartCa.check()}
-          error={signError ?? smartCa.error ?? pdf.error}
-        />
-        {windowOpen && data.status !== 'SIGNED' && data.status !== 'DECLINED' ? (
+        {terminal ? (
+          <InvestStatusCard
+            icon={terminalCopy.icon}
+            title={terminalCopy.title}
+            hint={terminalCopy.hint}
+            action={{ label: 'Xem hợp đồng PDF', onPress: () => void openPdf() }}
+          />
+        ) : (
+          <ContractSignSteps
+            pdfOpened={openedPdfHash === data.pdfDocumentHash}
+            openingPdf={pdf.opening}
+            onOpenPdf={() => void openPdf()}
+            providerIsMock={data.availableSignatureProvider === 'MOCK'}
+            signed={false}
+            signing={data.status === 'SIGNING'}
+            windowOpen={windowOpen}
+            submitting={submitting}
+            checking={smartCa.checking}
+            resign={resign || smartCa.rejected}
+            onSign={() => void onSign()}
+            onOpenSmartCa={() => {
+              void openSmartCaApp().then(result => {
+                const message = smartCaOpenFailureMessage(result);
+                if (message) Alert.alert('Không mở được SmartCA', message);
+              });
+            }}
+            onCheck={() => void smartCa.check()}
+            error={signError ?? smartCa.error ?? pdf.error}
+          />
+        )}
+        {windowOpen && data.status !== 'SIGNED' && data.status !== 'DECLINED' && data.status !== 'EXPIRED' ? (
           <ContractDeclineCard declining={declining} error={declineError} onDecline={onDecline} />
         ) : null}
         {data.padesSigned ? <ContractSignedFilesCard contract={data} /> : null}
-        <View style={styles.note}>
-          <Icon name="info" size={20} color={Colors.authPrimary} />
-          <Text style={styles.noteText}>{CONTRACT_NOTE}</Text>
-        </View>
         <PdfViewer
           visible={pdf.previewUri !== null}
           uri={pdf.previewUri}
@@ -219,7 +238,9 @@ export default function InvestContractScreen() {
         <WaveBackdrop background={CONTRACTS_WAVES} width={width} />
         <View style={styles.content}>
           <InvestHeader
-            title="Ký hợp đồng đầu tư"
+            title={data?.status === 'PENDING_SIGNATURE' || data?.status === 'SIGNING'
+              ? 'Ký hợp đồng đầu tư'
+              : 'Chi tiết hợp đồng'}
             topInset={insets.top}
             minHeight={CONTRACT_ART_BOTTOM * (width / CONTRACTS_WAVES.width)}
           />
@@ -235,13 +256,4 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.contractsFill },
   scroll: { flexGrow: 1, alignItems: 'center' },
   content: { gap: Spacing.xl, paddingHorizontal: PORTFOLIO_PADDING, paddingBottom: 40 },
-  note: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.md,
-    padding: Spacing.lg,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.walletHistoryNote,
-  },
-  noteText: { flex: 1, fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authMuted },
 });

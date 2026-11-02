@@ -29,6 +29,7 @@ import {
 import {
   AutoInvestScreen,
   InvestContractScreen,
+  InvestorContractsScreen,
   PortfolioScreen,
   RescheduleConsentsScreen,
 } from '@/features/investment';
@@ -106,6 +107,7 @@ function WalletTab() {
       <WalletStack.Screen name="PayInstallment" component={PayInstallmentScreen} />
       <WalletStack.Screen name="Portfolio" component={PortfolioScreen} />
       <WalletStack.Screen name="AutoInvest" component={AutoInvestScreen} />
+      <WalletStack.Screen name="InvestorContracts" component={InvestorContractsScreen} />
       <WalletStack.Screen name="InvestContract" component={InvestContractScreen} />
       <WalletStack.Screen name="RescheduleConsents" component={RescheduleConsentsScreen} />
       <WalletStack.Screen name="SecondaryMarket" component={SecondaryMarketScreen} />

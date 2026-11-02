@@ -84,7 +84,20 @@ export default function ApplyFormScreen() {
     purposes.reload();
   };
 
-  const showSubmitted = (created: LoanApplication) =>
+  const openSubmittedApplication = (created: LoanApplication) =>
+    navigation.navigate('Hồ sơ', {
+      screen: 'ApplicationDetail',
+      params: { applicationNumber: created.applicationNumber },
+    });
+
+  const showSubmitted = (created: LoanApplication) => {
+    // React Native Web chỉ hiện hộp thoại trình duyệt và không thực thi callback của các nút
+    // như Alert native. Điều hướng thẳng để người vay không bị giữ lại ở form đã nộp thành công.
+    if (Platform.OS === 'web') {
+      openSubmittedApplication(created);
+      return;
+    }
+
     Alert.alert(
       'Đã nộp hồ sơ',
       `Mã ${created.applicationNumber}. Hệ thống đang kiểm tra điều kiện và đánh giá hồ sơ.`,
@@ -92,13 +105,11 @@ export default function ApplyFormScreen() {
         { text: 'Về sản phẩm', onPress: () => navigation.popToTop() },
         {
           text: 'Xem hồ sơ',
-          onPress: () => navigation.navigate('Hồ sơ', {
-            screen: 'ApplicationDetail',
-            params: { applicationNumber: created.applicationNumber },
-          }),
+          onPress: () => openSubmittedApplication(created),
         },
       ],
     );
+  };
 
   const revealFirstError = (errors: ApplicationFormErrors) => {
     const first = ERROR_ORDER.find(({ key }) => errors[key]);

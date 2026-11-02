@@ -9,24 +9,11 @@ import AuthButton from '../components/AuthButton';
 import AuthField from '../components/AuthField';
 import AuthLayout from '../components/AuthLayout';
 import AuthSwitchLink from '../components/AuthSwitchLink';
+import { DEMO_ACCOUNTS } from '../demoAccounts';
 import FormError from '../components/FormError';
 import { useFieldErrors } from '../hooks/useFieldErrors';
 import { useLogin } from '../hooks/useLogin';
 import { validateLogin } from '../schemas/authForms';
-
-/**
- * Tài khoản mẫu đã seed sẵn trong Keycloak (môi trường phát triển).
- *
- * App này dành cho người vay và nhà đầu tư, nên không đưa tài khoản ADMIN vào —
- * đăng nhập ADMIN ở đây cũng không mở thêm được màn nào.
- *
- * Khu này chỉ hiển thị khi `__DEV__`, nên mật khẩu không đi vào bản phát hành.
- */
-const DEMO_ACCOUNTS = [
-  { email: 'nguyenhuynhngochai147@gmail.com', password: 'Xen123123!', label: 'Tài khoản của tôi' },
-  { email: 'le.thu.thao@gmail.com', password: 'Finora@12345', label: 'Người vay' },
-  { email: 'investor@finora.vn', password: 'Finora@12345', label: 'Nhà đầu tư' },
-] as const;
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 

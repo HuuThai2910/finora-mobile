@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Field } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import { FontFamily, Spacing } from '@/theme';
@@ -31,86 +31,75 @@ export default function WithdrawSection({
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
 
-  const confirm = () => {
-    Alert.alert(
-      'Rút hồ sơ vay?',
-      fundingWithdrawal
-        ? 'FINORA sẽ hủy đợt gọi vốn đang mở và trả tiền đang giữ cho các nhà đầu tư. Hồ sơ này không thể tiếp tục giải ngân.'
-        : 'FINORA sẽ dừng xử lý hồ sơ này và bạn không thể khôi phục lại. Nếu vẫn cần vay, bạn sẽ phải nộp hồ sơ mới.',
-      [
-        { text: 'Giữ hồ sơ', style: 'cancel' },
-        {
-          text: 'Rút hồ sơ',
-          style: 'destructive',
-          onPress: () => {
-            void onWithdraw(reason).then(done => {
-              if (done) {
-                setOpen(false);
-                setReason('');
-              }
-            });
-          },
-        },
-      ],
-    );
+  const confirm = async () => {
+    const done = await onWithdraw(reason);
+    if (done) {
+      setOpen(false);
+      setReason('');
+    }
   };
 
+  if (!open) {
+    return (
+      <View style={styles.collapsed}>
+        <DetailButton
+          label="Rút hồ sơ vay"
+          variant="outline"
+          icon="x"
+          onPress={() => setOpen(true)}
+          accessibilityLabel="Mở phần rút hồ sơ vay"
+        />
+      </View>
+    );
+  }
+
   return (
-    <DetailCard title="Không còn nhu cầu vay?" style={styles.card}>
+    <DetailCard title="Rút hồ sơ vay" style={styles.card}>
       <Text style={styles.body}>
         {fundingWithdrawal
-          ? 'Bạn có thể dừng đợt gọi vốn trước khi hợp đồng được lập. Các khoản tiền đang giữ sẽ được trả về ví nhà đầu tư.'
-          : 'Bạn có thể rút hồ sơ trong lúc FINORA còn đang xử lý. Sau khi rút, hồ sơ này dừng lại vĩnh viễn.'}
+          ? 'Đợt gọi vốn sẽ dừng và tiền đang giữ được trả về ví nhà đầu tư. Hồ sơ không thể tiếp tục giải ngân.'
+          : 'Hồ sơ sẽ dừng vĩnh viễn. Nếu vẫn cần vay, bạn phải nộp hồ sơ mới.'}
       </Text>
 
-      {open ? (
-        <>
-          <Field
-            label="Lý do rút hồ sơ"
-            value={reason}
-            onChangeText={value => {
-              setReason(value);
-              if (error) clearError();
-            }}
-            placeholder="Không bắt buộc"
-            helper="Lý do giúp FINORA cải thiện sản phẩm, bạn có thể bỏ trống."
-            multiline
-          />
-          {error ? (
-            <Text style={styles.error} accessibilityLiveRegion="polite">
-              {error.message}
-            </Text>
-          ) : null}
-          <View style={styles.actions}>
-            <DetailButton
-              label="Xác nhận rút hồ sơ"
-              variant="danger"
-              onPress={confirm}
-              loading={submitting}
-            />
-            <DetailButton
-              label="Để sau"
-              variant="outline"
-              onPress={() => {
-                setOpen(false);
-                clearError();
-              }}
-              disabled={submitting}
-            />
-          </View>
-        </>
-      ) : (
+      <Field
+        label="Lý do rút hồ sơ"
+        value={reason}
+        onChangeText={value => {
+          setReason(value);
+          if (error) clearError();
+        }}
+        placeholder="Không bắt buộc"
+        helper="Không nhập thông tin nhạy cảm."
+        multiline
+      />
+      {error ? (
+        <Text style={styles.error} accessibilityLiveRegion="polite">
+          {error.message}
+        </Text>
+      ) : null}
+      <View style={styles.actions}>
         <DetailButton
-          label={fundingWithdrawal ? 'Hủy đợt gọi vốn' : 'Rút hồ sơ vay'}
+          label="Xác nhận rút hồ sơ"
           variant="danger"
-          onPress={() => setOpen(true)}
+          onPress={() => void confirm()}
+          loading={submitting}
         />
-      )}
+        <DetailButton
+          label="Quay lại"
+          variant="outline"
+          onPress={() => {
+            setOpen(false);
+            clearError();
+          }}
+          disabled={submitting}
+        />
+      </View>
     </DetailCard>
   );
 }
 
 const styles = StyleSheet.create({
+  collapsed: { marginTop: Spacing.lg },
   // Tách hẳn khỏi các thẻ thông tin phía trên để nút phá huỷ không nằm sát nút xem lịch trả.
   card: { marginTop: Spacing.lg },
   body: { fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authMuted },

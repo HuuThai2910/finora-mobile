@@ -5,6 +5,7 @@ import type {
   CreateRescheduleInput,
   EarlySettlementQuote,
   PartialPrepaymentQuote,
+  PendingLoanActivation,
   RepaymentResult,
   ReschedulePolicy,
   ScheduledDue,
@@ -15,6 +16,9 @@ import type {
 
 export const listServicingLoans = (signal?: AbortSignal): Promise<PageResponse<ServicingLoanSummary>> =>
   apiFetch<PageResponse<ServicingLoanSummary>>('/loans/me?page=0&size=50', { signal });
+
+export const listPendingLoanActivations = (signal?: AbortSignal): Promise<PendingLoanActivation[]> =>
+  apiFetch<PendingLoanActivation[]>('/loans/pending-activation', { signal });
 
 export const getServicingLoan = (loanNumber: string, signal?: AbortSignal): Promise<ServicingLoanSummary> =>
   apiFetch<ServicingLoanSummary>(`/loans/${encodeURIComponent(loanNumber)}`, { signal });

@@ -62,13 +62,14 @@ export default function ApplicationSummaryCard({
       <SummaryKeyTerms terms={keyTerms} />
 
       <View style={styles.next}>
-        <Text style={styles.meaning}>{status.meaning}</Text>
         {status.next ? (
           <Text style={styles.nextText}>
             <Text style={styles.nextLabel}>Bước tiếp theo: </Text>
             {status.next}
           </Text>
-        ) : null}
+        ) : (
+          <Text style={styles.meaning}>{status.meaning}</Text>
+        )}
       </View>
 
       {action ? (

@@ -2,5 +2,6 @@
 export { default as PortfolioScreen } from './component/PortfolioScreen';
 export { default as AutoInvestScreen } from './component/AutoInvestScreen';
 export { default as InvestContractScreen } from './component/InvestContractScreen';
+export { default as InvestorContractsScreen } from './component/InvestorContractsScreen';
 export { default as RescheduleConsentsScreen } from './component/RescheduleConsentsScreen';
 export { usePortfolio } from './hook/useInvestment';

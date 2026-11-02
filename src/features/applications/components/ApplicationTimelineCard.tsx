@@ -9,7 +9,7 @@ import {
   type TimelineMark,
   type TimelineStop,
 } from '../mappers/detailTimeline';
-import DetailCard from './DetailCard';
+import DisclosureSection from './DisclosureSection';
 
 const DOT = 22;
 
@@ -47,19 +47,24 @@ export default function ApplicationTimelineCard({
   const entries = toTimelineEntries(steps, stop);
 
   return (
-    <DetailCard title={title} icon="clock">
-      {failed ? (
-        <Notice text="Chưa tải được tiến trình xử lý. Kéo xuống để tải lại; các thông tin khác vẫn dùng được." />
-      ) : entries.length === 0 ? (
-        <Notice text="Chưa có mốc xử lý nào được ghi nhận." />
-      ) : (
-        <View>
-          {entries.map((entry, index) => (
-            <TimelineRow key={entry.key} entry={entry} index={index} next={entries[index + 1]} />
-          ))}
-        </View>
-      )}
-    </DetailCard>
+    <DisclosureSection
+      title={title}
+      hint={failed ? 'Chưa tải được, kéo xuống để thử lại' : `${entries.length} mốc đã được ghi nhận`}
+    >
+      <View style={styles.timelineBody}>
+        {failed ? (
+          <Notice text="Chưa tải được tiến trình xử lý. Kéo xuống để tải lại; các thông tin khác vẫn dùng được." />
+        ) : entries.length === 0 ? (
+          <Notice text="Chưa có mốc xử lý nào được ghi nhận." />
+        ) : (
+          <View>
+            {entries.map((entry, index) => (
+              <TimelineRow key={entry.key} entry={entry} index={index} next={entries[index + 1]} />
+            ))}
+          </View>
+        )}
+      </View>
+    </DisclosureSection>
   );
 }
 
@@ -123,6 +128,7 @@ function Notice({ text }: { text: string }) {
 }
 
 const styles = StyleSheet.create({
+  timelineBody: { paddingVertical: Spacing.lg },
   row: { flexDirection: 'row', gap: Spacing.lg },
   rail: { width: DOT, alignItems: 'center' },
   dot: {

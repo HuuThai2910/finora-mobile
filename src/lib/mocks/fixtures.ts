@@ -447,6 +447,9 @@ export const AUTO_INVEST_MATCHES: AutoInvestMatch[] = [
 
 export const INVESTMENT_CONTRACT: InvestmentContract = {
   reference: 'INV_1036EB_1779470224528',
+  loanApplicationId: 2044,
+  applicationNumber: 'LA-MOCK-2044',
+  loanNumber: null,
   purpose: 'Vay học phí',
   amount: 10_000_000,
   noteCount: 20,
@@ -468,6 +471,7 @@ export const INVESTMENT_CONTRACT: InvestmentContract = {
   receiptDocumentHash: null,
   signedDocumentPath: '/investor/loan-contracts/INV_1036EB_1779470224528/signed-document',
   receiptPath: '/investor/loan-contracts/INV_1036EB_1779470224528/receipt',
+  investorSignedAt: null,
 };
 
 /* ---------------- Hồ sơ vay của tôi ---------------- */

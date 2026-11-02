@@ -65,5 +65,21 @@ Borrower chấp thuận exact terms
 - [x] UI thể hiện rõ mock/SmartCA và đủ trạng thái loading/error/success.
 - [x] Investor SmartCA có trạng thái `SIGNING`, kiểm tra thủ công và polling giới hạn ở foreground.
 - [x] Không gọi trực tiếp database, AI, Fineract hoặc service ngoài Gateway/backend public API.
+- [x] Danh mục đầu tư phân biệt rõ vốn còn nằm trong khoản vay và vốn đang chờ hoàn tất đầu tư.
+- [x] Nhà đầu tư có một màn riêng để xem hợp đồng cần xử lý và toàn bộ hợp đồng đã tham gia.
+- [x] Thẻ khoản đầu tư ưu tiên mã khoản vay `LN`, đồng thời hiển thị mã hồ sơ `LA` và hợp đồng `LC`
+  để người dùng nhận biết đúng hồ sơ đã đầu tư và mở lại đúng hợp đồng.
+- [x] Loan Contract API trả thêm định danh hồ sơ/khoản vay cho mobile mà không thay đổi nguồn chuẩn của Investment.
+
+## Cập nhật trải nghiệm hợp đồng và vốn chờ ngày 2026-11-02
+
+- Màn nhà đầu tư chỉ hiển thị luồng hai bước khi còn phải đọc/ký; sau khi ký, từ chối hoặc hết hạn thì
+  thay bằng trạng thái ngắn và một nút mở lại PDF.
+- Mã hồ sơ, mã khoản vay, số Note và số bên chưa ký nằm trong mục đối chiếu mở khi cần; số vốn, mục đích,
+  kỳ hạn và hạn ký vẫn ở phần tóm tắt.
+- “Không tiếp tục đầu tư” và “Rút vốn đang chờ” là hành động phụ, chỉ chuyển sang cảnh báo phá huỷ tại
+  bước xác nhận cuối. Điều kiện được rút/từ chối vẫn lấy nguyên từ backend.
+- Chữ ký/biên nhận mặc định thu gọn; danh mục giải thích vốn chờ một lần và dùng cùng thuật ngữ ở thẻ,
+  hộp xác nhận và thông báo thành công.
 
 Kiểm thử runtime trên thiết bị và E2E Kafka local vẫn là bước review trước khi Thái chuyển `ACCEPTED`.

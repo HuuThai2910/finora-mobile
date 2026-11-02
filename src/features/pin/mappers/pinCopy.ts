@@ -14,7 +14,10 @@ export function pinStepCopy(step: PinStep, request: PinRequest): PinStepCopy {
       return { title: 'Mã PIN', subtitle: 'Chưa kiểm tra được mã PIN.' };
     case 'verify':
       return {
-        title: 'Nhập mã PIN',
+        title:
+          request.kind === 'guard' && request.scope === 'SIGN_CONTRACT'
+            ? 'Xác nhận yêu cầu ký'
+            : 'Nhập mã PIN',
         subtitle: request.kind === 'guard' ? PIN_SCOPE_LABEL[request.scope] : 'Xác nhận giao dịch',
       };
     case 'createNew':
@@ -22,7 +25,9 @@ export function pinStepCopy(step: PinStep, request: PinRequest): PinStepCopy {
         title: 'Tạo mã PIN',
         subtitle:
           request.kind === 'guard'
-            ? 'Giao dịch này cần mã PIN 6 số. Tạo mã ngay để tiếp tục.'
+            ? request.scope === 'SIGN_CONTRACT'
+              ? 'Tạo PIN FINORA để gửi hợp đồng sang VNPT SmartCA. Sau đó bạn vẫn cần thực hiện ký số trong ứng dụng SmartCA.'
+              : 'Giao dịch này cần mã PIN 6 số. Tạo mã ngay để tiếp tục.'
             : 'Mã PIN gồm 6 chữ số, dùng để xác nhận các giao dịch.',
       };
     case 'createConfirm':

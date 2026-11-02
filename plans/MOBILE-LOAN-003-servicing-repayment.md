@@ -70,8 +70,20 @@ Hướng dẫn chạy happy case và từng cơ chế bằng UI: `docs/LOAN-SERV
 - Màn nhỏ, loading, empty, lỗi mạng, số dư thiếu và status lạ vẫn hiển thị an toàn.
 - Trả trước một phần chỉ hiển thị lịch mới sau khi Payment/Fineract hoàn tất.
 
+### Trạng thái đang hoàn tất sau giải ngân
+
+- Danh sách đọc đồng thời `GET /loans/me` và `GET /loans/pending-activation`.
+- Khi hợp đồng đã có hiệu lực nhưng Fineract chưa tạo xong khoản vay, UI hiển thị thẻ có mã hồ sơ, mã
+  hợp đồng, số tiền và diễn giải dễ hiểu; không hiện màn “chưa có khoản vay” và không dùng từ saga/core.
+- UI tự làm mới mỗi 5 giây, tối đa 24 lần trong một lượt theo dõi (2 phút), chỉ khi màn hình đang được mở.
+  Sau giới hạn này người dùng kéo để làm mới; không polling vô hạn.
+- `REPAIR_REQUIRED` không tự thử tiếp và hướng người dùng chờ FINORA hỗ trợ. Người dùng không được nhắc
+  tạo lại hồ sơ hoặc thanh toán khi lịch trả nợ chưa sẵn sàng.
+- Khi saga hoàn tất, thẻ trung gian biến mất và khoản vay thật từ `GET /loans/me` xuất hiện cùng lịch trả nợ.
+
 Kết quả kiểm tra gần nhất:
 
 - `npx tsc --noEmit`: đạt ngày 2026-10-17.
+- `npx tsc --noEmit`: đạt lại ngày 2026-11-01 sau khi bổ sung trạng thái đang hoàn tất khoản vay.
 - `npx expo export --platform web`: đạt, bundle 993 module.
 - Đối chiếu controller/DTO Loan và Payment: đúng path, body, response enum và idempotency header.

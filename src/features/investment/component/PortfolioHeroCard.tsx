@@ -31,7 +31,7 @@ export default function PortfolioHeroCard({ summary, width }: { summary: Portfol
     ...(summary.prepaymentFeeReceived > 0
       ? [{ label: 'Phí trả trước được chia', value: formatDong(summary.prepaymentFeeReceived) }]
       : []),
-    { label: 'Chờ giải ngân', value: formatDong(summary.pendingAmount) },
+    { label: 'Vốn chờ hoàn tất', value: formatDong(summary.pendingAmount) },
   ];
 
   return (
@@ -51,7 +51,7 @@ export default function PortfolioHeroCard({ summary, width }: { summary: Portfol
       />
 
       <Text style={styles.label} maxFontSizeMultiplier={1.4}>
-        Vốn đang đầu tư
+        Vốn còn trong các khoản vay
       </Text>
       <Text
         style={[styles.value, valueSize]}

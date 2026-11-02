@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import { FontFamily, Radius, SoftShadow, Spacing, tabularNums } from '@/theme';
-import type { PortfolioPosition } from '@/types/invest';
+import type { InvestmentContract, PortfolioPosition } from '@/types/invest';
 import { formatDong, formatPercentValue } from '@/utils/format';
 
 /** Hạng A xanh lá, B xanh dương, C/D hổ phách, E đỏ — cùng cặp màu viên hạng trên Sàn. */
@@ -26,6 +26,8 @@ const BAR_HEIGHT = 8;
 
 type Props = {
   position: PortfolioPosition;
+  contract: InvestmentContract | null;
+  onViewContract: (contractNumber: string) => void;
   /** Mở sổ lệnh của khoản vay trên chợ Notes để bán bớt Note. */
   onSell: () => void;
 };
@@ -34,7 +36,7 @@ type Props = {
  * Một khoản vay trong danh mục: tên và hạng, thanh gốc đã thu hồi, dư nợ còn lại và lãi đã nhận,
  * rồi lối sang chợ Notes để bán Note trước hạn.
  */
-export default function PositionCard({ position: p, onSell }: Props) {
+export default function PositionCard({ position: p, contract, onViewContract, onSell }: Props) {
   const tone = (p.grade && GRADE_TONE[p.grade]) || NEUTRAL;
   const rate = formatPercentValue(p.annualRate);
   // Phần gốc đã về túi; thanh không được tràn khung nếu backend làm tròn dư một chút.
@@ -52,7 +54,9 @@ export default function PositionCard({ position: p, onSell }: Props) {
         </View>
         <View style={styles.titleBlock}>
           <View style={styles.titleRow}>
-            <Text style={styles.title} maxFontSizeMultiplier={1.4}>{`Khoản vay #${p.loanId}`}</Text>
+            <Text style={styles.title} maxFontSizeMultiplier={1.4}>
+              {contract?.loanNumber ?? contract?.applicationNumber ?? `Khoản vay nội bộ #${p.loanId}`}
+            </Text>
             <View style={[styles.pill, { backgroundColor: tone.bg }]}>
               <Text style={[styles.pillText, { color: tone.fg }]} maxFontSizeMultiplier={1.4}>
                 {p.grade ? `${p.grade} - ${rate}` : rate}
@@ -62,6 +66,11 @@ export default function PositionCard({ position: p, onSell }: Props) {
           <Text style={styles.meta} numberOfLines={1} maxFontSizeMultiplier={1.4}>
             {[p.purpose, `${p.termMonths} tháng`].filter(Boolean).join(', ')}
           </Text>
+          {contract ? (
+            <Text style={styles.references} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+              {`Hồ sơ ${contract.applicationNumber} · Hợp đồng ${contract.reference}`}
+            </Text>
+          ) : null}
           {ended ? (
             <View style={[styles.pill, styles.endedPill, { backgroundColor: ended.bg }]}>
               <Text style={[styles.pillText, { color: ended.fg }]} maxFontSizeMultiplier={1.4}>{ended.text}</Text>
@@ -105,15 +114,28 @@ export default function PositionCard({ position: p, onSell }: Props) {
         ) : null}
       </View>
 
+      {contract ? (
+        <Pressable
+          onPress={() => onViewContract(contract.reference)}
+          accessibilityRole="button"
+          accessibilityLabel={`Xem hợp đồng ${contract.reference}`}
+          style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+        >
+          <Icon name="file" size={18} color={Colors.authPrimary} />
+          <Text style={styles.actionText} maxFontSizeMultiplier={1.4}>Xem hợp đồng đã ký</Text>
+          <Icon name="chevronRight" size={18} color={Colors.chevronMuted} />
+        </Pressable>
+      ) : null}
+
       {canSell ? (
         <Pressable
           onPress={onSell}
           accessibilityRole="button"
           accessibilityLabel={`Bán Note của khoản vay ${p.loanId} trên chợ Notes`}
-          style={({ pressed }) => [styles.sell, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.action, pressed && styles.pressed]}
         >
           <Icon name="layers" size={18} color={Colors.authPrimary} />
-          <Text style={styles.sellText} maxFontSizeMultiplier={1.4}>Bán Note trên chợ</Text>
+          <Text style={styles.actionText} maxFontSizeMultiplier={1.4}>Chuyển nhượng Note</Text>
           <Icon name="chevronRight" size={18} color={Colors.chevronMuted} />
         </Pressable>
       ) : null}
@@ -157,6 +179,7 @@ const styles = StyleSheet.create({
   endedPill: { alignSelf: 'flex-start', marginTop: Spacing.xs },
   pillText: { fontFamily: FontFamily.semibold, fontSize: 12, lineHeight: 17, ...tabularNums },
   meta: { marginTop: 2, fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 18, color: Colors.authMuted },
+  references: { marginTop: 3, fontFamily: FontFamily.regular, fontSize: 11.5, lineHeight: 16, color: Colors.authPrimary },
   progressHead: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.md, marginTop: Spacing.lg },
   progressLabel: { fontFamily: FontFamily.regular, fontSize: 12, lineHeight: 17, color: Colors.authMuted, ...tabularNums },
   track: {
@@ -186,7 +209,7 @@ const styles = StyleSheet.create({
   figureValue: { marginTop: 2, fontFamily: FontFamily.bold, fontSize: 15, lineHeight: 21, color: Colors.authInk, ...tabularNums },
   // Tiền lãi đã về ví: xanh lá đậm (đạt 5,17:1 trên nền ô) như số tiền vào ở lịch sử ví.
   figureAccent: { color: Colors.walletHistoryIn },
-  sell: {
+  action: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
@@ -196,5 +219,5 @@ const styles = StyleSheet.create({
     borderTopColor: Colors.rowDivider,
   },
   pressed: { opacity: 0.6 },
-  sellText: { flex: 1, fontFamily: FontFamily.semibold, fontSize: 14, lineHeight: 20, color: Colors.authPrimary },
+  actionText: { flex: 1, fontFamily: FontFamily.semibold, fontSize: 14, lineHeight: 20, color: Colors.authPrimary },
 });

@@ -262,11 +262,14 @@ export type SignatureMethod = 'PASSWORD_OTP' | 'APP_CONFIRM';
 
 export interface InvestmentContract {
   reference: string;
+  loanApplicationId: number;
+  applicationNumber: string;
+  loanNumber: string | null;
   purpose: string;
   amount: number;
   noteCount: number;
   termMonths: number;
-  status: 'PENDING_SIGNATURE' | 'SIGNING' | 'SIGNED' | 'DECLINED';
+  status: 'PENDING_SIGNATURE' | 'SIGNING' | 'SIGNED' | 'DECLINED' | 'EXPIRED';
   contractStatus: string;
   version: number;
   documentHash: string;
@@ -286,6 +289,8 @@ export interface InvestmentContract {
   receiptDocumentHash: string | null;
   signedDocumentPath: string;
   receiptPath: string;
+  /** Thời điểm chính nhà đầu tư hiện tại ký; null khi chưa ký. */
+  investorSignedAt: string | null;
 }
 
 /** Phần vốn sơ cấp đang giữ tiền trước khi phát hành Note. */

@@ -4,11 +4,18 @@ import {
   getScheduledDue,
   getServicingLoan,
   getServicingSchedule,
+  listPendingLoanActivations,
   listServicingLoans,
 } from '../api/servicingApi';
 import type { ScheduledDue } from '../types';
 
-export const useServicingLoans = () => useAsync(listServicingLoans, []);
+export const useServicingLoans = () => useAsync(async signal => {
+  const [loans, pending] = await Promise.all([
+    listServicingLoans(signal),
+    listPendingLoanActivations(signal),
+  ]);
+  return { loans, pending };
+}, []);
 
 /** Đọc cùng một snapshot UI gồm summary, lịch core và ID hồ sơ dùng cho Payment. */
 export const useServicingLoan = (loanNumber: string) => useAsync(async signal => {

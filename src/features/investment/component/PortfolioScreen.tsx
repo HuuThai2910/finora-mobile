@@ -13,7 +13,7 @@ import { FontFamily, Radius, Spacing } from '@/theme';
 import { formatDong } from '@/utils/format';
 import { PENDING_NOTE, PORTFOLIO_MAX_WIDTH, PORTFOLIO_PADDING } from '../constant';
 import { cancelInvestmentCommitment } from '../api';
-import { useInvestmentCommitments, usePortfolio } from '../hook/useInvestment';
+import { useInvestmentCommitments, useInvestmentContracts, usePortfolio } from '../hook/useInvestment';
 import InvestHeader from './InvestHeader';
 import InvestStatusCard from './InvestStatusCard';
 import PortfolioHeroCard from './PortfolioHeroCard';
@@ -37,22 +37,23 @@ export default function PortfolioScreen() {
   const [viewportHeight, setViewportHeight] = useState(0);
   const { data, loading, error, reload } = usePortfolio();
   const commitments = useInvestmentCommitments();
+  const contracts = useInvestmentContracts();
   const [cancellingId, setCancellingId] = useState<number | null>(null);
 
   const cancelCommitment = (commitment: NonNullable<typeof commitments.data>[number]) => {
     Alert.alert(
-      'Rút lệnh góp vốn?',
+      'Rút vốn đang chờ?',
       `FINORA sẽ hủy phần vốn ${formatDong(commitment.amount)} và trả tiền đang giữ về số dư khả dụng.`,
       [
-        { text: 'Giữ lệnh', style: 'cancel' },
+        { text: 'Quay lại', style: 'cancel' },
         {
-          text: 'Rút vốn',
+          text: 'Xác nhận rút vốn',
           style: 'destructive',
           onPress: () => {
             setCancellingId(commitment.commitmentId);
             void cancelInvestmentCommitment(commitment)
               .then(() => {
-                Alert.alert('Đã rút lệnh góp vốn', 'Tiền giữ sẽ trở lại số dư khả dụng; nếu nhà cung cấp tạm lỗi, hệ thống sẽ tự thử lại.');
+                Alert.alert('Đã rút vốn đang chờ', 'Tiền giữ sẽ trở lại số dư khả dụng.');
                 commitments.reload();
                 reload();
               })
@@ -65,9 +66,9 @@ export default function PortfolioScreen() {
   };
 
   const shortcuts: readonly PortfolioShortcut[] = [
-    { icon: 'layers', label: 'Chợ Notes', onPress: () => nav.navigate('SecondaryMarket') },
-    { icon: 'zap', label: 'Auto-Invest', onPress: () => nav.navigate('AutoInvest') },
-    { icon: 'file', label: 'Ký hợp đồng', onPress: () => nav.navigate('InvestContract') },
+    { icon: 'file', label: 'Hợp đồng của tôi', onPress: () => nav.navigate('InvestorContracts') },
+    { icon: 'zap', label: 'Tự động đầu tư', onPress: () => nav.navigate('AutoInvest') },
+    { icon: 'layers', label: 'Chợ chuyển nhượng', onPress: () => nav.navigate('SecondaryMarket') },
   ];
 
   const renderBody = () => {
@@ -111,14 +112,16 @@ export default function PortfolioScreen() {
         {(commitments.data?.length ?? 0) > 0 ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle} accessibilityRole="header" maxFontSizeMultiplier={1.4}>
-              Phần vốn đang chờ
+              Đang chờ hoàn tất đầu tư
             </Text>
             {commitments.data?.map(commitment => (
               <PendingCommitmentCard
                 key={commitment.commitmentId}
                 commitment={commitment}
+                contract={contracts.data?.find(contract => contract.loanApplicationId === commitment.loanId) ?? null}
                 cancelling={cancellingId === commitment.commitmentId}
                 onCancel={() => cancelCommitment(commitment)}
+                onViewContract={contractNumber => nav.navigate('InvestContract', { contractNumber })}
               />
             ))}
           </View>
@@ -126,7 +129,7 @@ export default function PortfolioScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle} accessibilityRole="header" maxFontSizeMultiplier={1.4}>
-            Khoản vay đang nắm Note
+            Các khoản đã đầu tư
           </Text>
           {data.positions.length === 0 ? (
             <InvestStatusCard
@@ -140,6 +143,8 @@ export default function PortfolioScreen() {
               <PositionCard
                 key={position.loanId}
                 position={position}
+                contract={contracts.data?.find(contract => contract.loanApplicationId === position.loanId) ?? null}
+                onViewContract={contractNumber => nav.navigate('InvestContract', { contractNumber })}
                 onSell={() => nav.navigate('OrderBook', { listingId: position.listingId })}
               />
             ))
@@ -158,8 +163,8 @@ export default function PortfolioScreen() {
       refreshControl={
         <RefreshControl
           // Lần tải đầu đã có khung giả; vòng xoay chỉ dành cho kéo làm mới.
-          refreshing={(loading && !!data) || (commitments.loading && !!commitments.data)}
-          onRefresh={() => { reload(); commitments.reload(); }}
+          refreshing={(loading && !!data) || (commitments.loading && !!commitments.data) || (contracts.loading && !!contracts.data)}
+          onRefresh={() => { reload(); commitments.reload(); contracts.reload(); }}
           tintColor={Colors.authPrimary}
           colors={[Colors.authPrimary]}
         />

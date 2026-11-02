@@ -3,6 +3,7 @@ import {
   getAutoInvest,
   getAutoInvestMatches,
   getInvestmentContract,
+  getInvestmentContracts,
   getInvestmentCommitments,
   getPortfolio,
   getRescheduleConsents,
@@ -11,6 +12,10 @@ import {
 export const usePortfolio = () => useAsync(getPortfolio, []);
 export const useAutoInvest = () => useAsync(getAutoInvest, []);
 export const useAutoInvestMatches = () => useAsync(getAutoInvestMatches, []);
-export const useInvestmentContract = () => useAsync(getInvestmentContract, []);
+export const useInvestmentContracts = () => useAsync(getInvestmentContracts, []);
+export const useInvestmentContract = (contractNumber?: string) => useAsync(
+  signal => getInvestmentContract(contractNumber, signal),
+  [contractNumber],
+);
 export const useInvestmentCommitments = () => useAsync(getInvestmentCommitments, []);
 export const useRescheduleConsents = () => useAsync(getRescheduleConsents, []);

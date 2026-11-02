@@ -9,7 +9,7 @@ import {
   PURPOSE_LABELS,
   REPAYMENT_LABELS,
 } from '../constant';
-import DetailCard from './DetailCard';
+import DisclosureSection from './DisclosureSection';
 
 const NOT_PROVIDED = 'Chưa cung cấp';
 
@@ -23,54 +23,56 @@ function optionLabel(
 
 /**
  * "Thông tin bạn đã gửi": bản khai và snapshot sản phẩm, chỉ để tra cứu lại khi
- * cần đối chiếu. Cố ý trình bày trầm (không ô màu, không nhãn) ở cuối màn để
- * không tranh chỗ với trạng thái và số tiền phải trả; nhóm như trước (đề nghị
- * vay, tài chính đã khai) nhưng mở sẵn, vì phần này đã nằm cuối màn.
+ * cần đối chiếu. Mặc định đóng để dữ liệu đã khai không tranh chỗ với trạng
+ * thái và hành động hiện tại của hồ sơ.
  */
 export default function DeclaredInfoSection({ application }: { application: LoanApplication }) {
   const financial = application.financialInformation;
   const product = application.productSnapshot;
 
   return (
-    <DetailCard title="Thông tin bạn đã gửi" icon="fileText">
-      <Text style={styles.note}>
-        Bản chụp lúc nộp hồ sơ, không thay đổi khi bạn cập nhật hồ sơ cá nhân.
-      </Text>
+    <DisclosureSection
+      title="Thông tin bạn đã gửi"
+      hint="Sản phẩm, mục đích vay và thông tin tài chính lúc nộp"
+    >
+      <View style={styles.content}>
+        <Text style={styles.note}>Bản ghi tại thời điểm nộp hồ sơ.</Text>
 
-      <InfoGroup title="Đề nghị vay đã gửi">
-        <InfoRow label="Sản phẩm" value={product.name} first />
-        <InfoRow label="Mục đích" value={PURPOSE_LABELS[application.purposeCode] ?? application.purposeCode} />
-        {application.purposeDetail ? (
-          <InfoRow label="Phương án sử dụng vốn" value={application.purposeDetail} stacked />
-        ) : null}
-        <InfoRow
-          label="Phương thức trả"
-          value={REPAYMENT_LABELS[product.repaymentMethod] ?? product.repaymentMethod}
-        />
-        <InfoRow label="Ngày giải ngân mong muốn" value={formatLocalDate(application.expectedDisbursementDate)} />
-        <InfoRow label="Ngày nộp hồ sơ" value={formatDate(application.submittedAt)} />
-      </InfoGroup>
+        <InfoGroup title="Đề nghị vay đã gửi">
+          <InfoRow label="Sản phẩm" value={product.name} first />
+          <InfoRow label="Mục đích" value={PURPOSE_LABELS[application.purposeCode] ?? application.purposeCode} />
+          {application.purposeDetail ? (
+            <InfoRow label="Phương án sử dụng vốn" value={application.purposeDetail} stacked />
+          ) : null}
+          <InfoRow
+            label="Phương thức trả"
+            value={REPAYMENT_LABELS[product.repaymentMethod] ?? product.repaymentMethod}
+          />
+          <InfoRow label="Ngày giải ngân mong muốn" value={formatLocalDate(application.expectedDisbursementDate)} />
+          <InfoRow label="Ngày nộp hồ sơ" value={formatDate(application.submittedAt)} />
+        </InfoGroup>
 
-      <InfoGroup title="Thông tin tài chính đã khai">
-        <InfoRow label="Thu nhập hằng tháng" value={formatDong(financial.declaredMonthlyIncome)} first />
-        <InfoRow label="Nghĩa vụ nợ hằng tháng" value={formatDong(financial.monthlyDebtObligations)} />
-        <InfoRow
-          label="Tỷ lệ nợ trên thu nhập"
-          hint="Phần thu nhập hằng tháng đang dùng để trả nợ"
-          value={formatPercentValue(financial.dtiSnapshot)}
-        />
-        <InfoRow
-          label="Số tháng đi làm"
-          value={
-            financial.employmentLengthMonths == null
-              ? NOT_PROVIDED
-              : `${financial.employmentLengthMonths} tháng`
-          }
-        />
-        <InfoRow label="Tình trạng nhà ở" value={optionLabel(HOME_OWNERSHIP_OPTIONS, financial.homeOwnership)} />
-        <InfoRow label="Trình độ học vấn" value={optionLabel(EDUCATION_LEVEL_OPTIONS, financial.educationLevel)} />
-      </InfoGroup>
-    </DetailCard>
+        <InfoGroup title="Thông tin tài chính đã khai">
+          <InfoRow label="Thu nhập hằng tháng" value={formatDong(financial.declaredMonthlyIncome)} first />
+          <InfoRow label="Nghĩa vụ nợ hằng tháng" value={formatDong(financial.monthlyDebtObligations)} />
+          <InfoRow
+            label="Tỷ lệ nợ trên thu nhập"
+            hint="Phần thu nhập hằng tháng đang dùng để trả nợ"
+            value={formatPercentValue(financial.dtiSnapshot)}
+          />
+          <InfoRow
+            label="Số tháng đi làm"
+            value={
+              financial.employmentLengthMonths == null
+                ? NOT_PROVIDED
+                : `${financial.employmentLengthMonths} tháng`
+            }
+          />
+          <InfoRow label="Tình trạng nhà ở" value={optionLabel(HOME_OWNERSHIP_OPTIONS, financial.homeOwnership)} />
+          <InfoRow label="Trình độ học vấn" value={optionLabel(EDUCATION_LEVEL_OPTIONS, financial.educationLevel)} />
+        </InfoGroup>
+      </View>
+    </DisclosureSection>
   );
 }
 
@@ -113,6 +115,7 @@ function InfoRow({ label, value, hint, stacked = false, first = false }: RowProp
 }
 
 const styles = StyleSheet.create({
+  content: { paddingVertical: Spacing.lg },
   note: { fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authMuted },
   groupTitle: {
     marginTop: Spacing.xs,

@@ -1,10 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { PdfViewer } from '@/components/feedback';
 import { Icon } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import { padesLegalNotice } from '@/constants/contractSignature';
 import { useAuthenticatedPdf } from '@/hooks/useAuthenticatedPdf';
-import { FontFamily, Radius, SoftShadow, Spacing } from '@/theme';
+import { FontFamily, MIN_TOUCH, Radius, SoftShadow, Spacing } from '@/theme';
 import type { InvestmentContract } from '@/types/invest';
 import InvestButton from './InvestButton';
 
@@ -15,6 +16,7 @@ import InvestButton from './InvestButton';
  * cha chỉ dựng thẻ này cho hợp đồng PAdES; mọi số liệu lấy nguyên từ backend.
  */
 export default function ContractSignedFilesCard({ contract }: { contract: InvestmentContract }) {
+  const [open, setOpen] = useState(false);
   const count = contract.pdfSignatureCount;
   const receiptReady = contract.receiptDocumentHash !== null;
   const inProgress = contract.signedPdfDocumentHash !== null && !receiptReady;
@@ -35,50 +37,64 @@ export default function ContractSignedFilesCard({ contract }: { contract: Invest
 
   return (
     <View style={styles.card}>
-      <View style={styles.head}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        accessibilityLabel={open ? 'Thu gọn chữ ký và biên nhận' : 'Mở chữ ký và biên nhận'}
+        onPress={() => setOpen(value => !value)}
+        style={({ pressed }) => [styles.head, pressed && styles.pressed]}
+      >
         <Icon name="shieldCheck" size={20} color={Colors.authPrimary} />
-        <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.4}>Chữ ký số trong PDF</Text>
-      </View>
-      <Text style={styles.count} maxFontSizeMultiplier={1.4}>
-        {count > 0 ? `${count} chữ ký đã nhúng vào tệp hợp đồng` : 'Tệp hợp đồng chưa có chữ ký số nào'}
-      </Text>
-      <Text style={styles.hint} maxFontSizeMultiplier={1.4}>
-        {receiptReady
-          ? 'Hợp đồng đã đủ chữ ký. Trang biên nhận liệt kê từng chữ ký: thứ tự, vai trò, thời điểm và chứng thư.'
-          : 'Các nhà đầu tư ký lần lượt vào chính tệp PDF theo thứ tự hoàn tất, người vay ký sau cùng.'}
-      </Text>
+        <View style={styles.headCopy}>
+          <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.4}>Chữ ký và biên nhận</Text>
+          <Text style={styles.count} maxFontSizeMultiplier={1.4}>
+            {count > 0 ? `${count} chữ ký trong PDF` : 'Chưa có chữ ký trong PDF'}
+          </Text>
+        </View>
+        <Icon name={open ? 'chevronLeft' : 'chevronRight'} size={18} color={Colors.authPrimary} />
+      </Pressable>
 
-      {inProgress ? (
-        <InvestButton
-          label={`Bản đang ký (${count} chữ ký)`}
-          icon="fileText"
-          variant="outline"
-          onPress={() => void signedPdf.openPdf()}
-          loading={signedPdf.opening}
-          disabled={busy}
-        />
-      ) : null}
-      {receiptReady ? (
-        <InvestButton
-          label="Trang biên nhận chữ ký"
-          icon="receipt"
-          variant="outline"
-          onPress={() => void receiptPdf.openPdf()}
-          loading={receiptPdf.opening}
-          disabled={busy}
-        />
-      ) : null}
+      {open ? (
+        <View style={styles.body}>
+          <Text style={styles.hint} maxFontSizeMultiplier={1.4}>
+            {receiptReady
+              ? 'Hợp đồng đã đủ chữ ký. Biên nhận ghi rõ từng bên và thời điểm ký.'
+              : 'Bản PDF được bổ sung chữ ký lần lượt; người vay ký sau cùng.'}
+          </Text>
 
-      {pdfError ? (
-        <View style={styles.error} accessibilityRole="alert">
-          <Icon name="alert" size={18} color={Colors.tagRedText} />
-          <Text style={styles.errorText}>{pdfError}</Text>
+          {inProgress ? (
+            <InvestButton
+              label={`Bản đang ký (${count} chữ ký)`}
+              icon="fileText"
+              variant="outline"
+              onPress={() => void signedPdf.openPdf()}
+              loading={signedPdf.opening}
+              disabled={busy}
+            />
+          ) : null}
+          {receiptReady ? (
+            <InvestButton
+              label="Trang biên nhận chữ ký"
+              icon="receipt"
+              variant="outline"
+              onPress={() => void receiptPdf.openPdf()}
+              loading={receiptPdf.opening}
+              disabled={busy}
+            />
+          ) : null}
+
+          {pdfError ? (
+            <View style={styles.error} accessibilityRole="alert">
+              <Icon name="alert" size={18} color={Colors.tagRedText} />
+              <Text style={styles.errorText}>{pdfError}</Text>
+            </View>
+          ) : null}
+          <View style={styles.legal}>
+            <Icon name="shieldAlert" size={18} color={Colors.tagAmberText} />
+            <Text style={styles.legalText}>{padesLegalNotice(contract.availableSignatureProvider)}</Text>
+          </View>
         </View>
       ) : null}
-      <View style={styles.legal}>
-        <Icon name="shieldAlert" size={18} color={Colors.tagAmberText} />
-        <Text style={styles.legalText}>{padesLegalNotice(contract.availableSignatureProvider)}</Text>
-      </View>
 
       <PdfViewer
         visible={signedPdf.previewUri !== null}
@@ -108,7 +124,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     ...SoftShadow.card,
   },
-  head: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  head: { minHeight: MIN_TOUCH, flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  headCopy: { flex: 1, gap: 2 },
+  body: { gap: Spacing.md, paddingTop: Spacing.md, borderTopWidth: 1, borderTopColor: Colors.rowDivider },
   title: { flex: 1, fontFamily: FontFamily.bold, fontSize: 16, lineHeight: 23, color: Colors.authInk },
   count: { fontFamily: FontFamily.semibold, fontSize: 14, lineHeight: 20, color: Colors.authInk },
   hint: { fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authMuted },
@@ -130,4 +148,5 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.amberBg,
   },
   legalText: { flex: 1, fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.tagAmberText },
+  pressed: { opacity: 0.75 },
 });

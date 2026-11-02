@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Field } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import { FontFamily, Radius, SoftShadow, Spacing } from '@/theme';
@@ -16,40 +16,41 @@ export default function ContractDeclineCard({ declining, error, onDecline }: Pro
   const [open, setOpen] = useState(false);
   const [detail, setDetail] = useState('');
 
-  const confirm = () => Alert.alert(
-    'Từ chối ký hợp đồng?',
-    'Hợp đồng dùng chung cho toàn bộ nhà đầu tư. Quyết định này sẽ hủy đợt vay và trả tiền đang giữ của tất cả nhà đầu tư về ví. Không thể hoàn tác.',
-    [
-      { text: 'Tiếp tục xem hợp đồng', style: 'cancel' },
-      { text: 'Từ chối ký', style: 'destructive', onPress: () => void onDecline(detail) },
-    ],
-  );
+  if (!open) {
+    return (
+      <DetailButton
+        label="Không tiếp tục đầu tư"
+        variant="outline"
+        icon="x"
+        onPress={() => setOpen(true)}
+      />
+    );
+  }
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Bạn không muốn tiếp tục đầu tư?</Text>
+      <Text style={styles.title}>Từ chối ký hợp đồng</Text>
       <Text style={styles.body}>
-        Bạn chỉ có thể từ chối khi phần vốn của mình chưa ký. Sau khi chữ ký được ghi nhận, FINORA không cho rút đơn phương.
+        Đợt vay sẽ dừng và tiền đang giữ của các nhà đầu tư được trả về ví. Quyết định này không thể hoàn tác.
       </Text>
-      {open ? (
-        <>
-          <Field
-            label="Lý do từ chối"
-            value={detail}
-            onChangeText={setDetail}
-            placeholder="Không bắt buộc"
-            helper="Không nhập thông tin nhạy cảm."
-            multiline
-          />
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          <View style={styles.actions}>
-            <DetailButton label="Xác nhận từ chối ký" variant="danger" loading={declining} onPress={confirm} />
-            <DetailButton label="Quay lại" variant="outline" disabled={declining} onPress={() => setOpen(false)} />
-          </View>
-        </>
-      ) : (
-        <DetailButton label="Không tiếp tục đầu tư" variant="danger" onPress={() => setOpen(true)} />
-      )}
+      <Field
+        label="Lý do từ chối"
+        value={detail}
+        onChangeText={setDetail}
+        placeholder="Không bắt buộc"
+        helper="Không nhập thông tin nhạy cảm."
+        multiline
+      />
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+      <View style={styles.actions}>
+        <DetailButton
+          label="Xác nhận từ chối ký"
+          variant="danger"
+          loading={declining}
+          onPress={() => void onDecline(detail)}
+        />
+        <DetailButton label="Quay lại" variant="outline" disabled={declining} onPress={() => setOpen(false)} />
+      </View>
     </View>
   );
 }

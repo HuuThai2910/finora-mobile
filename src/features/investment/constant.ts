@@ -22,7 +22,7 @@ export const PORTFOLIO_MAX_WIDTH = 480;
 export const PORTFOLIO_PADDING = 16;
 
 export const PENDING_NOTE =
-  'đang chờ giải ngân. Note được phát hành và bắt đầu sinh lãi khi khoản vay giải ngân xong.';
+  'đang chờ gọi đủ vốn, ký hợp đồng hoặc giải ngân. Nếu khoản vay dừng, tiền sẽ trở lại ví.';
 
 /**
  * Banner màn Auto-Invest: ba robot làm việc trên sàn (cùng ảnh `market-hero.png` của màn Sàn, 2172×724)

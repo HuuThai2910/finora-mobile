@@ -2,36 +2,55 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import { FontFamily, MIN_TOUCH, Radius, SoftShadow, Spacing, tabularNums } from '@/theme';
-import type { InvestmentCommitment } from '@/types/invest';
+import type { InvestmentCommitment, InvestmentContract } from '@/types/invest';
 import { formatDong } from '@/utils/format';
 
 type Props = {
   commitment: InvestmentCommitment;
+  contract: InvestmentContract | null;
   cancelling: boolean;
   onCancel: () => void;
+  onViewContract: (contractNumber: string) => void;
 };
 
 /** Phần vốn chưa thành Note; chỉ listing OPEN mới có nút rút riêng lệnh. */
-export default function PendingCommitmentCard({ commitment, cancelling, onCancel }: Props) {
+export default function PendingCommitmentCard({ commitment, contract, cancelling, onCancel, onViewContract }: Props) {
   const locked = commitment.listingStatus === 'FULLY_FUNDED';
+  const stage = commitment.cancelAllowed
+    ? 'Đang gọi vốn'
+    : locked
+      ? 'Chờ hoàn tất hợp đồng'
+      : 'Đang hoàn tất đầu tư';
   return (
     <View style={styles.card}>
       <View style={styles.head}>
         <View style={styles.icon}><Icon name="clock" size={20} color={Colors.authPrimary} /></View>
         <View style={styles.headText}>
-          <Text style={styles.title}>Khoản vay #{commitment.listingId}</Text>
-          <Text style={styles.meta}>{commitment.noteCount} Note · {commitment.sharePercent}% khoản vay</Text>
+          <Text style={styles.title}>{contract?.applicationNumber ?? `Đợt gọi vốn #${commitment.listingId}`}</Text>
+          <Text style={styles.meta}>{stage} · {commitment.noteCount} Note · {commitment.sharePercent}% khoản vay</Text>
         </View>
         <Text style={styles.amount}>{formatDong(commitment.amount)}</Text>
       </View>
 
       <Text style={styles.hint}>
         {commitment.cancelAllowed
-          ? 'Tiền đang được giữ tạm. Bạn có thể rút lệnh trước khi khoản vay gọi đủ vốn.'
+          ? 'Tiền đang được giữ trong ví và có thể rút trước khi khoản vay đủ vốn.'
           : locked
-            ? 'Danh sách góp vốn đã khóa để ký hợp đồng. Nếu chưa ký, bạn có thể từ chối tại mục Ký hợp đồng.'
-            : 'Phần vốn đang được hệ thống xử lý và không còn hủy trực tiếp tại đây.'}
+            ? 'Khoản vay đã đủ vốn; tiền chỉ chuyển sau khi hợp đồng được ký đủ.'
+            : 'Khoản đầu tư đang hoàn tất trước khi phát hành Note.'}
       </Text>
+
+      {contract ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Xem hợp đồng ${contract.reference}`}
+          onPress={() => onViewContract(contract.reference)}
+          style={({ pressed }) => [styles.contract, pressed && styles.pressed]}
+        >
+          <Text style={styles.contractText}>Xem hợp đồng {contract.reference}</Text>
+          <Icon name="chevronRight" size={18} color={Colors.authPrimary} />
+        </Pressable>
+      ) : null}
 
       {commitment.cancelAllowed ? (
         <Pressable
@@ -42,7 +61,7 @@ export default function PendingCommitmentCard({ commitment, cancelling, onCancel
           onPress={onCancel}
           style={({ pressed }) => [styles.cancel, pressed && styles.pressed, cancelling && styles.disabled]}
         >
-          <Text style={styles.cancelText}>{cancelling ? 'Đang rút vốn…' : 'Rút lệnh góp vốn'}</Text>
+          <Text style={styles.cancelText}>{cancelling ? 'Đang rút vốn…' : 'Rút vốn đang chờ'}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -58,8 +77,10 @@ const styles = StyleSheet.create({
   meta: { fontFamily: FontFamily.regular, fontSize: 12, lineHeight: 17, color: Colors.authMuted },
   amount: { fontFamily: FontFamily.bold, fontSize: 14, lineHeight: 20, color: Colors.authInk, ...tabularNums },
   hint: { fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authMuted },
-  cancel: { minHeight: MIN_TOUCH, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.tagRedBorder, borderRadius: Radius.pill },
-  cancelText: { fontFamily: FontFamily.semibold, fontSize: 14, lineHeight: 20, color: Colors.red },
+  contract: { minHeight: MIN_TOUCH, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.sm, borderTopWidth: 1, borderTopColor: Colors.rowDivider },
+  contractText: { flex: 1, fontFamily: FontFamily.semibold, fontSize: 13, lineHeight: 19, color: Colors.authPrimary },
+  cancel: { minHeight: MIN_TOUCH, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.authBorder, borderRadius: Radius.pill },
+  cancelText: { fontFamily: FontFamily.semibold, fontSize: 14, lineHeight: 20, color: Colors.authPrimary },
   pressed: { opacity: 0.75 },
   disabled: { opacity: 0.5 },
 });

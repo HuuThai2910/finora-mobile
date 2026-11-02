@@ -438,3 +438,14 @@ withdraw UI, polling theo AppState, component test và kiểm thử end-to-end t
 - `react-native-webview` 13.16.1 được thêm theo Expo SDK 57; TypeScript, web/iOS/Android export đều đạt.
   Còn cần thao tác thật trên iOS/Android để xác nhận cuộn/zoom tài liệu và hành vi quay lại màn Contract trước
   khi đánh dấu acceptance criterion thiết bị đạt.
+
+## 21. Giảm quá tải thông tin hồ sơ và hợp đồng (cập nhật 2026-11-02)
+
+- Chi tiết hồ sơ chỉ nêu một câu về bước tiếp theo; bản khai và tiến trình chuyển thành mục tra cứu
+  mặc định đóng, không lặp lại ý nghĩa trạng thái ở nhiều thẻ.
+- Rút hồ sơ là hành động phụ ở cuối màn. Biểu mẫu chỉ mở khi người vay chủ động chọn và nút xác nhận
+  trong biểu mẫu là bước quyết định cuối, không chồng thêm hộp thoại xác nhận thứ ba.
+- Chi tiết hợp đồng ưu tiên PDF và hành động ký. Kết quả điều khoản, giải ngân, chữ ký/biên nhận và lịch
+  sử đặt sau luồng chính; mã thanh toán/Fineract chỉ hiện trong mục đối chiếu khi cần hỗ trợ.
+- Người vay vẫn phải mở đúng PDF theo hash trước khi ký; version, idempotency, quyền rút/từ chối và API
+  backend không thay đổi.

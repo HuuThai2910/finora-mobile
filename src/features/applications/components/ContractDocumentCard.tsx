@@ -44,8 +44,7 @@ export default function ContractDocumentCard({
             {confirmed ? 'Bản PDF xác nhận' : 'Hợp đồng và lịch trả nợ'}
           </Text>
           <Text style={styles.body}>
-            Mở toàn văn hợp đồng PDF. Lịch từng kỳ và tổng số tiền phải trả được trình bày đầy đủ
-            trong tài liệu này.
+            Xem đầy đủ điều khoản và lịch trả nợ trong bản PDF.
           </Text>
         </View>
         <PdfArt />

@@ -77,8 +77,24 @@ export const saveAutoInvest = async (
  * đồng nào là trạng thái bình thường (chưa góp vốn vào khoản nào đủ vốn), nên trả null cho màn hiện
  * trạng thái trống thay vì báo lỗi.
  */
-export const getInvestmentContract = async (signal?: AbortSignal): Promise<InvestmentContract | null> => {
+export const getInvestmentContracts = async (signal?: AbortSignal): Promise<InvestmentContract[]> => {
+  if (isMocked('signature')) return [await investMock.getInvestmentContract()];
+  const contracts = await apiFetch<InvestorContractDto[]>('/investor/loan-contracts/me', { signal });
+  return contracts.map(toInvestmentContract);
+};
+
+export const getInvestmentContract = async (
+  contractNumber?: string,
+  signal?: AbortSignal,
+): Promise<InvestmentContract | null> => {
   if (isMocked('signature')) return investMock.getInvestmentContract();
+  if (contractNumber) {
+    const contract = await apiFetch<InvestorContractDto>(
+      `/investor/loan-contracts/${encodeURIComponent(contractNumber)}`,
+      { signal },
+    );
+    return toInvestmentContract(contract);
+  }
   const contracts = await apiFetch<InvestorContractDto[]>('/investor/loan-contracts/me', { signal });
   const selected = contracts.find(item => (item.partyStatus === 'PENDING_SIGNATURE'
       || item.partyStatus === 'SIGNING')

@@ -12,7 +12,8 @@ export const PIN_SCOPE_LABEL: Record<PinScope, string> = {
   INVEST: 'Xác nhận đặt lệnh đầu tư',
   ORDER: 'Xác nhận đặt lệnh mua/bán Note',
   AUTO_INVEST: 'Xác nhận lưu cài đặt Auto-Invest',
-  SIGN_CONTRACT: 'Xác nhận ký hợp đồng',
+  SIGN_CONTRACT:
+    'Nhập PIN FINORA để gửi hợp đồng sang VNPT SmartCA. PIN này không phải mã ký SmartCA.',
   WITHDRAW: 'Xác nhận rút tiền',
 };
 

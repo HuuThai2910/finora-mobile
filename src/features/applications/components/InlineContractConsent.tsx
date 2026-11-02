@@ -24,6 +24,8 @@ type Props = {
   onStale: () => void;
   /** Chỉ cho rút/từ chối khi borrower chưa tới lượt ký hoặc đang có phiên SmartCA chưa hoàn tất. */
   declineOnly?: boolean;
+  /** Đóng biểu mẫu từ chối khi màn cha chỉ mở biểu mẫu theo yêu cầu người dùng. */
+  onCancelDecline?: () => void;
 };
 
 /**
@@ -38,6 +40,7 @@ export default function InlineContractConsent({
   onDone,
   onStale,
   declineOnly = false,
+  onCancelDecline,
 }: Props) {
   const consent = useContractConsent(contract);
   const [mode, setMode] = useState<'sign' | 'decline'>(declineOnly ? 'decline' : 'sign');
@@ -108,13 +111,14 @@ export default function InlineContractConsent({
             disabled={!declineReady || consent.busy}
             loading={consent.declining}
           />
-          {!declineOnly ? (
+          {!declineOnly || onCancelDecline ? (
             <DetailButton
-              label="Quay lại xác nhận"
+              label={declineOnly ? 'Quay lại' : 'Quay lại xác nhận'}
               variant="outline"
               onPress={() => {
                 consent.clearError();
-                setMode('sign');
+                if (declineOnly) onCancelDecline?.();
+                else setMode('sign');
               }}
               disabled={consent.busy}
             />

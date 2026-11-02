@@ -51,6 +51,10 @@ export interface PortfolioDto {
 /** Contract Loan trả cho đúng investor đang đăng nhập; không chứa PII của các bên khác. */
 export interface InvestorContractDto {
   contractNumber: string;
+  loanApplicationId: number;
+  applicationNumber: string;
+  loanNumber: string | null;
+  purpose: string;
   contractStatus: string;
   partyStatus: 'PENDING_SIGNATURE' | 'SIGNING' | 'SIGNED' | 'DECLINED' | 'EXPIRED';
   contractVersion: number;
@@ -68,6 +72,7 @@ export interface InvestorContractDto {
   pdfSignatureCount?: number;
   signedPdfDocumentHash?: string | null;
   receiptDocumentHash?: string | null;
+  investorSignedAt?: string | null;
 }
 
 export interface InvestmentCommitmentDto {
@@ -138,7 +143,10 @@ export function toPortfolioSummary(dto: PortfolioDto): PortfolioSummary {
 export function toInvestmentContract(dto: InvestorContractDto): InvestmentContract {
   return {
     reference: dto.contractNumber,
-    purpose: 'Hợp đồng cho vay nhiều bên',
+    loanApplicationId: dto.loanApplicationId,
+    applicationNumber: dto.applicationNumber,
+    loanNumber: dto.loanNumber,
+    purpose: dto.purpose,
     amount: Number(dto.investorAmount),
     noteCount: dto.allocationCount,
     termMonths: dto.termMonths,
@@ -146,6 +154,8 @@ export function toInvestmentContract(dto: InvestorContractDto): InvestmentContra
     // các nhà đầu tư còn lại cũng phải thấy "đã hủy", dù party riêng của họ vẫn là PENDING_SIGNATURE.
     status: dto.contractStatus === 'DECLINED' || dto.partyStatus === 'DECLINED'
       ? 'DECLINED'
+      : dto.contractStatus === 'EXPIRED' || dto.partyStatus === 'EXPIRED'
+        ? 'EXPIRED'
       : dto.partyStatus === 'SIGNED'
         ? 'SIGNED'
         : dto.partyStatus === 'SIGNING' ? 'SIGNING' : 'PENDING_SIGNATURE',
@@ -164,6 +174,7 @@ export function toInvestmentContract(dto: InvestorContractDto): InvestmentContra
     receiptDocumentHash: dto.receiptDocumentHash ?? null,
     signedDocumentPath: `/investor/loan-contracts/${dto.contractNumber}/signed-document`,
     receiptPath: `/investor/loan-contracts/${dto.contractNumber}/receipt`,
+    investorSignedAt: dto.investorSignedAt ?? null,
   };
 }
 

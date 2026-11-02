@@ -1,6 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Icon } from '@/components/ui';
 import { Colors } from '@/constants/colors';
-import { FontFamily, Radius, SoftShadow, Spacing, tabularNums } from '@/theme';
+import { FontFamily, MIN_TOUCH, Radius, SoftShadow, Spacing, tabularNums } from '@/theme';
 import type { InvestmentContract } from '@/types/invest';
 import { formatDateTime, formatDong } from '@/utils/format';
 
@@ -9,6 +11,7 @@ const STATUS: Record<InvestmentContract['status'], { label: string; bg: string; 
   SIGNING: { label: 'Đang xác nhận SmartCA', bg: Colors.blueBg, fg: Colors.tagBlueText },
   SIGNED: { label: 'Bạn đã ký', bg: Colors.greenBg, fg: Colors.tagGreenText },
   DECLINED: { label: 'Hợp đồng đã hủy', bg: Colors.redBg, fg: Colors.tagRedText },
+  EXPIRED: { label: 'Đã hết hạn ký', bg: Colors.grayBg, fg: Colors.tagGrayText },
 };
 
 /**
@@ -16,14 +19,15 @@ const STATUS: Record<InvestmentContract['status'], { label: string; bg: string; 
  * hạn ký và còn bao nhiêu nhà đầu tư chưa ký.
  */
 export default function ContractSummaryCard({ contract }: { contract: InvestmentContract }) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const status = STATUS[contract.status];
-  const rows = [
-    { label: 'Mục đích', value: contract.purpose },
+  const details = [
+    { label: 'Mã hồ sơ vay', value: contract.applicationNumber },
+    ...(contract.loanNumber ? [{ label: 'Mã khoản vay', value: contract.loanNumber }] : []),
     { label: 'Số Note', value: String(contract.noteCount) },
-    { label: 'Kỳ hạn', value: `${contract.termMonths} tháng` },
-    { label: 'Hạn ký', value: formatDateTime(contract.expiresAt) },
     { label: 'Nhà đầu tư chưa ký', value: String(contract.remainingLenderSignatures) },
   ];
+  const signingWindow = contract.status === 'PENDING_SIGNATURE' || contract.status === 'SIGNING';
 
   return (
     <View style={styles.card}>
@@ -38,13 +42,36 @@ export default function ContractSummaryCard({ contract }: { contract: Investment
       <Text style={styles.amount} maxFontSizeMultiplier={1.3}>{formatDong(contract.amount)}</Text>
 
       <View style={styles.rows}>
-        {rows.map((r, i) => (
-          <View key={r.label} style={[styles.row, i > 0 && styles.divider]}>
-            <Text style={styles.rowLabel} maxFontSizeMultiplier={1.4}>{r.label}</Text>
-            <Text style={styles.rowValue} maxFontSizeMultiplier={1.4}>{r.value}</Text>
-          </View>
-        ))}
+        <SummaryRow label="Mục đích" value={contract.purpose} />
+        <SummaryRow label="Kỳ hạn" value={`${contract.termMonths} tháng`} divided />
+        {signingWindow ? <SummaryRow label="Hạn ký" value={formatDateTime(contract.expiresAt)} divided /> : null}
       </View>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: detailsOpen }}
+        accessibilityLabel={detailsOpen ? 'Thu gọn mã và thông tin đối chiếu' : 'Xem mã và thông tin đối chiếu'}
+        onPress={() => setDetailsOpen(value => !value)}
+        style={({ pressed }) => [styles.detailsButton, pressed && styles.pressed]}
+      >
+        <Text style={styles.detailsLabel}>Mã và thông tin đối chiếu</Text>
+        <Icon name={detailsOpen ? 'chevronLeft' : 'chevronRight'} size={17} color={Colors.authPrimary} />
+      </Pressable>
+
+      {detailsOpen ? (
+        <View style={styles.details}>
+          {details.map((r, i) => <SummaryRow key={r.label} label={r.label} value={r.value} divided={i > 0} />)}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function SummaryRow({ label, value, divided = false }: { label: string; value: string; divided?: boolean }) {
+  return (
+    <View style={[styles.row, divided && styles.divider]}>
+      <Text style={styles.rowLabel} maxFontSizeMultiplier={1.4}>{label}</Text>
+      <Text style={styles.rowValue} maxFontSizeMultiplier={1.4}>{value}</Text>
     </View>
   );
 }
@@ -68,4 +95,16 @@ const styles = StyleSheet.create({
   divider: { borderTopWidth: 1, borderTopColor: Colors.rowDivider },
   rowLabel: { fontFamily: FontFamily.regular, fontSize: 14, lineHeight: 20, color: Colors.authMuted },
   rowValue: { flexShrink: 1, textAlign: 'right', fontFamily: FontFamily.semibold, fontSize: 14, lineHeight: 20, color: Colors.authInk, ...tabularNums },
+  detailsButton: {
+    minHeight: MIN_TOUCH,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.rowDivider,
+  },
+  detailsLabel: { fontFamily: FontFamily.semibold, fontSize: 13, lineHeight: 19, color: Colors.authPrimary },
+  details: { borderTopWidth: 1, borderTopColor: Colors.rowDivider },
+  pressed: { opacity: 0.75 },
 });

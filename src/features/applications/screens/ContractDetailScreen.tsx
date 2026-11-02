@@ -14,6 +14,7 @@ import ContractSignaturesCard from '../components/ContractSignaturesCard';
 import ContractSmartCaCard from '../components/ContractSmartCaCard';
 import ContractSummaryCard from '../components/ContractSummaryCard';
 import ContractDisbursementCard from '../components/ContractDisbursementCard';
+import DetailButton from '../components/DetailButton';
 import DetailNote from '../components/DetailNote';
 import InlineContractConsent from '../components/InlineContractConsent';
 import { useContractDetail, type ContractDetailView } from '../hook/useContractDetail';
@@ -76,6 +77,7 @@ function ContractDetailBody({
   // Chỉ cho ký sau khi người vay đã mở đúng bản PDF hiện hành (so theo hash):
   // PDF được phát hành lại thì phải mở lại.
   const [openedPdfHash, setOpenedPdfHash] = useState<string | null>(null);
+  const [showDecline, setShowDecline] = useState(false);
   const currentPdfHash = contract.pdfDocument?.contentHash ?? null;
   const openedCurrentPdf = currentPdfHash !== null && openedPdfHash === currentPdfHash;
 
@@ -92,10 +94,6 @@ function ContractDetailBody({
   return (
     <ContractDetailScaffold onRefresh={reload} refreshing={refreshing}>
       <ContractSummaryCard contract={contract} countdown={countdown} />
-
-      <ContractDisbursementCard contract={contract} />
-
-      {pricingApplication ? <ContractPricingCard application={pricingApplication} /> : null}
 
       {expiredWhileWaiting ? (
         <DetailNote tone="warn">
@@ -128,8 +126,6 @@ function ContractDetailBody({
 
       {pdf.error ? <DetailNote tone="warn">{pdf.error}</DetailNote> : null}
 
-      {contract.signatureProfile === 'PADES_B_B' ? <ContractSignaturesCard contract={contract} /> : null}
-
       {canRespond && !contract.pdfDocument ? (
         <DetailNote tone="warn">
           Hợp đồng cũ này chưa có PDF từ máy chủ nên chưa thể ký trên ứng dụng. Vui lòng liên hệ FINORA
@@ -155,14 +151,30 @@ function ContractDetailBody({
       ) : null}
 
       {canDecline && !canRespond ? (
-        <InlineContractConsent
-          contract={contract}
-          countdown={countdown}
-          declineOnly
-          onDone={reload}
-          onStale={handleStale}
-        />
+        showDecline ? (
+          <InlineContractConsent
+            contract={contract}
+            countdown={countdown}
+            declineOnly
+            onCancelDecline={() => setShowDecline(false)}
+            onDone={reload}
+            onStale={handleStale}
+          />
+        ) : (
+          <DetailButton
+            label="Không tiếp tục khoản vay"
+            variant="outline"
+            icon="x"
+            onPress={() => setShowDecline(true)}
+          />
+        )
       ) : null}
+
+      {pricingApplication ? <ContractPricingCard application={pricingApplication} /> : null}
+
+      <ContractDisbursementCard contract={contract} />
+
+      {contract.signatureProfile === 'PADES_B_B' ? <ContractSignaturesCard contract={contract} /> : null}
 
       <ApplicationTimelineCard
         title="Lịch sử hợp đồng"

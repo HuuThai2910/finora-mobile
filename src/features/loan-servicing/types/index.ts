@@ -22,6 +22,24 @@ export interface ServicingLoanSummary {
   stale: boolean;
 }
 
+export type PendingLoanActivationStatus =
+  | 'WAITING_PAYMENT'
+  | 'CORE_BOOKING_PENDING'
+  | 'CORE_BOOKING'
+  | 'RETRY_PENDING'
+  | 'REPAIR_REQUIRED';
+
+/** Hợp đồng đã có hiệu lực nhưng khoản vay và lịch trả nợ chưa sẵn sàng để thao tác. */
+export interface PendingLoanActivation {
+  loanApplicationId: number;
+  applicationNumber: string;
+  contractNumber: string;
+  principalAmount: number;
+  currency: string;
+  status: PendingLoanActivationStatus;
+  updatedAt: string;
+}
+
 export interface ServicingSchedule {
   loan: ServicingLoanSummary;
   periods: SchedulePeriod[];

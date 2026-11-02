@@ -29,10 +29,8 @@ type Props = {
  * dưới thẻ; nay nằm cuối thẻ ở cỡ chữ phụ để không tranh chỗ với số tiền.
  */
 const NOTES = {
-  estimate:
-    'Đây là số dự kiến tính lúc bạn nộp hồ sơ. Lịch trả chính thức chỉ hình thành sau khi hợp đồng có hiệu lực và khoản vay được giải ngân.',
-  approved:
-    'Đây là lịch theo điều khoản sau thẩm định và là cơ sở lập hợp đồng. Ngày trả thực tế có thể dịch theo ngày giải ngân.',
+  estimate: 'Đây là lịch dự kiến; lịch chính thức có sau khi giải ngân.',
+  approved: 'Ngày trả thực tế có thể thay đổi theo ngày giải ngân.',
 } as const;
 
 /**
@@ -94,9 +92,8 @@ export default function RepaymentSummary({
           </Text>
         </View>
         <Text style={styles.fine}>
-          Lịch trả tính từ ngày giải ngân dự kiến {formatLocalDate(expectedDisbursementDate)}.
+          {`Tính từ ngày dự kiến ${formatLocalDate(expectedDisbursementDate)}. ${estimate ? NOTES.estimate : NOTES.approved}`}
         </Text>
-        <Text style={styles.fine}>{estimate ? NOTES.estimate : NOTES.approved}</Text>
       </View>
 
       <DetailButton
