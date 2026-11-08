@@ -5,4 +5,6 @@ export { default as WithdrawScreen } from './component/WithdrawScreen';
 export { default as WithdrawalDetailScreen } from './component/WithdrawalDetailScreen';
 export { default as WithdrawalHistoryScreen } from './component/WithdrawalHistoryScreen';
 export { default as PayInstallmentScreen } from './component/PayInstallmentScreen';
+export { default as BankAccountsScreen } from './component/BankAccountsScreen';
+export { default as LinkBankAccountScreen } from './component/LinkBankAccountScreen';
 export { useBalance, useDueInstallment, useTransactions } from './hook/useWallet';

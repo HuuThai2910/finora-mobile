@@ -197,32 +197,6 @@ const demoTime = (daysAgo: number, hours: number, minutes: number): string => {
   return d.toISOString();
 };
 
-export const HOME_RECENT = [
-  {
-    id: 'H-1',
-    label: 'Nạp ví VietQR',
-    amount: 5_000_000,
-    direction: 'in' as const,
-    occurredAt: demoTime(0, 10, 24),
-  },
-  {
-    id: 'H-2',
-    label: 'Trả nợ kỳ 4',
-    amount: 4_320_000,
-    direction: 'out' as const,
-    occurredAt: demoTime(1, 15, 30),
-  },
-];
-
-export const HOME_CHAIN_REF = {
-  // Ký tự nối từ vô hình (U+2060) quanh dấu gạch: máy màn hẹp ngắt thành
-  // "Hợp đồng / on-chain" thay vì "Hợp đồng on- / chain". Font Be Vietnam Pro
-  // không có gạch nối không ngắt (U+2011) nên không dùng được ký tự đó.
-  label: 'Hợp đồng on⁠-⁠chain',
-  tx: '0x33d9…41b8',
-  occurredAt: '2026-09-12T09:18:00+07:00',
-};
-
 /* ---------------- Sàn khoản vay ---------------- */
 
 /** Hạn gọi vốn tính từ lúc mở app, để khoản vay mẫu luôn còn đang mở khi demo. */

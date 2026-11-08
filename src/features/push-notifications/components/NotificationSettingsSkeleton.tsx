@@ -3,12 +3,12 @@ import { Colors } from '@/constants/colors';
 import { Radius, SoftShadow, Spacing } from '@/theme';
 import { Skeleton } from '@/components/feedback';
 
-/** Số dòng giả bằng số nhóm hay gặp nhất trên màn thật để nội dung không nhảy nhiều khi dữ liệu về. */
-const ROWS = 5;
+/** Thẻ thật chỉ có một dòng công tắc. */
+const ROWS = 1;
 
 /**
- * Khung giả lúc tải tùy chọn thông báo lần đầu: cùng khung thẻ, ô icon 40pt và nhịp dòng với thẻ "Nhận thông báo đẩy
- * theo nhóm", kể cả chỗ của công tắc bên phải.
+ * Khung giả lúc tải tùy chọn thông báo lần đầu: cùng khung thẻ, ô icon 40pt và nhịp dòng với thẻ "Tùy chọn thông
+ * báo", kể cả chỗ của công tắc bên phải.
  */
 export default function NotificationSettingsSkeleton() {
   return (

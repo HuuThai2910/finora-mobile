@@ -1,27 +1,30 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { FontFamily, tabularNums } from '@/theme';
+import type { WalletTransaction } from '@/types/wallet';
 import { formatRecentTime, formatSignedDong } from '@/utils/format';
-import type { HomeSummary } from '../api';
+import { latestTransactions } from '../mappers/recentActivity';
 import ActivityRow from './ActivityRow';
 import HomeSection, { RowSkeleton, SectionMessage } from './HomeSection';
 
 type Props = {
-  summary: HomeSummary | null;
+  transactions: WalletTransaction[] | null;
   loading: boolean;
   error: string | null;
   onRetry: () => void;
   onSeeAll: () => void;
+  /** Ví chưa có giao dịch nào: gợi ý việc tiếp theo là nạp tiền. */
+  onTopUp: () => void;
 };
 
 const TITLE = 'Giao dịch gần đây';
 
 /** Trình đọc màn hình đọc "đồng" rõ hơn ký hiệu "đ". */
-const spokenDong = (amount: number) => `${new Intl.NumberFormat('vi-VN').format(amount)} đồng`;
+const spokenDong = (amount: number) => `${new Intl.NumberFormat('vi-VN').format(Math.abs(amount))} đồng`;
 
-/** Mục "Giao dịch gần đây": vài giao dịch ví mới nhất và bản ghi hợp đồng trên chuỗi. */
-export default function RecentActivitySection({ summary, loading, error, onRetry, onSeeAll }: Props) {
-  if (!summary) {
+/** Mục "Giao dịch gần đây": vài giao dịch ví mới nhất từ `GET /wallets/me/transactions`. */
+export default function RecentActivitySection({ transactions, loading, error, onRetry, onSeeAll, onTopUp }: Props) {
+  if (!transactions) {
     return (
       <HomeSection title={TITLE}>
         {loading ? (
@@ -40,8 +43,15 @@ export default function RecentActivitySection({ summary, loading, error, onRetry
     );
   }
 
-  const { recent, chainRef } = summary;
-  const chainTime = formatRecentTime(chainRef.occurredAt);
+  const recent = latestTransactions(transactions);
+
+  if (recent.length === 0) {
+    return (
+      <HomeSection title={TITLE}>
+        <SectionMessage text="Ví của bạn chưa có giao dịch nào." actionLabel="Nạp tiền" onAction={onTopUp} />
+      </HomeSection>
+    );
+  }
 
   return (
     <HomeSection title={TITLE} onSeeAll={onSeeAll} seeAllLabel="Xem tất cả giao dịch ví">
@@ -53,31 +63,18 @@ export default function RecentActivitySection({ summary, loading, error, onRetry
             key={tx.id}
             icon={incoming ? 'download' : 'arrowUpRight'}
             tone={incoming ? 'green' : 'blue'}
-            title={tx.label}
+            title={tx.description}
             subtitle={time}
             right={
               <Text style={[styles.amount, incoming && styles.amountIn]}>
                 {formatSignedDong(tx.amount, tx.direction)}
               </Text>
             }
-            accessibilityLabel={`${tx.label}, ${time}, ${incoming ? 'tiền vào' : 'tiền ra'} ${spokenDong(tx.amount)}`}
+            accessibilityLabel={`${tx.description}, ${time}, ${incoming ? 'tiền vào' : 'tiền ra'} ${spokenDong(tx.amount)}`}
             divider={i > 0}
           />
         );
       })}
-
-      <ActivityRow
-        icon="chain"
-        title={chainRef.label}
-        subtitle={chainTime}
-        right={
-          <View style={styles.hash}>
-            <Text style={styles.hashText}>{chainRef.tx}</Text>
-          </View>
-        }
-        accessibilityLabel={`${chainRef.label}, ${chainTime}, mã giao dịch ${chainRef.tx}`}
-        divider={recent.length > 0}
-      />
     </HomeSection>
   );
 }
@@ -92,16 +89,4 @@ const styles = StyleSheet.create({
   },
   // Xanh lá kèm dấu "+" nên không chỉ dựa vào màu để phân biệt tiền vào.
   amountIn: { color: Colors.green },
-  hash: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: Colors.authNoteBg,
-  },
-  hashText: {
-    fontFamily: FontFamily.medium,
-    fontSize: 12,
-    lineHeight: 16,
-    color: Colors.authNoteText,
-  },
 });

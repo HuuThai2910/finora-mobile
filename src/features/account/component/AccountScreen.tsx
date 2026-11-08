@@ -13,7 +13,6 @@ import {
   EKYC_ROW_SUBTITLE,
   LOGOUT_CONFIRM_BODY,
   LOGOUT_CONFIRM_TITLE,
-  NOTIFICATION_SETTINGS,
   PROFILE_MAX_WIDTH,
   SECURITY_SETTINGS,
   canStartEkyc,
@@ -50,7 +49,6 @@ export default function AccountScreen() {
   const openInfo = () => nav.navigate('AccountInfo');
   // Luôn vào qua màn điều khoản; đã đồng ý bản hiện hành thì màn đó tự chuyển sang chụp thẻ.
   const startEkyc = () => nav.navigate('EkycConsent');
-  const openEkycPrivacy = () => nav.navigate('EkycPrivacy');
 
   const onLogout = () =>
     Alert.alert(LOGOUT_CONFIRM_TITLE, LOGOUT_CONFIRM_BODY, [
@@ -133,23 +131,32 @@ export default function AccountScreen() {
               onPress={() => void pin.open()}
               accessibilityHint="Mở bảng nhập mã PIN giao dịch"
             />
+            <SettingsRow
+              icon="bank"
+              title="Ngân hàng liên kết"
+              subtitle="Tài khoản nhận tiền rút về"
+              onPress={() => nav.navigate('BankAccounts')}
+              accessibilityHint="Mở danh sách tài khoản ngân hàng đã liên kết"
+              divider
+            />
           </UpcomingGroup>
-          <UpcomingGroup icon="bell" title="Thông báo & Cài đặt" items={NOTIFICATION_SETTINGS}>
+          <SettingsCard icon="bell" title="Thông báo & Cài đặt">
             <SettingsRow
               icon="bell"
               title="Cài đặt thông báo"
-              subtitle="Thông báo đẩy và nhóm tin muốn nhận"
+              subtitle="Bật hoặc tắt thông báo đẩy"
               onPress={() => nav.navigate('NotificationSettings')}
               accessibilityHint="Mở màn cài đặt thông báo đẩy"
             />
             <SettingsRow
-              icon="shieldCheck"
-              title="Quyền riêng tư eKYC"
-              subtitle="Điều khoản đã đồng ý, rút lại đồng ý"
-              onPress={openEkycPrivacy}
-              accessibilityHint="Mở màn quyền riêng tư của định danh điện tử"
+              icon="fileText"
+              title="Điều khoản"
+              subtitle="Điều khoản sử dụng FINORA"
+              onPress={() => nav.navigate('Terms')}
+              accessibilityHint="Mở điều khoản sử dụng"
+              divider
             />
-          </UpcomingGroup>
+          </SettingsCard>
 
           <SettingsCard>
             <SettingsRow icon="logout" title="Đăng xuất" onPress={onLogout} danger />

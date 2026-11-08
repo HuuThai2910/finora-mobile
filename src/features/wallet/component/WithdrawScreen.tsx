@@ -3,6 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { WalletStackParamList } from '@/navigation/types';
 import type { CreateWithdrawalRequest } from '@/types/wallet';
 import { WITHDRAW_DEMO_NOTE } from '../constant';
+import { useBankAccounts } from '../hook/useBankAccounts';
 import { useCreateWithdrawal } from '../hook/useCreateWithdrawal';
 import { useWithdrawalPolicy } from '../hook/useWallet';
 import WalletAccountCard from './WalletAccountCard';
@@ -27,12 +28,17 @@ export default function WithdrawScreen() {
   const nav = useNavigation<Nav>();
   const policy = useWithdrawalPolicy();
   const create = useCreateWithdrawal();
+  // Danh sách tự tải lại khi quay về từ màn liên kết tài khoản.
+  const bank = useBankAccounts();
 
   const submit = async (request: CreateWithdrawalRequest) => {
     const outcome = await create.submit(request);
     if (outcome.kind === 'created') {
       // Thay chỗ form để nút quay lại không đưa về form vừa gửi; lệnh tiếp theo sẽ là một ý định mới.
       nav.replace('WithdrawalDetail', { withdrawalId: outcome.withdrawal.withdrawalId });
+    } else if (outcome.kind === 'failed' && outcome.code === 'WITHDRAWAL_BANK_ACCOUNT_INVALID') {
+      // Tài khoản vừa bị huỷ liên kết ở nơi khác: tải lại để form bỏ chọn tài khoản đó.
+      bank.reload();
     } else if (outcome.kind === 'failed' && outcome.code?.startsWith('WITHDRAWAL_')) {
       // Payment từ chối theo hạn mức hay số dư: tải lại policy để con số trên màn khớp lý do vừa báo. Dữ liệu cũ vẫn
       // giữ trong lúc tải nên form đang nhập không bị gỡ.
@@ -41,13 +47,16 @@ export default function WithdrawScreen() {
   };
 
   const renderBody = () => {
-    if (!policy.data) {
-      if (policy.loading) return <WalletHistorySkeleton cards={3} label="Đang tải hạn mức rút tiền" />;
+    if (!policy.data || !bank.loaded) {
+      if (policy.loading || bank.loading) return <WalletHistorySkeleton cards={3} label="Đang tải hạn mức rút tiền" />;
       return (
         <WalletHistoryStatus
           kind="error"
-          message={policy.error ?? 'Không tải được hạn mức rút tiền.'}
-          onRetry={policy.reload}
+          message={policy.error ?? bank.loadError ?? 'Không tải được hạn mức rút tiền.'}
+          onRetry={() => {
+            policy.reload();
+            bank.reload();
+          }}
         />
       );
     }
@@ -57,6 +66,8 @@ export default function WithdrawScreen() {
         <WithdrawPolicyCard policy={policy.data} />
         <WithdrawForm
           policy={policy.data}
+          accounts={bank.accounts}
+          onAddAccount={() => nav.navigate('LinkBankAccount')}
           submitting={create.submitting}
           submitError={create.error}
           onSubmit={request => void submit(request)}

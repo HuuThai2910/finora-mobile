@@ -1,0 +1,22 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://finora-api.malaysiawest.cloudapp.azure.com/api/v1",
+        "EXPO_PUBLIC_APP_NAME": "FINORA",
+        "EXPO_PUBLIC_MOCK_DOMAINS": "notification",
+        "EXPO_PUBLIC_PRICING_DISCLOSURE_VERSION": "RATE_DISCLOSURE_V2",
+        "EXPO_PUBLIC_EAS_PROJECT_ID": "9da461f6-43c9-4da9-b4b0-2f9a32dce4b3"
+      }
+    }
+  },
+  "submit": {}
+}

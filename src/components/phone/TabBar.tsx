@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { StackActions } from '@react-navigation/native';
+import { getFocusedRouteNameFromRoute, StackActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
 import { FontFamily, FontSize, IconSize, Spacing } from '@/theme';
@@ -15,12 +15,19 @@ export const TAB_ICONS: Record<string, IconName> = {
   'Hồ sơ': 'users',
 };
 
+type Props = BottomTabBarProps & {
+  /** Tên màn con (trong stack của tab) cần toàn màn hình: đang mở thì ẩn tab bar. */
+  hiddenOn?: ReadonlySet<string>;
+};
+
 /**
  * `.p-tabbar` của mockup.
  * Mục đang chọn phân biệt bằng cả màu lẫn chữ đậm, không chỉ bằng màu.
  */
-export default function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export default function TabBar({ state, descriptors, navigation, hiddenOn }: Props) {
   const insets = useSafeAreaInsets();
+  const focusedScreen = getFocusedRouteNameFromRoute(state.routes[state.index]);
+  if (focusedScreen && hiddenOn?.has(focusedScreen)) return null;
 
   return (
     <View style={[styles.bar, { paddingBottom: insets.bottom + Spacing.sm }]}>

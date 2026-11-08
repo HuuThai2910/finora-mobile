@@ -16,7 +16,7 @@ export default function ContractDisbursementCard({ contract }: { contract: LoanC
       <PItem label="Giải ngân" value={statusLabel(contract.disbursementStatus)} />
       {contract.disbursedAt ? <PItem label="Hoàn tất lúc" value={formatRecentTime(contract.disbursedAt)} last /> : null}
       {completed ? (
-        <DetailNote>Khoản vay đã được ghi nhận trên hệ thống quản lý và hoàn tất giải ngân.</DetailNote>
+        <DetailNote>Khoản vay đã hoàn tất giải ngân.</DetailNote>
       ) : needsAttention ? (
         <DetailNote tone="warn">
           FINORA đang kiểm tra kết quả giao dịch. Hợp đồng vẫn có hiệu lực và hệ thống không tạo lệnh chuyển tiền thứ hai khi chưa xác định kết quả.
@@ -24,10 +24,9 @@ export default function ContractDisbursementCard({ contract }: { contract: LoanC
       ) : (
         <DetailNote>Hệ thống đang tự động xử lý giải ngân. Bạn không cần ký hoặc gửi lại yêu cầu.</DetailNote>
       )}
-      {contract.paymentReference || contract.fineractLoanId ? (
+      {contract.paymentReference ? (
         <DisclosureSection title="Mã đối chiếu" hint="Chỉ cần khi liên hệ hỗ trợ">
-          {contract.paymentReference ? <PItem label="Mã thanh toán" value={contract.paymentReference} /> : null}
-          {contract.fineractLoanId ? <PItem label="Mã khoản vay hệ thống" value={String(contract.fineractLoanId)} last /> : null}
+          <PItem label="Mã thanh toán" value={contract.paymentReference} last />
         </DisclosureSection>
       ) : null}
     </DetailCard>

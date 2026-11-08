@@ -12,19 +12,19 @@ import { usePushRegistrationState } from '../lib/registrationStore';
 import NotificationNote from '../components/NotificationNote';
 import NotificationSettingsHeader from '../components/NotificationSettingsHeader';
 import NotificationSettingsSkeleton from '../components/NotificationSettingsSkeleton';
-import PreferenceToggleRow from '../components/PreferenceToggleRow';
 import PushStatusCard from '../components/PushStatusCard';
+import PushToggleRow from '../components/PushToggleRow';
 import SettingsGroupCard from '../components/SettingsGroupCard';
 
 /** Cùng bề ngang cột nội dung với các màn của tab Hồ sơ (`PROFILE_MAX_WIDTH` của feature `account`). */
 const SETTINGS_MAX_WIDTH = 480;
 
 /**
- * Cài đặt thông báo (tab Hồ sơ): trạng thái thông báo đẩy của thiết bị và công tắc push theo nhóm. Vẽ theo giao diện
+ * Cài đặt thông báo (tab Hồ sơ): trạng thái thông báo đẩy của thiết bị và một công tắc push chung. Vẽ theo giao diện
  * màn "Thông tin tài khoản" của Hải (nền sóng, đầu màn không thẻ, thẻ cài đặt trắng, hộp ghi chú nền nhạt).
  *
  * Màn chỉ điều phối; đăng ký thiết bị nằm ở `lib/pushRegistration`, dữ liệu tùy chọn ở `useNotificationPreferences`.
- * Thẻ trạng thái thiết bị luôn hiện vì đọc từ trạng thái trên máy; chỉ phần nhóm thông báo chờ máy chủ.
+ * Thẻ trạng thái thiết bị luôn hiện vì đọc từ trạng thái trên máy; chỉ phần công tắc chờ máy chủ.
  */
 export default function NotificationSettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -49,20 +49,15 @@ export default function NotificationSettingsScreen() {
           </NotificationNote>
         ) : null}
         {preferences.saveError ? <NotificationNote tone="warn">{preferences.saveError}</NotificationNote> : null}
-        <SettingsGroupCard icon="layers" title="Nhận thông báo đẩy theo nhóm">
-          {preferences.items.map((item, index) => (
-            <PreferenceToggleRow
-              key={item.category}
-              category={item.category}
-              pushEnabled={item.pushEnabled}
-              disabled={preferences.readOnly || preferences.saving.has(item.category)}
-              divider={index > 0}
-              onChange={value => preferences.toggle(item.category, value)}
-            />
-          ))}
+        <SettingsGroupCard icon="layers" title="Tùy chọn thông báo">
+          <PushToggleRow
+            pushEnabled={preferences.pushEnabled}
+            disabled={preferences.readOnly || preferences.saving}
+            onChange={preferences.toggle}
+          />
         </SettingsGroupCard>
         <NotificationNote>
-          Thông báo trong ứng dụng luôn được lưu ở mục Thông báo, kể cả khi bạn tắt thông báo đẩy của một nhóm.
+          Thông báo trong ứng dụng luôn được lưu ở mục Thông báo, kể cả khi bạn tắt thông báo đẩy.
         </NotificationNote>
       </>
     );

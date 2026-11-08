@@ -19,6 +19,8 @@ import {
   RepaymentScheduleScreen,
 } from '@/features/applications';
 import {
+  BankAccountsScreen,
+  LinkBankAccountScreen,
   PayInstallmentScreen,
   TopUpScreen,
   WalletHistoryScreen,
@@ -41,11 +43,11 @@ import {
 } from '@/features/secondary-market';
 import { AccountInfoScreen, AccountScreen } from '@/features/account';
 import { NotificationSettingsScreen } from '@/features/push-notifications';
+import { TermsScreen } from '@/features/legal';
 import {
   EkycCaptureScreen,
   EkycConsentScreen,
   EkycLivenessScreen,
-  EkycPrivacyScreen,
   EkycResultScreen,
   EkycSessionProvider,
 } from '@/features/ekyc';
@@ -114,6 +116,8 @@ function WalletTab() {
       <WalletStack.Screen name="OrderBook" component={OrderBookScreen} />
       <WalletStack.Screen name="PlaceBookOrder" component={PlaceOrderScreen} />
       <WalletStack.Screen name="MyBookOrders" component={MyOrdersScreen} />
+      <WalletStack.Screen name="BankAccounts" component={BankAccountsScreen} />
+      <WalletStack.Screen name="LinkBankAccount" component={LinkBankAccountScreen} />
     </WalletStack.Navigator>
   );
 }
@@ -127,6 +131,8 @@ function ProfileTab() {
       <ProfileStack.Navigator screenOptions={stackOptions}>
       <ProfileStack.Screen name="Profile" component={AccountScreen} />
       <ProfileStack.Screen name="AccountInfo" component={AccountInfoScreen} />
+      <ProfileStack.Screen name="BankAccounts" component={BankAccountsScreen} />
+      <ProfileStack.Screen name="LinkBankAccount" component={LinkBankAccountScreen} />
       <ProfileStack.Screen name="EkycConsent" component={EkycConsentScreen} />
       {/* Mỗi mặt thẻ một màn: `navigate` về mặt trước khi server bắt chụp lại sẽ quay về
           đúng màn đó thay vì chồng thêm màn mới. */}
@@ -137,7 +143,6 @@ function ProfileTab() {
       />
       <ProfileStack.Screen name="EkycLiveness" component={EkycLivenessScreen} />
       <ProfileStack.Screen name="EkycResult" component={EkycResultScreen} />
-      <ProfileStack.Screen name="EkycPrivacy" component={EkycPrivacyScreen} />
       <ProfileStack.Screen name="MyApplications" component={MyApplicationsScreen} />
       <ProfileStack.Screen name="ApplicationDetail" component={ApplicationDetailScreen} />
       <ProfileStack.Screen name="MyContracts" component={MyContractsScreen} />
@@ -151,6 +156,7 @@ function ProfileTab() {
       <ProfileStack.Screen name="EarlySettlement" component={EarlySettlementScreen} />
       <ProfileStack.Screen name="RescheduleLoan" component={RescheduleLoanScreen} />
       <ProfileStack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+      <ProfileStack.Screen name="Terms" component={TermsScreen} />
       </ProfileStack.Navigator>
     </EkycSessionProvider>
   );
@@ -168,11 +174,14 @@ const Tab = createBottomTabNavigator<TabParamList>();
  * liệu mỗi lần quay về (trừ phần dùng cache RTK Query của loanApi), và việc đang
  * làm dở trong tab — như ảnh eKYC đã chụp — bị bỏ khi chuyển tab.
  */
+/** Màn cần trọn chiều cao máy (đọc điều khoản dài, nút ghim đáy) nên ẩn tab bar khi đang mở. */
+const FULLSCREEN_SCREENS: ReadonlySet<string> = new Set(['EkycConsent']);
+
 export default function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={{ headerShown: false, unmountOnBlur: true }}
-      tabBar={props => <TabBar {...props} />}
+      tabBar={props => <TabBar {...props} hiddenOn={FULLSCREEN_SCREENS} />}
     >
       <Tab.Screen name="Trang chủ" component={HomeTab} />
       <Tab.Screen name="Sàn" component={MarketTab} />

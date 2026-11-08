@@ -15,6 +15,7 @@ export const PIN_SCOPE_LABEL: Record<PinScope, string> = {
   SIGN_CONTRACT:
     'Nhập PIN FINORA để gửi hợp đồng sang VNPT SmartCA. PIN này không phải mã ký SmartCA.',
   WITHDRAW: 'Xác nhận rút tiền',
+  BANK_ACCOUNT: 'Xác nhận liên kết hoặc huỷ liên kết ngân hàng',
 };
 
 /** Mã lỗi `finora-user` trả cho các API mã PIN. */

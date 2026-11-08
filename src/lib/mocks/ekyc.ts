@@ -81,15 +81,6 @@ export const acceptEkycConsent = (request: EkycConsentAcceptRequest): Promise<Ek
   return mockResponse('ekyc', currentConsent());
 };
 
-export const withdrawEkycConsent = (): Promise<EkycConsent> => {
-  state.acceptedAt = null;
-  state.profile = 'PENDING';
-  state.draft = null;
-  state.challenge = null;
-  state.liveness = null;
-  return mockResponse('ekyc', currentConsent());
-};
-
 export const verifyEkyc = (request: EkycVerifyRequest): Promise<EkycResultResponse> => {
   if (state.profile === 'VERIFIED') {
     return reply({ resultCode: 'VERIFIED', message: 'Hồ sơ của bạn đã được xác minh trước đó.' });

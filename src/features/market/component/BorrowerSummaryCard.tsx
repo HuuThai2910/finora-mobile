@@ -96,15 +96,13 @@ function scoreText(assessment: BorrowerProfile['assessment']): string {
 }
 
 /**
- * Dòng nhân thân ngắn. Hồ sơ giả lập thì nói thẳng là giả lập, không in tuổi và eKYC như số liệu
- * thật. Điểm CIC chỉ có khi bảng luật có luật đọc trường này.
+ * Dòng nhân thân ngắn. Hồ sơ giả lập không in tuổi và eKYC như số liệu thật. Điểm CIC chỉ có khi
+ * bảng luật có luật đọc trường này.
  */
 function factsLine(profile: BorrowerProfile): string | null {
   const parts: string[] = [];
   const { background } = profile;
-  if (background.mockProfile) {
-    parts.push('Tuổi, eKYC từ hồ sơ giả lập');
-  } else {
+  if (!background.mockProfile) {
     if (background.kycStatus) parts.push(`eKYC ${KYC_LABEL[background.kycStatus].toLowerCase()}`);
     if (background.age != null) parts.push(`${background.age} tuổi`);
   }

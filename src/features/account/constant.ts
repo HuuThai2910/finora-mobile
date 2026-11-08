@@ -100,25 +100,14 @@ export const COMING_SOON = 'Sắp có';
 export type UpcomingSetting = { icon: IconName; title: string };
 
 /**
- * Nhóm "Bảo mật & Liên kết" của mockup. Chưa mục nào có chức năng thật nên đều
- * hiện mờ, không bấm được:
- * - Ngân hàng liên kết: `linkedBank` của `GET /users/me` chưa có contract (luôn
- *   rỗng), miền ví vẫn chạy dữ liệu giả;
+ * Các mục "Sắp có" của nhóm "Bảo mật & Liên kết" (mã PIN và Ngân hàng liên kết đã có màn thật, vẽ thành dòng bấm
+ * được). Các mục dưới đây chưa có chức năng nên hiện mờ, không bấm được:
  * - Sinh trắc học: app chưa tích hợp xác thực sinh trắc;
  * - Thiết bị đăng nhập: `finora-user` chưa có API danh sách phiên/thiết bị;
  * - Chữ ký số: SmartCA chỉ dùng khi ký từng hợp đồng, chưa có màn quản lý chứng thư.
  */
 export const SECURITY_SETTINGS: readonly UpcomingSetting[] = [
-  { icon: 'bank', title: 'Ngân hàng liên kết' },
   { icon: 'scanFace', title: 'Sinh trắc học (Face ID)' },
   { icon: 'shield', title: 'Thiết bị đăng nhập' },
   { icon: 'penLine', title: 'Chữ ký số' },
-];
-
-/**
- * Mục "Sắp có" của nhóm "Thông báo & Cài đặt": chưa có trang điều khoản trong app.
- * "Cài đặt thông báo" đã có màn thật (feature `push-notifications`) nên vẽ thành dòng bấm được.
- */
-export const NOTIFICATION_SETTINGS: readonly UpcomingSetting[] = [
-  { icon: 'fileCog', title: 'Điều khoản' },
 ];

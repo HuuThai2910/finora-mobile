@@ -24,7 +24,11 @@
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#1d4ed8"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       "expo-font",
@@ -50,6 +54,12 @@
           "color": "#1d4ed8"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9da461f6-43c9-4da9-b4b0-2f9a32dce4b3"
+      }
+    },
+    "owner": "ngochai147"
   }
 }

@@ -36,9 +36,6 @@ export const isFinalWithdrawal = (status: string): boolean => status === 'COMPLE
 
 export const feeLabel = (fee: number): string => (fee === 0 ? 'Miễn phí' : formatDong(fee));
 
-/** Bản demo gọi đúng tên "nhà cung cấp giả lập"; provider thật (chưa có ở W3B) gọi chung là đơn vị chi hộ. */
-const providerName = (simulated: boolean) => (simulated ? 'nhà cung cấp giả lập' : 'đơn vị chi hộ');
-
 /** Tiền đã rời ví khi nhận lệnh: số tiền rút cộng phí. */
 const debitOf = (withdrawal: Withdrawal) => withdrawal.amount + withdrawal.feeAmount;
 
@@ -62,8 +59,8 @@ export function withdrawalOutcome(withdrawal: Withdrawal, simulated: boolean): W
     case 'completed':
       return simulated
         ? {
-            title: `Đã rút ${amount} (giả lập)`,
-            detail: `Nhà cung cấp giả lập đã xác nhận lệnh chi tới ${destination}${at(withdrawal.completedAt)}. Môi trường demo không chuyển tiền thật tới ngân hàng.`,
+            title: `Đã rút ${amount}`,
+            detail: `Lệnh rút tới ${destination} đã hoàn tất${at(withdrawal.completedAt)}. Đây là bản dùng thử nên không có tiền thật chuyển tới ngân hàng.`,
             refund: null,
           }
         : {
@@ -75,19 +72,19 @@ export function withdrawalOutcome(withdrawal: Withdrawal, simulated: boolean): W
       return {
         title: 'Rút tiền không thành công',
         // `failureReason` của Payment đã viết cho người dùng đọc (ví dụ "Tài khoản nhận không hợp lệ").
-        detail: withdrawal.failureReason ?? (simulated ? 'Nhà cung cấp giả lập từ chối lệnh chi.' : 'Đơn vị chi hộ từ chối lệnh chi.'),
+        detail: withdrawal.failureReason ?? 'Lệnh rút bị từ chối.',
         refund: `Tiền đã hoàn về ví: ${formatDong(debitOf(withdrawal))} đã trở lại số dư khả dụng.`,
       };
     case 'reconcile':
       return {
         title: 'Đang xác minh kết quả lệnh rút',
-        detail: `Chưa nhận được kết quả cuối từ ${providerName(simulated)}. FINORA đang tra cứu lại theo mã lệnh và không gửi lệnh chi thứ hai; số tiền vẫn tạm trừ khỏi ví cho tới khi có kết quả.`,
+        detail: 'Chưa nhận được kết quả cuối cùng. FINORA đang kiểm tra lại và không gửi lệnh rút thứ hai; số tiền vẫn tạm trừ khỏi ví cho tới khi có kết quả.',
         refund: null,
       };
     case 'pending':
       return {
         title: `Đang xử lý lệnh rút ${amount}`,
-        detail: `Đã trừ ${formatDong(debitOf(withdrawal))} khỏi ví. Lệnh đang được gửi tới ${providerName(simulated)} để chi về ${destination}.`,
+        detail: `Đã trừ ${formatDong(debitOf(withdrawal))} khỏi ví. Lệnh đang được xử lý để chuyển về ${destination}.`,
         refund: null,
       };
   }
@@ -107,7 +104,6 @@ export function withdrawalDetailRows(withdrawal: Withdrawal): WithdrawalDetailRo
     { label: 'Tạo lúc', value: formatDateTime(withdrawal.createdAt) },
   ];
   if (withdrawal.completedAt) rows.push({ label: 'Hoàn tất lúc', value: formatDateTime(withdrawal.completedAt) });
-  if (withdrawal.failureCode) rows.push({ label: 'Mã lỗi', value: withdrawal.failureCode });
   return rows;
 }
 

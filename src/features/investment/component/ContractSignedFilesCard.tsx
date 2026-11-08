@@ -3,7 +3,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { PdfViewer } from '@/components/feedback';
 import { Icon } from '@/components/ui';
 import { Colors } from '@/constants/colors';
-import { padesLegalNotice } from '@/constants/contractSignature';
 import { useAuthenticatedPdf } from '@/hooks/useAuthenticatedPdf';
 import { FontFamily, MIN_TOUCH, Radius, SoftShadow, Spacing } from '@/theme';
 import type { InvestmentContract } from '@/types/invest';
@@ -89,10 +88,6 @@ export default function ContractSignedFilesCard({ contract }: { contract: Invest
               <Text style={styles.errorText}>{pdfError}</Text>
             </View>
           ) : null}
-          <View style={styles.legal}>
-            <Icon name="shieldAlert" size={18} color={Colors.tagAmberText} />
-            <Text style={styles.legalText}>{padesLegalNotice(contract.availableSignatureProvider)}</Text>
-          </View>
         </View>
       ) : null}
 
@@ -139,14 +134,5 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.redBg,
   },
   errorText: { flex: 1, fontFamily: FontFamily.medium, fontSize: 13, lineHeight: 19, color: Colors.tagRedText },
-  legal: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.md,
-    padding: Spacing.lg,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.amberBg,
-  },
-  legalText: { flex: 1, fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.tagAmberText },
   pressed: { opacity: 0.75 },
 });

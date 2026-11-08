@@ -48,15 +48,15 @@ function look(state: PushRegistrationState): Look {
       return {
         badge: gray('fileCog'),
         label: 'CHƯA CẤU HÌNH',
-        message: 'Bản cài đặt này chưa cấu hình EAS projectId nên chưa nhận được thông báo đẩy.',
+        message: 'Bản cài đặt này chưa hỗ trợ thông báo đẩy.',
       };
     case 'unsupported':
       return { badge: gray('circleX'), label: 'KHÔNG HỖ TRỢ', message: 'Nền tảng này không nhận được thông báo đẩy.' };
     case 'mocked':
       return {
         badge: gray('database'),
-        label: 'DỮ LIỆU GIẢ',
-        message: 'Thông báo đang chạy dữ liệu giả nên không đăng ký thiết bị với máy chủ.',
+        label: 'CHƯA HỖ TRỢ',
+        message: 'Thông báo đẩy chưa khả dụng trên bản này.',
       };
     case 'error':
       return { badge: RED, label: 'CHƯA ĐĂNG KÝ ĐƯỢC', message: state.message };

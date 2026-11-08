@@ -110,5 +110,5 @@ function currentPlatform(): DevicePlatform {
 /** Lỗi API giữ thông điệp backend; lỗi của Expo (máy ảo, Expo Go, mất mạng tới Expo) quy về một câu dễ hiểu. */
 function describe(error: unknown): string {
   if (error instanceof ApiError || error instanceof NetworkError) return toUserMessage(error);
-  return 'Không lấy được mã nhận thông báo trên thiết bị này. Máy ảo và Expo Go không nhận được thông báo đẩy từ xa.';
+  return 'Thiết bị này chưa nhận được thông báo đẩy. Hãy thử lại trên điện thoại đã cài ứng dụng FINORA.';
 }

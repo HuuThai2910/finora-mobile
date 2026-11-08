@@ -63,12 +63,20 @@ export type WalletStackParamList = {
   PlaceBookOrder: { listingId: number; side: 'BID' | 'ASK'; price?: number };
   /** Lệnh của tôi trên mọi sổ. */
   MyBookOrders: undefined;
+  /** Tài khoản ngân hàng đã liên kết nhận tiền rút (BL-001). */
+  BankAccounts: undefined;
+  /** Thêm tài khoản: tra cứu chủ tài khoản, PIN, OTP của ngân hàng. */
+  LinkBankAccount: undefined;
 };
 
 export type ProfileStackParamList = {
   Profile: undefined;
   /** Toàn bộ thông tin `GET /users/me` của tài khoản đang đăng nhập, chỉ đọc. */
   AccountInfo: undefined;
+  /** Tài khoản ngân hàng đã liên kết nhận tiền rút (BL-001). */
+  BankAccounts: undefined;
+  /** Thêm tài khoản: tra cứu chủ tài khoản, PIN, OTP của ngân hàng. */
+  LinkBankAccount: undefined;
   /**
    * eKYC là chức năng tuỳ chọn mở từ tab Hồ sơ, không ép sau đăng nhập. Luôn vào qua màn
    * điều khoản; đã đồng ý đúng phiên bản hiện hành thì màn này tự chuyển sang chụp thẻ.
@@ -83,8 +91,6 @@ export type ProfileStackParamList = {
   EkycLiveness: undefined;
   /** Soát bản nháp (nhãn nguồn từng trường) và xác nhận, hoặc kết quả cuối của luồng. */
   EkycResult: undefined;
-  /** Cài đặt › Quyền riêng tư eKYC: xem điều khoản đã đồng ý, rút lại đồng ý. */
-  EkycPrivacy: undefined;
   MyApplications: undefined;
   ApplicationDetail: { applicationNumber: string };
   MyContracts: undefined;
@@ -102,8 +108,10 @@ export type ProfileStackParamList = {
   PartialPrepayment: { loanNumber: string };
   EarlySettlement: { loanNumber: string };
   RescheduleLoan: { loanNumber: string };
-  /** Thông báo đẩy của thiết bị và bật/tắt push theo nhóm (finora-notification R7). */
+  /** Thông báo đẩy của thiết bị và một công tắc push chung (finora-notification R7). */
   NotificationSettings: undefined;
+  /** Điều khoản sử dụng FINORA, nội dung tĩnh trong app. */
+  Terms: undefined;
 };
 
 export type TabParamList = {

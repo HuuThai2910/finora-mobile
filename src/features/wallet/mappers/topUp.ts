@@ -29,7 +29,7 @@ export function topUpStatusView(status: string): StatusView {
   return STATUS[status] ?? UNKNOWN_STATUS;
 }
 
-const PROVIDER: Record<string, string> = { ZALOPAY: 'ZaloPay', MOCK: 'Giả lập (demo)' };
+const PROVIDER: Record<string, string> = { ZALOPAY: 'ZaloPay', MOCK: 'Thanh toán thử' };
 
 export function providerLabel(provider: string): string {
   return PROVIDER[provider] ?? provider;
@@ -44,7 +44,7 @@ export function topUpPaymentHint(order: TopUpOrder, expired: boolean): string {
     return 'Mã này đã hết hạn. Nếu bạn đã thanh toán trước hạn, hãy kiểm tra trạng thái; nếu chưa, tạo giao dịch mới.';
   }
   if (order.provider === 'MOCK') {
-    return 'Mã giả lập chỉ để nhận diện giao dịch. Bấm “Giả lập thanh toán thành công” thay cho bước quét mã.';
+    return 'Giao dịch thử không cần quét mã. Bấm “Giả lập thanh toán thành công” để hoàn tất.';
   }
   const app = order.provider === 'ZALOPAY' ? 'ứng dụng ZaloPay' : `ứng dụng ${providerLabel(order.provider)}`;
   if (order.qrPayload && order.checkoutUrl) return `Quét mã bằng ${app}, hoặc mở trang thanh toán ngay trên máy này.`;
@@ -70,7 +70,6 @@ export function topUpDetailRows(order: TopUpOrder, withProvider: boolean): TopUp
   const rows: TopUpDetailRow[] = [];
   if (withProvider) rows.push({ label: 'Cổng thanh toán', value: providerLabel(order.provider) });
   rows.push({ label: 'Mã giao dịch', value: order.topUpId });
-  rows.push({ label: 'Mã đối tác', value: order.providerOrderId });
   if (order.providerReference) rows.push({ label: 'Mã tham chiếu', value: order.providerReference });
   if (order.completedAt) {
     rows.push({ label: 'Hoàn tất lúc', value: formatDateTime(order.completedAt) });

@@ -41,7 +41,7 @@ export default function ContractSignSteps(props: Props) {
     if (!windowOpen) return 'Hợp đồng đã hết hạn ký hoặc không còn chờ nhà đầu tư.';
     if (!pdfOpened) return 'Mở hợp đồng ở bước 1 trước, rồi mới ký được.';
     return providerIsMock
-      ? 'Bản thử nghiệm: xác nhận này chỉ phục vụ phát triển, không thay thế chữ ký số hợp pháp.'
+      ? 'Bấm xác nhận để ký hợp đồng.'
       : 'FINORA gửi giao dịch tới tài khoản VNPT SmartCA của bạn để xác nhận.';
   })();
 
