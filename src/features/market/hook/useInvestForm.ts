@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
+import { useEkycGate } from '@/features/ekyc';
 import { usePinGuard } from '@/features/pin';
 import type { InvestOrderResult, MarketLoan } from '@/types/invest';
 import { invest } from '../api';
@@ -32,6 +33,7 @@ export function useInvestForm(loan: MarketLoan) {
   const [riskAccepted, setRiskAccepted] = useState(false);
   const idempotencyKey = useRef(generateIdempotencyKey());
   const { requirePin } = usePinGuard();
+  const ekyc = useEkycGate('đầu tư');
 
   const error = validateInvestAmount(amount, bounds);
 
@@ -46,10 +48,15 @@ export function useInvestForm(loan: MarketLoan) {
     setSubmitError(null);
     setSubmitting(true);
     try {
+      // Chưa định danh thì báo ngay, không bắt nhập PIN cho một lệnh chắc chắn bị từ chối.
+      if (!(await ekyc.ensureVerified())) return;
       // Đóng bảng PIN là thôi đặt lệnh: không báo lỗi, giữ nguyên khoá cho lần bấm sau.
-      const pinToken = await requirePin('INVEST', idempotencyKey.current);
+      const key = idempotencyKey.current;
+      const pinToken = await requirePin('INVEST', key);
       if (!pinToken) return;
-      const order = await invest(loan.id, amount, idempotencyKey.current, pinToken, RISK_DISCLOSURE_VERSION);
+      // Token PIN gắn với khoá lệnh, nên gửi lại sau khi làm mới phiên (claim eKYC cũ) vẫn dùng được.
+      const order = await ekyc.run(() => invest(loan.id, amount, key, pinToken, RISK_DISCLOSURE_VERSION));
+      if (!order) return;
       if (order.status !== 'PENDING_FUNDS') idempotencyKey.current = generateIdempotencyKey();
       setResult(order);
     } catch (e) {
@@ -72,6 +79,8 @@ export function useInvestForm(loan: MarketLoan) {
     submitting,
     submitError,
     result,
+    /** Trạng thái định danh: chưa duyệt thì màn thay ô nhập bằng lời báo eKYC. */
+    ekyc,
     /** Rời màn kết quả để đặt lại (sau khi bị từ chối): xoá kết quả, giữ số tiền đã nhập. */
     clearResult: () => setResult(null),
   };

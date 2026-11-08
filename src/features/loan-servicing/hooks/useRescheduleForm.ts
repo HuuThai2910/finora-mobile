@@ -29,6 +29,7 @@ type Options = {
  * - Một khoá idempotency cho cả màn: bấm gửi lại sau lỗi mạng vẫn là cùng một ý định,
  *   backend trả lại đúng đề nghị đã lưu thay vì tạo bản thứ hai.
  * - Chống bấm lặp bằng cờ `busy`; lỗi ô chỉ báo đỏ sau lần gửi đầu (trừ lỗi sai dạng).
+ * - `valid` cho nút gửi biết khi nào đã điền đủ: chưa đủ thì nút mờ và không bấm được.
  */
 export function useRescheduleForm({ loanNumber, termsVersion, today, defaultFromDate, onSubmitted, onStale }: Options) {
   const key = useRef(generateIdempotencyKey()).current;
@@ -83,5 +84,5 @@ export function useRescheduleForm({ loanNumber, termsVersion, today, defaultFrom
     }
   };
 
-  return { values, set, errorOf, submit, busy, error };
+  return { values, set, errorOf, submit, busy, error, valid };
 }

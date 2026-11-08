@@ -11,6 +11,17 @@ type Props = {
 };
 
 const statusOf = (contract: InvestmentContract): { label: string; bg: string; fg: string } => {
+  // Phần vốn của chính nhà đầu tư đã rời hợp đồng trong khi hợp đồng vẫn tiếp tục gọi vốn bổ sung.
+  const contractOpen = contract.contractStatus !== 'DECLINED' && contract.contractStatus !== 'EXPIRED';
+  if (contract.status === 'DECLINED' && contractOpen) {
+    return { label: 'Bạn đã rút', bg: Colors.grayBg, fg: Colors.tagGrayText };
+  }
+  if (contract.status === 'EXPIRED' && contractOpen) {
+    return { label: 'Bạn chưa ký kịp', bg: Colors.grayBg, fg: Colors.tagGrayText };
+  }
+  if (contract.contractStatus === 'PENDING_REFUNDING') {
+    return { label: 'Đang gọi vốn bổ sung', bg: Colors.amberBg, fg: Colors.tagAmberText };
+  }
   if (contract.status === 'PENDING_SIGNATURE') {
     return { label: 'Chờ bạn ký', bg: Colors.amberBg, fg: Colors.tagAmberText };
   }

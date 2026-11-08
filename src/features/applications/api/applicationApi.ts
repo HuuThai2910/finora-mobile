@@ -49,6 +49,9 @@ const applicationApi = loanApi.injectEndpoints({
         url: `/loan-applications/${applicationNumber}/history`,
         params,
       }),
+      // Cùng tag với hồ sơ: thao tác làm hồ sơ đổi trạng thái thì tải lại cả lịch sử, không để
+      // dòng thời gian đứng ở mốc cũ trong khi thẻ trạng thái đã sang mốc mới.
+      providesTags: (_result, _error, { applicationNumber }) => [{ type: 'LoanApplication', id: applicationNumber }],
     }),
     withdrawApplication: builder.mutation<LoanApplication, {
       applicationNumber: string;
@@ -115,6 +118,8 @@ const applicationApi = loanApi.injectEndpoints({
       size?: number;
     }>({
       query: ({ contractNumber, ...params }) => ({ url: `/loan-contracts/${contractNumber}/history`, params }),
+      // Cùng tag với hợp đồng, cùng lý do với lịch sử hồ sơ.
+      providesTags: (_result, _error, { contractNumber }) => [{ type: 'LoanContract', id: contractNumber }],
     }),
     signContract: builder.mutation<LoanContractActionResponse, {
       contractNumber: string;

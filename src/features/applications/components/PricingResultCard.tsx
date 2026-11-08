@@ -1,72 +1,82 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Icon } from '@/components/ui';
 import { Colors } from '@/constants/colors';
-import { FontFamily, Radius, Spacing, tabularNums } from '@/theme';
+import { FontFamily, Spacing, tabularNums } from '@/theme';
 import type { LoanApplication } from '@/types/loan';
 import { formatAnnualRate } from '@/utils/format';
-import { PRICING_CHOICE_NOTES, pricingChangeOf, type PricingChangeCopy } from '../mappers/pricingChange';
+import { pricingChangeOf, type PricingChange, type PricingChangeCopy } from '../mappers/pricingChange';
 import DetailCard from './DetailCard';
+import TermsDecision from './TermsDecision';
 
-/** Ô icon, nền và chữ của nhãn theo chiều thay đổi; tông lấy từ `pricingChangeOf`. */
-const TONES: Record<PricingChangeCopy['tone'], { badge: string; bg: string; fg: string }> = {
-  amber: { badge: Colors.amber, bg: Colors.amberBg, fg: Colors.tagAmberText },
-  green: { badge: Colors.emerald, bg: Colors.greenBg, fg: Colors.tagGreenText },
-  blue: { badge: Colors.authPrimary, bg: Colors.blueBg, fg: Colors.tagBlueText },
+/** Màu ô icon cạnh tiêu đề theo chiều thay đổi; tông lấy từ `pricingChangeOf`. */
+const TONES: Record<PricingChangeCopy['tone'], { badge: string }> = {
+  amber: { badge: Colors.amber },
+  green: { badge: Colors.emerald },
+  blue: { badge: Colors.authPrimary },
 };
 
-/**
- * "Kết quả điều khoản" theo mockup 26/09/2026: lãi suất lúc đăng ký → lãi suất
- * sau thẩm định, kèm lời giải thích. Cùng dữ liệu và điều kiện hiển thị với
- * `ContractPricingCard` của màn hợp đồng qua `pricingChangeOf`.
- *
- * Câu "đã tự tiếp tục vì không bất lợi hơn" chỉ đúng khi Loan tự uỷ quyền; hồ sơ
- * đã chấp nhận điều khoản bất lợi hơn thì câu đó sai, nên chỉ hiện ở
- * `AUTO_AUTHORIZED`.
- */
-export default function PricingResultCard({ application }: { application: LoanApplication }) {
-  const change = pricingChangeOf(application);
-  if (!change) return null;
+/** Điều khoản cuối bất lợi hơn lúc nộp: thẻ đổi sang tông vàng và mang luôn phần quyết định. */
+const PENDING = { tone: TONES.amber };
 
-  const tone = TONES[change.copy.tone];
-  const baseText = formatAnnualRate(change.baseRate);
-  const finalText = formatAnnualRate(change.finalRate);
-  const finalLabel = change.pending ? 'Lãi suất đề nghị' : 'Lãi suất được duyệt';
-  const choice = change.pending
-    ? PRICING_CHOICE_NOTES.pending
-    : application.termsConfirmation?.status === 'AUTO_AUTHORIZED'
-      ? PRICING_CHOICE_NOTES.autoContinued
-      : null;
+/** Một câu thay cho đoạn giải thích dài: vì sao phải quyết định và điều gì xảy ra nếu không trả lời. */
+const PENDING_NOTE =
+  "Điều khoản vay đã thay đổi theo hướng bất lợi hơn so với khi bạn nộp hồ sơ. Hợp đồng chỉ được lập khi bạn đồng ý.";
+
+/**
+ * "Kết quả điều khoản" theo mockup 26/09/2026: lãi suất lúc đăng ký → lãi suất sau thẩm định, kèm lời
+ * giải thích khi lãi đổi (giữ nguyên thì không). Khi điều khoản cần người vay quyết định, cùng thẻ này
+ * hiện hạn phản hồi và hai nút chấp nhận/từ chối, để người vay xem mức lãi và quyết định ở một chỗ.
+ * Dữ liệu và điều kiện hiển thị lấy từ `pricingChangeOf`.
+ */
+export default function PricingResultCard({
+  application,
+  onDone,
+}: {
+  application: LoanApplication;
+  /** Gọi sau khi chấp nhận/từ chối điều khoản để màn tải lại hồ sơ. */
+  onDone: () => void;
+}) {
+  const change = pricingChangeOf(application);
+  const pending = application.termsConfirmation?.status === 'PENDING';
+  if (!change && !pending) return null;
+
+  const tone = pending ? PENDING.tone : TONES[change?.copy.tone ?? 'blue'];
+  const note = pending ? PENDING_NOTE : change?.copy.notice?.description ?? null;
 
   return (
     <DetailCard
       title="Kết quả điều khoản"
-      badge={{ icon: 'percent', color: tone.badge }}
-      right={
-        <View style={[styles.pill, { backgroundColor: tone.bg }]}>
-          <Text style={[styles.pillText, { color: tone.fg }]} maxFontSizeMultiplier={1.4}>
-            {change.direction === 'same' ? 'Không đổi' : 'Đã cập nhật'}
-          </Text>
-        </View>
-      }
+      badge={{ icon: pending ? 'alert' : 'percent', color: tone.badge }}
     >
-      <View
-        style={styles.compare}
-        accessible
-        accessibilityLabel={`${change.copy.title}. Lãi suất khi đăng ký ${baseText}, ${finalLabel.toLowerCase()} ${finalText}.`}
-      >
-        <RateBox label="Lãi suất khi đăng ký" value={baseText} />
-        <Icon name="arrowRight" size={18} color={Colors.authPrimary} />
-        <RateBox label={finalLabel} value={finalText} emphasized />
-      </View>
+      {change ? <RateCompare change={change} /> : null}
 
-      <View style={styles.info}>
-        <Icon name="info" size={16} color={Colors.authPrimary} />
-        <View style={styles.infoText}>
-          <Text style={styles.note}>{change.copy.description}</Text>
-          {choice ? <Text style={styles.note}>{choice}</Text> : null}
+      {note ? (
+        <View style={styles.info}>
+          <Icon name="info" size={16} color={pending ? Colors.tagAmberText : Colors.authPrimary} />
+          <Text style={styles.note}>{note}</Text>
         </View>
-      </View>
+      ) : null}
+
+      <TermsDecision application={application} onDone={onDone} />
     </DetailCard>
+  );
+}
+
+function RateCompare({ change }: { change: PricingChange }) {
+  const baseText = formatAnnualRate(change.baseRate);
+  const finalText = formatAnnualRate(change.finalRate);
+  const finalLabel = change.pending ? 'Lãi suất đề nghị' : 'Lãi suất được duyệt';
+  const { notice } = change.copy;
+  return (
+    <View
+      style={styles.compare}
+      accessible
+      accessibilityLabel={`${notice ? `${notice.title}. ` : ''}Lãi suất khi đăng ký ${baseText}, ${finalLabel.toLowerCase()} ${finalText}.`}
+    >
+      <RateBox label="Lãi suất khi đăng ký" value={baseText} />
+      <Icon name="arrowRight" size={18} color={Colors.authPrimary} />
+      <RateBox label={finalLabel} value={finalText} emphasized />
+    </View>
   );
 }
 
@@ -84,8 +94,6 @@ function RateBox({ label, value, emphasized = false }: { label: string; value: s
 }
 
 const styles = StyleSheet.create({
-  pill: { borderRadius: Radius.pill, paddingHorizontal: 10, paddingVertical: 3 },
-  pillText: { fontFamily: FontFamily.semibold, fontSize: 12, lineHeight: 17 },
   // Khe hẹp quanh mũi tên để "Lãi suất khi đăng ký" và "13,00%/năm" vẫn một dòng ở màn 360pt.
   compare: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   box: {
@@ -107,6 +115,5 @@ const styles = StyleSheet.create({
   },
   boxValueEmphasized: { color: Colors.authPrimary },
   info: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md },
-  infoText: { flex: 1, gap: Spacing.xs },
-  note: { fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authMuted },
+  note: { flex: 1, fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authMuted },
 });

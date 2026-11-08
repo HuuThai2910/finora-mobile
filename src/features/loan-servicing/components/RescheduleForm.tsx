@@ -48,16 +48,19 @@ export default function RescheduleForm({ loanNumber, policy, loan, periods, onSu
   return (
     <>
       <DetailCard title="Hình thức đề nghị" icon="refreshCw">
-        <RescheduleTypePicker value={values.type} onChange={type => set('type', type)} />
+        <RescheduleTypePicker
+          value={values.type}
+          onChange={(type) => set("type", type)}
+        />
       </DetailCard>
 
       <DetailCard title="Thông tin đề nghị" icon="calendar">
         <RescheduleDateField
           label="Kỳ trả nợ muốn điều chỉnh"
           value={values.fromDate}
-          onChange={value => set('fromDate', value)}
-          helper="Chọn ngày đến hạn hiện tại của một kỳ chưa thanh toán."
-          error={errorOf('fromDate')}
+          onChange={(value) => set("fromDate", value)}
+          helper="Chọn ngày đến hạn của kỳ chưa trả."
+          error={errorOf("fromDate")}
           minDate={today}
           sheetTitle="Chọn kỳ trả nợ cần điều chỉnh"
           options={options}
@@ -65,34 +68,45 @@ export default function RescheduleForm({ loanNumber, policy, loan, periods, onSu
         {extension ? (
           <RescheduleTermStepper
             value={values.extraTerms}
-            onChange={value => set('extraTerms', value)}
-            error={errorOf('extraTerms')}
+            onChange={(value) => set("extraTerms", value)}
+            error={errorOf("extraTerms")}
           />
         ) : (
           <RescheduleDateField
             label="Ngày muốn thanh toán kỳ này"
             value={values.adjustedDate}
-            onChange={value => set('adjustedDate', value)}
+            onChange={(value) => set("adjustedDate", value)}
             helper="Ngày mới phải sau ngày đến hạn hiện tại và không làm thay đổi ngày đáo hạn cuối cùng."
-            error={errorOf('adjustedDate')}
+            error={errorOf("adjustedDate")}
             minDate={adjustedMin}
             sheetTitle="Chọn ngày thanh toán mới"
           />
         )}
-        <RescheduleReasonField value={values.reason} onChange={value => set('reason', value)} error={errorOf('reason')} />
+        <RescheduleReasonField
+          value={values.reason}
+          onChange={(value) => set("reason", value)}
+          error={errorOf("reason")}
+        />
       </DetailCard>
 
       <RescheduleConsent
         termsText={policy.termsText}
         checked={values.accepted}
-        onChange={checked => set('accepted', checked)}
-        error={errorOf('accepted')}
+        onChange={(checked) => set("accepted", checked)}
+        error={errorOf("accepted")}
       />
 
       {form.error ? <DetailNote tone="warn">{form.error}</DetailNote> : null}
 
       <View style={styles.action}>
-        <DetailButton label="Gửi đề nghị" icon="fileCheck" onPress={() => void form.submit()} loading={form.busy} />
+        <DetailButton
+          label="Gửi đề nghị"
+          icon="fileCheck"
+          onPress={() => void form.submit()}
+          loading={form.busy}
+          // Chưa điền đủ (hoặc chưa đồng ý điều khoản) thì nút mờ, không bấm được.
+          disabled={!form.valid}
+        />
       </View>
     </>
   );

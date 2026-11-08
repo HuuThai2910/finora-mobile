@@ -19,15 +19,20 @@ import InvestorContractCard from './InvestorContractCard';
 
 type Nav = NativeStackNavigationProp<WalletStackParamList, 'InvestorContracts'>;
 
-/** Danh sách hợp đồng của nhà đầu tư, gồm cả bản cần ký và lịch sử đã ký để có thể mở lại PDF/biên nhận. */
-export default function InvestorContractsScreen() {
+/**
+ * Danh sách hợp đồng của nhà đầu tư, gồm cả bản cần ký và lịch sử đã ký để có thể mở lại PDF/biên nhận.
+ *
+ * @param signedOnly mở từ tab Hồ sơ → Hợp đồng: chỉ liệt kê phần vốn nhà đầu tư đã ký, giống màn hợp đồng của
+ *                   người vay; bản chờ ký vẫn xử lý ở Ví → Hợp đồng đầu tư.
+ */
+export default function InvestorContractsScreen({ signedOnly = false }: { signedOnly?: boolean }) {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const width = Math.min(windowWidth, PORTFOLIO_MAX_WIDTH);
   const [viewportHeight, setViewportHeight] = useState(0);
   const query = useInvestmentContracts();
-  const contracts = query.data ?? [];
+  const contracts = (query.data ?? []).filter(contract => !signedOnly || contract.status === 'SIGNED');
   const awaiting = contracts.filter(contract => contract.status === 'PENDING_SIGNATURE' || contract.status === 'SIGNING');
   const history = contracts.filter(contract => contract.status !== 'PENDING_SIGNATURE' && contract.status !== 'SIGNING');
 
@@ -44,9 +49,11 @@ export default function InvestorContractsScreen() {
       return (
         <InvestStatusCard
           icon="file"
-          title="Bạn chưa có hợp đồng đầu tư"
-          hint="Hợp đồng được lập khi khoản vay bạn góp vốn đã gọi đủ tiền."
-          action={{ label: 'Quay lại danh mục', onPress: () => navigation.goBack() }}
+          title={signedOnly ? 'Bạn chưa có hợp đồng đầu tư đã ký' : 'Bạn chưa có hợp đồng đầu tư'}
+          hint={signedOnly
+            ? 'Hợp đồng chờ ký nằm ở Ví → Hợp đồng đầu tư; ký xong hợp đồng sẽ hiện ở đây.'
+            : 'Hợp đồng được lập khi khoản vay bạn góp vốn đã gọi đủ tiền.'}
+          action={{ label: 'Quay lại', onPress: () => navigation.goBack() }}
         />
       );
     }

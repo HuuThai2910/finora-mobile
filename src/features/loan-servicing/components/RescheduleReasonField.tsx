@@ -59,13 +59,6 @@ export default function RescheduleReasonField({ value, onChange, error }: Props)
         />
       </View>
 
-      {error ? (
-        <Text style={f.error} accessibilityLiveRegion="polite">
-          {error}
-        </Text>
-      ) : (
-        <Text style={f.helper}>Nêu tình hình hiện tại và cách bạn sẽ trả nợ sau khi cơ cấu.</Text>
-      )}
     </View>
   );
 }

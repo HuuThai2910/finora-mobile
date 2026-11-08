@@ -128,13 +128,13 @@ export default function InlineContractConsent({
   }
 
   return (
-    <DetailCard title="Bạn đã xem bản PDF hiện hành" icon="fileText">
+    <DetailCard title="Bạn đã xem bản PDF" icon="fileText">
       <Text style={styles.description}>
-        Chỉ xác nhận khi bạn đồng ý với toàn bộ điều khoản và lịch trả nợ trong tài liệu vừa mở.
+        Chỉ xác nhận khi bạn đồng ý với toàn bộ điều khoản.
       </Text>
 
-      <DetailNote tone={countdown.urgent ? 'warn' : 'info'}>
-        {`Hạn xác nhận ${countdown.label || 'sắp kết thúc'}. Quá hạn thì hợp đồng này không ký được nữa.`}
+      <DetailNote tone={countdown.urgent ? "warn" : "info"}>
+        {`Hạn xác nhận ${countdown.label || "sắp kết thúc"}. Quá hạn thì hợp đồng này không ký được nữa.`}
       </DetailNote>
 
       <View style={styles.consentBox}>
@@ -144,21 +144,24 @@ export default function InlineContractConsent({
           label="Đồng ý toàn bộ nội dung hợp đồng"
         >
           <Text style={styles.consentText}>
-            Tôi đã mở và đọc bản PDF, hiểu nghĩa vụ thanh toán và đồng ý xác nhận đúng phiên bản
-            đang được FINORA cung cấp.
+            Tôi xác nhận đã đọc hợp đồng và đồng ý với toàn bộ nội dung trong hợp đồng.
           </Text>
         </Checkbox>
       </View>
 
-      {consent.error ? <DetailNote tone="warn">{consent.error.message}</DetailNote> : null}
+      {consent.error ? (
+        <DetailNote tone="warn">{consent.error.message}</DetailNote>
+      ) : null}
 
       <View style={styles.actions}>
         <DetailButton
-          label={resign
-            ? 'Ký lại'
-            : contract.availableSignatureMethod === 'VNPT_SMART_CA'
-              ? 'Gửi yêu cầu VNPT SmartCA'
-              : 'Ký xác nhận hợp đồng'}
+          label={
+            resign
+              ? "Ký lại"
+              : contract.availableSignatureMethod === "VNPT_SMART_CA"
+                ? "Gửi yêu cầu VNPT SmartCA"
+                : "Ký xác nhận hợp đồng"
+          }
           onPress={sign}
           disabled={!accepted || consent.busy}
           loading={consent.signing}
@@ -168,7 +171,7 @@ export default function InlineContractConsent({
           variant="outline"
           onPress={() => {
             consent.clearError();
-            setMode('decline');
+            setMode("decline");
           }}
           disabled={consent.busy}
         />
@@ -176,12 +179,12 @@ export default function InlineContractConsent({
 
       <Text style={styles.legal}>
         {pades
-          // Hợp đồng PAdES: kể cả với MOCK, backend nhúng một chữ ký số thật vào tệp, nên câu
-          // "chỉ là click-wrap" không còn đúng.
-          ? 'Chữ ký số của bạn được nhúng vào chính tệp PDF, sau chữ ký của các bên cho vay.'
-          : contract.availableSignatureMethod === 'VNPT_SMART_CA'
-            ? 'Hợp đồng chỉ được ghi nhận đã ký sau khi VNPT SmartCA trả kết quả thành công.'
-            : 'Đây là xác nhận điện tử dạng click-wrap trong FINORA, chưa phải chữ ký số VNPT SmartCA.'}
+          ? // Hợp đồng PAdES: kể cả với MOCK, backend nhúng một chữ ký số thật vào tệp, nên câu
+            // "chỉ là click-wrap" không còn đúng.
+            "Chữ ký số của bạn được nhúng vào chính tệp PDF, sau chữ ký của các bên cho vay."
+          : contract.availableSignatureMethod === "VNPT_SMART_CA"
+            ? "Hợp đồng chỉ được ghi nhận đã ký sau khi VNPT SmartCA trả kết quả thành công."
+            : "Đây là xác nhận điện tử dạng click-wrap trong FINORA, chưa phải chữ ký số VNPT SmartCA."}
       </Text>
     </DetailCard>
   );

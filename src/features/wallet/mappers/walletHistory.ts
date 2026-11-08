@@ -60,7 +60,8 @@ function toView(tx: WalletTransaction): WalletTxView {
   const time = formatRecentTime(tx.occurredAt);
   const incoming = tx.direction === 'in';
   return {
-    id: tx.id,
+    // Một giao dịch có thể vừa trừ vừa cộng vào cùng ví: mã giao dịch thôi chưa đủ làm khoá dòng.
+    id: `${tx.id}-${tx.direction}`,
     icon: iconFor(tx),
     tone: incoming ? 'in' : 'out',
     title: keepCodesTogether(tx.description),

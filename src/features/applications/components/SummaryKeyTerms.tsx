@@ -39,6 +39,9 @@ export default function SummaryKeyTerms({ terms }: { terms: readonly KeyTerm[] }
   const layoutKey = `${Math.round(width)}@${fontScale}`;
   const [stackedFor, setStackedFor] = useState<string | null>(null);
   const stacked = stackedFor === layoutKey;
+  // Ô dọc chia đều bằng phần trăm, không dựa vào `flex: 1`: trên iOS Yoga vẫn co ô theo nội dung, ô
+  // "Trả góp đều" chiếm chỗ và ô lãi suất bị ép tới mức "9,5% /năm" và "Lãi suất cuối" vỡ từng chữ.
+  const stackedWidth = `${100 / Math.max(terms.length, 1)}%` as const;
 
   const checkWrap = (event: LayoutChangeEvent) => {
     // Chiều cao dòng co giãn cùng cỡ chữ hệ thống (kể cả khi nhỏ hơn mặc định), tối đa MAX_FONT_SCALE.
@@ -52,7 +55,7 @@ export default function SummaryKeyTerms({ terms }: { terms: readonly KeyTerm[] }
         <View
           key={term.label}
           style={[
-            stacked ? styles.cellStacked : styles.cell,
+            stacked ? [styles.cellStacked, { width: stackedWidth }] : styles.cell,
             index > 0 && styles.divided,
             index < terms.length - 1 && styles.beforeDivider,
           ]}
@@ -87,8 +90,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: GAP,
   },
-  // Dọc: ba ô rộng bằng nhau, chữ vẫn xuống dòng được nếu cỡ chữ rất lớn.
-  cellStacked: { flex: 1, gap: GAP },
+  // Dọc: ba ô rộng bằng nhau (bề rộng đặt theo phần trăm), chữ vẫn xuống dòng được nếu cỡ chữ rất lớn.
+  cellStacked: { flexGrow: 0, flexShrink: 0, gap: GAP },
   divided: {
     paddingLeft: DIVIDER_SPACE,
     borderLeftWidth: StyleSheet.hairlineWidth,

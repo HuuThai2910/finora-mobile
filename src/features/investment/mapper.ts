@@ -150,8 +150,9 @@ export function toInvestmentContract(dto: InvestorContractDto): InvestmentContra
     amount: Number(dto.investorAmount),
     noteCount: dto.allocationCount,
     termMonths: dto.termMonths,
-    // Một Contract dùng chung cho toàn allocation. Nếu bất kỳ bên chưa ký nào từ chối thì Contract bị đóng;
-    // các nhà đầu tư còn lại cũng phải thấy "đã hủy", dù party riêng của họ vẫn là PENDING_SIGNATURE.
+    // Một Contract dùng chung cho toàn allocation. Người vay từ chối/hết hạn thì Contract đóng và mọi nhà đầu tư thấy
+    // "đã hủy". Nhà đầu tư chưa ký tự rút (party DECLINED/EXPIRED) thì chỉ phần của họ dừng: Contract chuyển
+    // PENDING_REFUNDING, người còn lại giữ trạng thái party của mình.
     status: dto.contractStatus === 'DECLINED' || dto.partyStatus === 'DECLINED'
       ? 'DECLINED'
       : dto.contractStatus === 'EXPIRED' || dto.partyStatus === 'EXPIRED'

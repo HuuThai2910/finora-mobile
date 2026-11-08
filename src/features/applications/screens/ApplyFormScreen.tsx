@@ -165,7 +165,7 @@ export default function ApplyFormScreen() {
         style={styles.scroll}
         contentContainerStyle={scrollFrame}
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode={Platform.OS === 'web' ? 'none' : 'on-drag'}
+        keyboardDismissMode={Platform.OS === "web" ? "none" : "on-drag"}
         automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}
       >
@@ -180,52 +180,70 @@ export default function ApplyFormScreen() {
           annualInterestRate={product.data.annualInterestRate}
           expectedDisbursementDate={params.expectedDisbursementDate}
         />
-        <View style={styles.selectionNote}>
-          <ApplyFormNote>
-            Số tiền và kỳ hạn đã được chọn ở bước đầu. Nếu muốn thay đổi, hãy quay lại thay vì nhập lại lần nữa.
-          </ApplyFormNote>
-        </View>
-
-        <ApplyFormSection title="Mục đích vay" onLayout={trackSection('purpose')}>
+        <ApplyFormSection
+          title="Mục đích vay"
+          onLayout={trackSection("purpose")}
+        >
           <ApplyFormSelectRow
             icon="target"
             label="Mục đích vay"
             required
-            options={(purposes.data ?? []).map((item) => ({ value: item.code, label: item.label }))}
+            options={(purposes.data ?? []).map((item) => ({
+              value: item.code,
+              label: item.label,
+            }))}
             value={values.purposeCode}
-            onChange={(value) => update('purposeCode', value)}
+            onChange={(value) => update("purposeCode", value)}
             placeholder="Chọn mục đích vay"
             error={errors.purpose}
           />
         </ApplyFormSection>
 
-        <ApplyFormSection title="Phương án sử dụng vốn" onLayout={trackSection('plan')}>
+        <ApplyFormSection
+          title="Phương án sử dụng vốn"
+          onLayout={trackSection("plan")}
+        >
           <ApplyFormInputRow
             icon="fileText"
             label="Phương án sử dụng vốn"
             multiline
             required={form.purposeRequiresDetail}
             value={values.purposeDetail}
-            onChangeText={(value) => update('purposeDetail', value)}
+            onChangeText={(value) => update("purposeDetail", value)}
             placeholder="Nhập phương án sử dụng vốn"
-            helper={form.purposeRequiresDetail ? 'Bắt buộc với mục đích đã chọn' : 'Không bắt buộc · tối đa 500 ký tự'}
+            helper={
+              form.purposeRequiresDetail
+                ? "Bắt buộc với mục đích đã chọn"
+                : "Không bắt buộc · tối đa 500 ký tự"
+            }
             error={errors.purposeDetail}
           />
         </ApplyFormSection>
 
-        <ApplyFormSection title="Thông tin hồ sơ tín dụng" onLayout={trackSection('credit')}>
-          <ApplyFormCreditFields values={values} errors={errors} onChange={update} />
+        <ApplyFormSection
+          title="Thông tin hồ sơ tín dụng"
+          onLayout={trackSection("credit")}
+        >
+          <ApplyFormCreditFields
+            values={values}
+            errors={errors}
+            onChange={update}
+          />
         </ApplyFormSection>
 
-        <ApplyFormSection title="Xác nhận trước khi nộp" onLayout={trackSection('consent')}>
+        <ApplyFormSection
+          title="Xác nhận trước khi nộp"
+          onLayout={trackSection("consent")}
+        >
           <ApplyFormConsent
             checked={values.accepted}
-            onChange={(value) => update('accepted', value)}
+            onChange={(value) => update("accepted", value)}
             error={errors.accepted}
           />
           <ApplyFormNote>
-            Sau khi nộp, hệ thống đánh giá hồ sơ, xác định lãi suất áp dụng và tính lại lịch trả bằng
-            hệ thống lõi. Nếu được duyệt, bạn sẽ xem đầy đủ điều khoản mới trước khi chọn ký hoặc từ chối.
+            Hồ sơ của bạn sẽ được xét duyệt sau khi nộp. Nếu được duyệt, bạn sẽ
+            được xem lại thông tin chính thức trước khi quyết định ký hoặc từ
+            chối hợp đồng.
           </ApplyFormNote>
         </ApplyFormSection>
       </ScrollView>
@@ -236,7 +254,11 @@ export default function ApplyFormScreen() {
         error={form.submitError}
         onStartEkyc={
           form.kycRequired
-            ? () => navigation.navigate('Hồ sơ', { screen: 'EkycCapture', params: { side: 'front' } })
+            ? () =>
+                navigation.navigate("Hồ sơ", {
+                  screen: "EkycCapture",
+                  params: { side: "front" },
+                })
             : undefined
         }
       />

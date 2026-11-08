@@ -44,6 +44,7 @@ import {
 import { AccountInfoScreen, AccountScreen } from '@/features/account';
 import { NotificationSettingsScreen } from '@/features/push-notifications';
 import { TermsScreen } from '@/features/legal';
+import { useAuth } from '@/providers/AuthProvider';
 import {
   EkycCaptureScreen,
   EkycConsentScreen,
@@ -123,6 +124,15 @@ function WalletTab() {
 }
 
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
+/**
+ * "Hợp đồng" của tab Hồ sơ theo vai trò: nhà đầu tư thấy phần vốn mình đã ký, người vay thấy hợp đồng vay đã
+ * ký. Chọn ở tầng điều hướng để hai feature không phải nhập lẫn nhau.
+ */
+function MyContractsRoute() {
+  const role = useAuth().session?.profile.role;
+  return role === 'INVESTOR' ? <InvestorContractsScreen signedOnly /> : <MyContractsScreen />;
+}
+
 function ProfileTab() {
   return (
     // eKYC là chức năng tuỳ chọn trong tab Hồ sơ. Ảnh CCCD đi giữa các màn qua
@@ -145,7 +155,8 @@ function ProfileTab() {
       <ProfileStack.Screen name="EkycResult" component={EkycResultScreen} />
       <ProfileStack.Screen name="MyApplications" component={MyApplicationsScreen} />
       <ProfileStack.Screen name="ApplicationDetail" component={ApplicationDetailScreen} />
-      <ProfileStack.Screen name="MyContracts" component={MyContractsScreen} />
+      <ProfileStack.Screen name="MyContracts" component={MyContractsRoute} />
+      <ProfileStack.Screen name="InvestContract" component={InvestContractScreen} />
       <ProfileStack.Screen name="ContractDetail" component={ContractDetailScreen} />
       <ProfileStack.Screen name="RepaymentSchedule" component={RepaymentScheduleScreen} />
       <ProfileStack.Screen name="LoanServicingList" component={LoanServicingListScreen} />

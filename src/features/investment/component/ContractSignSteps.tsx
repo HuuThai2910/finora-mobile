@@ -62,7 +62,7 @@ export default function ContractSignSteps(props: Props) {
           <View style={styles.signingActions}>
             <InvestButton label="Mở VNPT SmartCA" icon="pen" onPress={props.onOpenSmartCa} />
             <InvestButton
-              label="Tôi đã xác nhận, kiểm tra kết quả"
+              label="Tôi đã xác nhận"
               icon="check"
               variant="outline"
               onPress={props.onCheck}

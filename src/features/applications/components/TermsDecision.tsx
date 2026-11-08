@@ -9,15 +9,13 @@ import { DECLINE_REASONS, type DeclineReasonCode } from '../constant';
 import { useTermsConfirmation } from '../hook/useTermsConfirmation';
 import DeclineForm from './DeclineForm';
 import DetailButton from './DetailButton';
-import DetailCard from './DetailCard';
 
 /**
- * Điều khoản cuối bất lợi hơn lúc nộp: borrower phải chủ động chấp nhận hoặc từ
- * chối trước khi FINORA lập hợp đồng. Vẽ theo ngôn ngữ thẻ của màn chi tiết
- * (mockup 26/09/2026); hạn phản hồi đặt trong dải nền vàng nhạt vì đây là mốc
- * duy nhất trên màn có thể làm hồ sơ dừng lại nếu bỏ lỡ.
+ * Phần quyết định nằm cuối thẻ "Kết quả điều khoản" khi điều khoản cuối bất lợi hơn lúc nộp: hạn phản
+ * hồi rồi hai nút chấp nhận/từ chối. Hạn đặt trong dải nền vàng nhạt vì đây là mốc duy nhất trên màn
+ * có thể làm hồ sơ dừng lại nếu bỏ lỡ. Không còn chờ quyết định thì không vẽ gì.
  */
-export default function TermsConfirmationSection({
+export default function TermsDecision({
   application,
   onDone,
 }: {
@@ -53,15 +51,7 @@ export default function TermsConfirmationSection({
   };
 
   return (
-    <DetailCard title="Cần quyết định của bạn" badge={{ icon: 'alert', color: Colors.amber }}>
-      <View style={styles.copy}>
-        <Text style={styles.lead}>Điều khoản cuối bất lợi hơn lúc nộp hồ sơ</Text>
-        <Text style={styles.body}>
-          FINORA chưa tạo hợp đồng. Hãy đối chiếu lãi suất và lịch trả bên dưới rồi chọn chấp nhận
-          hoặc từ chối. Không phản hồi không được xem là đồng ý.
-        </Text>
-      </View>
-
+    <>
       <View style={styles.deadline}>
         <Icon name="clock" size={16} color={Colors.tagAmberText} />
         <Text style={styles.deadlineText}>
@@ -119,14 +109,11 @@ export default function TermsConfirmationSection({
           </View>
         </>
       )}
-    </DetailCard>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  copy: { gap: Spacing.xs },
-  lead: { fontFamily: FontFamily.semibold, fontSize: 14.5, lineHeight: 21, color: Colors.authInk },
-  body: { fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authMuted },
   deadline: {
     flexDirection: 'row',
     alignItems: 'center',

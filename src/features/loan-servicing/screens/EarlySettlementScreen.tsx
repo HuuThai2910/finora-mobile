@@ -12,7 +12,7 @@ import { useBalance } from '@/features/wallet';
 import { usePinGuard } from '@/features/pin';
 import { confirmEarlySettlement, createEarlySettlementQuote } from '../api/servicingApi';
 import FinancialRows from '../components/FinancialRows';
-import { feePolicyNote, feeRows } from '../mappers/fee';
+import { feeRows } from '../mappers/fee';
 import LoanDetailSkeleton from '../components/LoanDetailSkeleton';
 import RepaymentResultCard from '../components/RepaymentResultCard';
 import ServicingScaffold from '../components/ServicingScaffold';
@@ -124,7 +124,6 @@ export default function EarlySettlementScreen() {
             ]} />
           </DetailCard>
           <DetailNote>Không thu lãi của các tháng tương lai. Phí tất toán được tính trên gốc còn lại theo thời gian đã sử dụng khoản vay.</DetailNote>
-          <DetailNote>{feePolicyNote(quote.policyVersion)}</DetailNote>
           {insufficient ? <DetailNote tone="warn">Số dư ví không đủ cho tổng báo giá.</DetailNote> : null}
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <DetailButton label="Xác nhận tất toán" onPress={askConfirm} loading={busy} disabled={insufficient || quote.status !== 'ACTIVE'} />

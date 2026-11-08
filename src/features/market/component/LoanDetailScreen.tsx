@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import {
   useNavigation,
@@ -83,8 +84,16 @@ function LoanInvest({ loan, refreshing, onRefresh }: InvestProps) {
   // Loan chỉ trả hồ sơ người vay cho tài khoản nhà đầu tư; vai trò khác không gọi để khỏi nhận 403.
   const applicationNumber = session?.profile.role === 'INVESTOR' ? loan.applicationNumber : null;
   const block = investBlock(state, form.bounds);
+  // Chưa định danh thì nói ngay từ đầu, thay vì để nhập số tiền, nhập PIN rồi mới bị từ chối.
+  const needsEkyc = session?.profile.role === 'INVESTOR' && !form.ekyc.verified;
+  const { recheck } = form.ekyc;
   const title = titleOf(loan.id);
   const toMarket = () => nav.navigate('Market');
+
+  // Hồ sơ trong phiên có thể cũ (nhân viên vừa duyệt eKYC): tải lại một lần khi mở màn.
+  useEffect(() => {
+    if (needsEkyc) void recheck().catch(() => undefined);
+  }, [needsEkyc, recheck]);
 
   if (form.result) {
     const actions: Record<ResultAction, { label: string; onPress: () => void }> = {
@@ -110,7 +119,7 @@ function LoanInvest({ loan, refreshing, onRefresh }: InvestProps) {
   }
 
   const repaymentLabel = REPAYMENT_METHOD_LABEL[loan.repaymentMethod] ?? loan.repaymentMethod;
-  const footer = block ? null : (
+  const footer = block || needsEkyc ? null : (
     <InvestBar
       label={form.error ? 'Đầu tư' : `Đầu tư ${formatDong(form.amount)}`}
       onPress={() => void form.submit()}
@@ -136,6 +145,19 @@ function LoanInvest({ loan, refreshing, onRefresh }: InvestProps) {
           title={INVEST_BLOCK_COPY[block].title}
           message={block === 'CANCELLED' ? cancelledListingHint(loan.cancellationReason) : INVEST_BLOCK_COPY[block].hint}
           primary={{ label: 'Về sàn khoản vay', onPress: toMarket }}
+        />
+      ) : needsEkyc ? (
+        <LoanStatusCard
+          icon="scanFace"
+          title={form.ekyc.copy.title}
+          message={form.ekyc.copy.message}
+          primary={{
+            label: form.ekyc.copy.action.label,
+            onPress: form.ekyc.copy.action.kind === 'start'
+              ? form.ekyc.startEkyc
+              : () => void recheck().catch(() => undefined),
+          }}
+          secondary={{ label: 'Về sàn khoản vay', onPress: toMarket }}
         />
       ) : (
         <>

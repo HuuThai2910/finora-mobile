@@ -54,6 +54,13 @@ export function contractFact(
         icon: "users",
         urgent: false,
       };
+    case "PENDING_REFUNDING":
+      return {
+        label: "Chuỗi ký",
+        value: "Đang gọi vốn bổ sung",
+        icon: "users",
+        urgent: false,
+      };
     case "PENDING_BORROWER_SIGNATURE":
     case "PENDING_SIGNATURE":
       return countdown.expired

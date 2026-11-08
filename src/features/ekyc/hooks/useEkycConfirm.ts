@@ -4,6 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { getMyProfile } from '@/features/auth';
 import { useSubmit } from '@/hooks/useSubmit';
 import { toUserMessage } from '@/lib/api';
+import { refreshAccessToken } from '@/lib/authSession';
 import type { ProfileStackParamList } from '@/navigation/types';
 import { useAuth } from '@/providers/AuthProvider';
 import type { EkycConfirmEdits } from '@/types/ekyc';
@@ -34,7 +35,10 @@ export function useEkycConfirm() {
 
   const refreshProfile = async () => {
     try {
-      updateProfile(await getMyProfile());
+      const profile = await getMyProfile();
+      updateProfile(profile);
+      // Investment đọc trạng thái eKYC từ claim trong access token: lấy token mới để đầu tư được ngay.
+      if (profile.kycStatus === 'KYC_VERIFIED') await refreshAccessToken();
     } catch (e) {
       console.warn('Không tải lại được hồ sơ sau eKYC:', toUserMessage(e));
     }

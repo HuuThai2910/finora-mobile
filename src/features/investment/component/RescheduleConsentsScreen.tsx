@@ -49,24 +49,46 @@ function ConsentCard({ item, busy, onDecide }: {
   return (
     <DetailCard title={`Khoản vay ${item.loanNumber}`} icon="file">
       <View style={[styles.status, { backgroundColor: look.bg }]}>
-        <Text style={[styles.statusText, { color: look.color }]}>{look.label}</Text>
+        <Text style={[styles.statusText, { color: look.color }]}>
+          {look.label}
+        </Text>
       </View>
       <Text style={styles.proposal}>{requestTitle(item)}</Text>
       <View style={styles.rows}>
-        <View style={styles.row}><Text style={styles.label}>Phần vốn của bạn</Text><Text style={styles.value}>{formatDong(item.outstandingPrincipal)}</Text></View>
-        <View style={styles.row}><Text style={styles.label}>Kỳ bắt đầu điều chỉnh</Text><Text style={styles.value}>{date(item.rescheduleFromDate)}</Text></View>
-        {item.requestType === 'TERM_EXTENSION' ? (
-          <View style={styles.row}><Text style={styles.label}>Ngày đáo hạn hiện tại</Text><Text style={styles.value}>{date(item.originalMaturityDate)}</Text></View>
+        <View style={styles.row}>
+          <Text style={styles.label}>Phần vốn của bạn</Text>
+          <Text style={styles.value}>
+            {formatDong(item.outstandingPrincipal)}
+          </Text>
+        </View>
+        <View style={styles.row}>
+          <Text style={styles.label}>Kỳ bắt đầu điều chỉnh</Text>
+          <Text style={styles.value}>{date(item.rescheduleFromDate)}</Text>
+        </View>
+        {item.requestType === "TERM_EXTENSION" ? (
+          <View style={styles.row}>
+            <Text style={styles.label}>Ngày đáo hạn hiện tại</Text>
+            <Text style={styles.value}>{date(item.originalMaturityDate)}</Text>
+          </View>
         ) : null}
       </View>
       <DetailNote>
-        Lịch mới chỉ được áp dụng khi toàn bộ nhà đầu tư đang nắm Note đồng ý và Fineract xử lý thành công.
-        Trong thời gian chờ, lịch trả hiện tại vẫn có hiệu lực.
+        Lịch trả nợ mới chỉ có hiệu lực khi tất cả nhà đầu tư đồng ý. Trong thời
+        gian chờ, lịch trả nợ hiện tại vẫn được áp dụng.
       </DetailNote>
-      {item.status === 'PENDING' ? (
+      {item.status === "PENDING" ? (
         <View style={styles.actions}>
-          <DetailButton label="Đồng ý lịch mới" onPress={() => onDecide(item, true)} loading={busy} />
-          <DetailButton label="Từ chối" variant="danger" onPress={() => onDecide(item, false)} disabled={busy} />
+          <DetailButton
+            label="Đồng ý lịch mới"
+            onPress={() => onDecide(item, true)}
+            loading={busy}
+          />
+          <DetailButton
+            label="Từ chối"
+            variant="danger"
+            onPress={() => onDecide(item, false)}
+            disabled={busy}
+          />
         </View>
       ) : null}
     </DetailCard>

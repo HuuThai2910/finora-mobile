@@ -12,7 +12,6 @@ import ApplicationTimelineCard from '../components/ApplicationTimelineCard';
 import DeclaredInfoSection from '../components/DeclaredInfoSection';
 import PricingResultCard from '../components/PricingResultCard';
 import RepaymentSummary from '../components/RepaymentSummary';
-import TermsConfirmationSection from '../components/TermsConfirmationSection';
 import WithdrawSection from '../components/WithdrawSection';
 import { applicationTimelineStop } from '../mappers/detailTimeline';
 
@@ -100,9 +99,7 @@ export default function ApplicationDetailScreen() {
         }
       />
 
-      <PricingResultCard application={application} />
-
-      <TermsConfirmationSection application={application} onDone={state.reload} />
+      <PricingResultCard application={application} onDone={state.reload} />
 
       <RepaymentSummary
         firstInstallment={snapshot.firstInstallment}
@@ -126,7 +123,7 @@ export default function ApplicationDetailScreen() {
 
       <ApplicationTimelineCard
         steps={timeline}
-        stop={applicationTimelineStop(application.status)}
+        stop={applicationTimelineStop(application.status, status)}
         failed={timelineFailed}
       />
 

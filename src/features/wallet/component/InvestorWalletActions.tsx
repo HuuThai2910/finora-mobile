@@ -22,7 +22,11 @@ export default function InvestorWalletActions({
 }: Props) {
   return (
     <View style={styles.section}>
-      <Text style={styles.heading} accessibilityRole="header" maxFontSizeMultiplier={1.4}>
+      <Text
+        style={styles.heading}
+        accessibilityRole="header"
+        maxFontSizeMultiplier={1.4}
+      >
         Dành cho nhà đầu tư
       </Text>
       <View style={styles.card}>
@@ -39,8 +43,8 @@ export default function InvestorWalletActions({
           onPress={onOpenPendingContract}
         />
         <PItem
-          label="Đề nghị cơ cấu cần đồng ý"
-          sub="Xem ảnh hưởng và quyết định lịch trả mới"
+          label="Đề nghị cơ cấu"
+          sub="Xem và phản hồi đề nghị đổi lịch trả nợ"
           icon="clock"
           onPress={onOpenRescheduleConsents}
           last
