@@ -13,14 +13,20 @@ type Props = {
   onViewContract: (contractNumber: string) => void;
 };
 
-/** Phần vốn chưa thành Note; chỉ listing OPEN mới có nút rút riêng lệnh. */
+/**
+ * Phần vốn chưa thành Note; chỉ listing OPEN mới có nút rút riêng lệnh. Listing mở lại để gọi vốn bổ sung (một nhà
+ * đầu tư khác rút trước khi ký) thì phần vốn đã nằm trong hợp đồng không rút được qua lệnh.
+ */
 export default function PendingCommitmentCard({ commitment, contract, cancelling, onCancel, onViewContract }: Props) {
   const locked = commitment.listingStatus === 'FULLY_FUNDED';
+  const refunding = commitment.listingStatus === 'OPEN' && !commitment.cancelAllowed && contract != null;
   const stage = commitment.cancelAllowed
     ? 'Đang gọi vốn'
     : locked
       ? 'Chờ hoàn tất hợp đồng'
-      : 'Đang hoàn tất đầu tư';
+      : refunding
+        ? 'Đang gọi vốn bổ sung'
+        : 'Đang hoàn tất đầu tư';
   return (
     <View style={styles.card}>
       <View style={styles.head}>
@@ -37,7 +43,9 @@ export default function PendingCommitmentCard({ commitment, contract, cancelling
           ? 'Tiền đang được giữ trong ví và có thể rút trước khi khoản vay đủ vốn.'
           : locked
             ? 'Khoản vay đã đủ vốn; tiền chỉ chuyển sau khi hợp đồng được ký đủ.'
-            : 'Khoản đầu tư đang hoàn tất trước khi phát hành Note.'}
+            : refunding
+              ? 'Một nhà đầu tư khác đã rút trước khi ký. Phần vốn của bạn được giữ nguyên trong lúc khoản vay tìm người góp thay.'
+              : 'Khoản đầu tư đang hoàn tất trước khi phát hành Note.'}
       </Text>
 
       {contract ? (

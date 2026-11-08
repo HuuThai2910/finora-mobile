@@ -18,6 +18,7 @@ import {
 } from '../mappers/applicationSummary';
 import { applicationJourneyStatus } from '../mappers/statusMeta';
 import { buildApplicationTimeline } from '../mappers/timeline';
+import { latestStatus, useHistoryInSync } from './useHistoryInSync';
 
 const HISTORY_PAGE_SIZE = 20;
 const CONTRACT_LOOKUP_SIZE = 100;
@@ -70,12 +71,19 @@ export type ApplicationDetailState = {
  * hook không tự thử lại mà buộc tải lại bản mới.
  */
 export function useApplicationDetail(applicationNumber: string): ApplicationDetailState {
-  const applicationQuery = useGetApplicationQuery(applicationNumber);
-  const historyQuery = useGetApplicationHistoryQuery({
-    applicationNumber,
-    page: 0,
-    size: HISTORY_PAGE_SIZE,
-  });
+  // Trạng thái hồ sơ đổi ở phía máy chủ (hệ thống chấm điểm, nhân viên duyệt) mà app không hay biết:
+  // mở màn là tải mới, không dùng bản đệm của lần xem trước.
+  const applicationQuery = useGetApplicationQuery(applicationNumber, { refetchOnMountOrArgChange: true });
+  const historyQuery = useGetApplicationHistoryQuery(
+    { applicationNumber, page: 0, size: HISTORY_PAGE_SIZE },
+    { refetchOnMountOrArgChange: true },
+  );
+  useHistoryInSync(
+    applicationQuery.data?.status,
+    latestStatus(historyQuery.data?.data ?? [], item => item.createdAt),
+    historyQuery.isFetching,
+    historyQuery.refetch,
+  );
   const [withdrawApplication, withdrawState] = useWithdrawApplicationMutation();
   const [withdrawError, setWithdrawError] = useState<ActionError | null>(null);
 
@@ -116,23 +124,28 @@ export function useApplicationDetail(applicationNumber: string): ApplicationDeta
   const contract =
     (relatedContracts.find(item => item.status === 'PENDING_BORROWER_SIGNATURE')
       ?? relatedContracts.find(item => item.status === 'PENDING_LENDER_SIGNATURES')
+      ?? relatedContracts.find(item => item.status === 'PENDING_REFUNDING')
       ?? relatedContracts.find(item => item.status === 'PENDING_SIGNATURE')
       ?? relatedContracts[0])
       ?? null;
 
-  const view: ApplicationDetailView | null = application && displayedSchedule
+  const journey = application
+    ? applicationJourneyStatus(
+        application.status,
+        contract?.status,
+        application.termsConfirmation?.status,
+        application.funding?.status,
+      )
+    : null;
+
+  const view: ApplicationDetailView | null = application && displayedSchedule && journey
     ? {
         application,
         displayedSchedule,
-        status: applicationJourneyStatus(
-          application.status,
-          contract?.status,
-          application.termsConfirmation?.status,
-          application.funding?.status,
-        ),
+        status: journey,
         keyTerms: buildKeyTerms(application, showFinalTerms),
         decision: decisionDateOf(application, historyQuery.data?.data ?? []),
-        timeline: buildApplicationTimeline(historyQuery.data?.data ?? [], application.status),
+        timeline: buildApplicationTimeline(historyQuery.data?.data ?? [], application.status, journey),
         timelineFailed: Boolean(historyQuery.error),
         canWithdraw: WITHDRAWABLE_STATUSES.includes(application.status)
           || (application.status === 'APPROVED' && application.funding?.status === 'REQUESTED'),

@@ -13,7 +13,7 @@ import { useBalance } from '@/features/wallet';
 import { usePinGuard } from '@/features/pin';
 import { confirmPartialPrepayment, createPartialPrepaymentQuote } from '../api/servicingApi';
 import FinancialRows from '../components/FinancialRows';
-import { feePolicyNote, feeRows } from '../mappers/fee';
+import { feeRows } from '../mappers/fee';
 import LoanDetailSkeleton from '../components/LoanDetailSkeleton';
 import RepaymentResultCard from '../components/RepaymentResultCard';
 import ServicingScaffold from '../components/ServicingScaffold';
@@ -30,6 +30,9 @@ import type { PartialPrepaymentQuote, RepaymentResult } from '../types';
 
 type Route = RouteProp<ProfileStackParamList, 'PartialPrepayment'>;
 type Nav = NativeStackNavigationProp<ProfileStackParamList, 'PartialPrepayment'>;
+
+/** "5000000" → "5.000.000", đúng cách viết tiền vi-VN của app. */
+const groupThousands = (digits: string): string => digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
 export default function PartialPrepaymentScreen() {
   const { loanNumber } = useRoute<Route>().params;
@@ -93,53 +96,117 @@ export default function PartialPrepaymentScreen() {
       {trackedResult ? (
         <>
           <RepaymentResultCard result={trackedResult} />
-          <DetailButton label="Xem lịch trả nợ mới" onPress={() => nav.goBack()} />
+          <DetailButton
+            label="Xem lịch trả nợ mới"
+            onPress={() => nav.goBack()}
+          />
         </>
       ) : quote ? (
         <>
           <DetailCard title="Số tiền cần thanh toán" icon="coins">
-            <FinancialRows rows={[
-              { label: 'Số tiền kỳ gần nhất cần trả', value: quote.scheduledDue },
-              { label: 'Gốc trả trước thêm', value: quote.prepaidPrincipal },
-              ...feeRows('Tổng phí trả trước', quote),
-              { label: 'Tổng trừ từ ví', value: quote.totalAmount, emphasis: true },
-              { label: 'Số tiền này có hiệu lực đến', value: formatDateTime(quote.expiresAt) },
-            ]} />
+            <FinancialRows
+              rows={[
+                {
+                  label: "Số tiền kỳ gần nhất cần trả",
+                  value: quote.scheduledDue,
+                },
+                { label: "Gốc trả trước thêm", value: quote.prepaidPrincipal },
+                ...feeRows("Tổng phí trả trước", quote),
+                {
+                  label: "Tổng trừ từ ví",
+                  value: quote.totalAmount,
+                  emphasis: true,
+                },
+                {
+                  label: "Số tiền này có hiệu lực đến",
+                  value: formatDateTime(quote.expiresAt),
+                },
+              ]}
+            />
           </DetailCard>
-          <DetailNote>{prepaymentAllocationNote(quote.allocationStrategy)}</DetailNote>
-          <DetailNote>{feePolicyNote(quote.policyVersion)}</DetailNote>
-          {insufficient ? <DetailNote tone="warn">Số dư ví không đủ cho tổng báo giá.</DetailNote> : null}
+          <DetailNote>
+            {prepaymentAllocationNote(quote.allocationStrategy)}
+          </DetailNote>
+          {insufficient ? (
+            <DetailNote tone="warn">
+              Số dư ví không đủ cho tổng báo giá.
+            </DetailNote>
+          ) : null}
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <DetailButton label="Xác nhận trả trước" loading={busy} disabled={insufficient || quote.status !== 'ACTIVE'} onPress={confirm} />
-          <DetailButton label="Thay đổi số tiền" variant="outline" disabled={busy} onPress={() => { setQuote(null); setError(null); }} />
+          <DetailButton
+            label="Xác nhận trả trước"
+            loading={busy}
+            disabled={insufficient || quote.status !== "ACTIVE"}
+            onPress={confirm}
+          />
+          <DetailButton
+            label="Thay đổi số tiền"
+            variant="outline"
+            disabled={busy}
+            onPress={() => {
+              setQuote(null);
+              setError(null);
+            }}
+          />
         </>
       ) : (
         <>
           <DetailCard title="Số gốc muốn trả thêm" icon="coins">
-            <Text style={styles.hint}>Gốc còn lại: {formatDong(data.loan.principalOutstanding)}</Text>
+            <Text style={styles.hint}>
+              Gốc còn lại: {formatDong(data.loan.principalOutstanding)}
+            </Text>
             <Field
               label="Số tiền trả trước"
-              value={amountText}
-              onChangeText={value => setAmountText(value.replace(/[^0-9]/g, ''))}
+              // Hiện dấu chấm ngăn nghìn ngay khi gõ như ô thu nhập ở form vay; state chỉ giữ chữ số.
+              value={groupThousands(amountText)}
+              onChangeText={(value) =>
+                setAmountText(value.replace(/[^0-9]/g, "").replace(/^0+(?=\d)/, ""))
+              }
               keyboardType="number-pad"
               placeholder="Ví dụ: 5.000.000"
               required
-              error={amountText && invalidAmount ? 'Số tiền phải lớn hơn 0 và nhỏ hơn gốc còn lại.' : undefined}
+              error={
+                amountText && invalidAmount
+                  ? "Số tiền phải lớn hơn 0 và nhỏ hơn gốc còn lại."
+                  : undefined
+              }
             />
           </DetailCard>
-          <DetailNote>Phí được tính trên phần gốc trả trước. Lãi chỉ tính đến ngày giao dịch, không thu lãi tương lai của phần gốc đã trả.</DetailNote>
+          <DetailNote>
+            Khi trả trước một phần khoản vay, bạn sẽ trả thêm phí tính trên số
+            tiền trả sớm. Số tiền này chỉ tính lãi đến ngày thanh toán. Sau đó,
+            bạn chỉ tiếp tục trả lãi cho số tiền vay còn lại.
+          </DetailNote>
           {overdue ? (
-            <DetailNote tone="warn">Khoản vay đang quá hạn. Hãy thanh toán phần quá hạn trước khi trả trước gốc; phần gốc trả thêm lúc này sẽ chỉ trả nợ quá hạn mà vẫn bị tính phí.</DetailNote>
+            <DetailNote tone="warn">
+              Khoản vay đang quá hạn. Hãy thanh toán phần quá hạn trước khi trả
+              trước gốc; phần gốc trả thêm lúc này sẽ chỉ trả nợ quá hạn mà vẫn
+              bị tính phí.
+            </DetailNote>
           ) : blocked || pendingInstallment ? (
-            <DetailNote tone="warn">{error ?? ''}</DetailNote>
-          ) : error ? <Text style={styles.error}>{error}</Text> : null}
+            <DetailNote tone="warn">{error ?? ""}</DetailNote>
+          ) : error ? (
+            <Text style={styles.error}>{error}</Text>
+          ) : null}
           {overdue ? (
-            <DetailButton label="Thanh toán phần quá hạn" onPress={() => nav.navigate('LoanPayment', { loanNumber })} />
+            <DetailButton
+              label="Thanh toán phần quá hạn"
+              onPress={() => nav.navigate("LoanPayment", { loanNumber })}
+            />
           ) : pendingInstallment ? (
-            <DetailButton label="Xem khoản chờ ghi nhận" variant="outline" onPress={() => nav.navigate('LoanPayment', { loanNumber })} />
+            <DetailButton
+              label="Xem khoản chờ ghi nhận"
+              variant="outline"
+              onPress={() => nav.navigate("LoanPayment", { loanNumber })}
+            />
           ) : null}
           {blocked || overdue ? null : (
-            <DetailButton label="Xem số tiền cần thanh toán" loading={busy} disabled={invalidAmount || data.loan.stale} onPress={() => void requestQuote()} />
+            <DetailButton
+              label="Xem số tiền cần thanh toán"
+              loading={busy}
+              disabled={invalidAmount || data.loan.stale}
+              onPress={() => void requestQuote()}
+            />
           )}
         </>
       )}

@@ -16,6 +16,8 @@ type Props = {
   onShare: () => void;
   applicationNumber: string;
   onOpenApplication: () => void;
+  /** Đang chờ ký mà chưa mở bản PDF hiện hành: dòng mô tả nhắc phải đọc PDF trước khi ký. */
+  mustRead?: boolean;
 };
 
 /**
@@ -32,6 +34,7 @@ export default function ContractDocumentCard({
   onShare,
   applicationNumber,
   onOpenApplication,
+  mustRead = false,
 }: Props) {
   return (
     <DetailCard>
@@ -44,7 +47,10 @@ export default function ContractDocumentCard({
             {confirmed ? 'Bản PDF xác nhận' : 'Hợp đồng và lịch trả nợ'}
           </Text>
           <Text style={styles.body}>
-            Xem đầy đủ điều khoản và lịch trả nợ trong bản PDF.
+            {mustRead
+              ? // Khoảng trắng không ngắt giữ "trước khi ký" cùng một dòng khi câu xuống dòng ở màn hẹp.
+                'Bạn cần mở và đọc hợp đồng PDF trước khi ký.'
+              : 'Xem đầy đủ điều khoản và lịch trả nợ trong bản PDF.'}
           </Text>
         </View>
         <PdfArt />

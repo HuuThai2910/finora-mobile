@@ -65,12 +65,10 @@ export const DEFAULT_INVEST_AMOUNT = 5_000_000;
 export const RISK_DISCLOSURE_VERSION = 'INVESTOR_RISK_V1';
 
 export const RISK_DISCLOSURE_TEXT =
-  'Tôi xác nhận đã được cung cấp và đã xem thông tin khoản vay (số tiền, kỳ hạn, lãi suất, lịch trả) cùng hồ sơ người '
-  + 'vay ẩn danh trước khi góp vốn. Tôi hiểu khoản đầu tư không được bảo đảm vốn: người vay có thể trả chậm hoặc không '
-  + 'trả, khi đó tôi chỉ nhận phần tiền thu hồi được theo tỷ lệ Note đang nắm.';
+  "Tôi xác nhận đã xem thông tin khoản vay, hồ sơ người vay ẩn danh và đồng ý với các điều khoản, rủi ro đầu tư.";
 
 export const INVEST_NOTE =
-  'Tiền được giữ tạm trong ví ngay khi đặt lệnh và chỉ chuyển đi khi khoản vay gọi đủ 100% vốn và các bên ký hợp đồng. Note bắt đầu sinh lãi khi khoản vay giải ngân.';
+  "Tiền được tạm giữ khi đặt lệnh, chỉ chuyển khi khoản vay đủ vốn và các bên đã ký hợp đồng.";
 
 /** Viên trạng thái ở đầu màn: chấm màu luôn đi kèm chữ. */
 export const FUNDING_STATE_BADGE: Record<FundingState, { label: string; dot: string }> = {

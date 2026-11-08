@@ -93,8 +93,11 @@ export type ProfileStackParamList = {
   EkycResult: undefined;
   MyApplications: undefined;
   ApplicationDetail: { applicationNumber: string };
+  /** Hợp đồng đã ký: của người vay, hoặc phần vốn đã ký của nhà đầu tư (theo vai trò). */
   MyContracts: undefined;
   ContractDetail: { contractNumber: string };
+  /** Chi tiết hợp đồng đầu tư khi mở từ "Hợp đồng" của tab Hồ sơ (cùng màn với Ví → Hợp đồng đầu tư). */
+  InvestContract: { contractNumber?: string } | undefined;
   /**
    * Lịch trả nợ đầy đủ tách khỏi màn chi tiết vì có thể tới 60 kỳ.
    * Chỉ truyền định danh; màn tự đọc lại từ cache RTK Query thay vì

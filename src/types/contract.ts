@@ -18,6 +18,8 @@ export interface LoanContract {
 
 export type LoanContractStatus =
   | 'PENDING_LENDER_SIGNATURES'
+  /** Nhà đầu tư chưa ký rút; khoản vay đang gọi vốn bổ sung, bên đã ký giữ nguyên. */
+  | 'PENDING_REFUNDING'
   | 'PENDING_BORROWER_SIGNATURE'
   | 'PENDING_SIGNATURE'
   | 'SIGNING'

@@ -157,18 +157,34 @@ export default function InvestContractScreen() {
     const openPdf = async () => {
       if (await pdf.openPdf()) setOpenedPdfHash(data.pdfDocumentHash);
     };
-    const terminal = data.status === 'SIGNED' || data.status === 'DECLINED' || data.status === 'EXPIRED';
+    // Nhà đầu tư khác vừa rút: hợp đồng chờ gọi vốn bổ sung, chưa nhận chữ ký mới cho tới khi phát hành lại.
+    const refunding = data.contractStatus === 'PENDING_REFUNDING';
+    // Hợp đồng vẫn chạy (không bị người vay từ chối/hết hạn): phần vốn DECLINED/EXPIRED là của riêng nhà đầu tư này.
+    const contractOpen = data.contractStatus !== 'DECLINED' && data.contractStatus !== 'EXPIRED';
+    const terminal = data.status === 'SIGNED' || data.status === 'DECLINED' || data.status === 'EXPIRED' || refunding;
     const terminalCopy = data.status === 'SIGNED'
       ? {
           icon: 'shieldCheck' as const,
           title: 'Bạn đã ký phần vốn này',
           hint: data.contractStatus === 'EFFECTIVE'
             ? 'Hợp đồng đã đủ chữ ký và đang có hiệu lực.'
-            : 'FINORA đang chờ các bên còn lại hoàn tất chữ ký.',
+            : refunding
+              ? 'Một nhà đầu tư khác đã rút trước khi ký. Chữ ký và phần vốn của bạn được giữ nguyên trong lúc khoản vay gọi vốn bổ sung.'
+              : 'FINORA đang chờ các bên còn lại hoàn tất chữ ký.',
         }
       : data.status === 'DECLINED'
-        ? { icon: 'x' as const, title: 'Hợp đồng đã dừng', hint: 'Phần vốn này không tiếp tục giải ngân.' }
-        : { icon: 'clock' as const, title: 'Đã hết hạn ký', hint: 'Hợp đồng này không còn nhận chữ ký mới.' };
+        ? contractOpen
+          ? { icon: 'x' as const, title: 'Bạn đã rút khỏi hợp đồng', hint: 'Tiền giữ cho phần vốn này được trả về ví; khoản vay đang tìm nhà đầu tư thay thế.' }
+          : { icon: 'x' as const, title: 'Hợp đồng đã dừng', hint: 'Phần vốn này không tiếp tục giải ngân.' }
+        : data.status === 'EXPIRED'
+          ? contractOpen
+            ? { icon: 'clock' as const, title: 'Bạn chưa ký kịp', hint: 'Phần vốn đã rời hợp đồng và tiền giữ được trả về ví.' }
+            : { icon: 'clock' as const, title: 'Đã hết hạn ký', hint: 'Hợp đồng này không còn nhận chữ ký mới.' }
+          : {
+              icon: 'users' as const,
+              title: 'Đang gọi vốn bổ sung',
+              hint: 'Một nhà đầu tư khác đã rút trước khi ký. Phần vốn của bạn được giữ; bạn sẽ được mời ký bản hợp đồng phát hành lại khi khoản vay gọi đủ vốn.',
+            };
 
     return (
       <>

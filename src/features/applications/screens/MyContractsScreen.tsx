@@ -13,7 +13,7 @@ import ApplicationListStatus from '../components/ApplicationListStatus';
 import ContractListCard from '../components/ContractListCard';
 import ContractListHeader from '../components/ContractListHeader';
 import ContractListSkeleton from '../components/ContractListSkeleton';
-import { APPLICATION_LIST_MAX_WIDTH, APPLICATION_LIST_PADDING } from '../constant';
+import { APPLICATION_LIST_MAX_WIDTH, APPLICATION_LIST_PADDING, SIGNED_CONTRACT_STATUSES } from '../constant';
 import { useContractFilter } from '../hook/useContractFilter';
 import { contractStatusMeta } from '../mappers/statusMeta';
 
@@ -23,7 +23,7 @@ type Nav = NativeStackNavigationProp<ProfileStackParamList, 'MyContracts'>;
 const BOTTOM_SPACE = 56;
 
 /**
- * Danh sách hợp đồng của borrower (mockup 26/09/2026), mở từ tab Hồ sơ → Hợp
+ * Danh sách hợp đồng đã ký của borrower (mockup 26/09/2026), mở từ tab Hồ sơ → Hợp
  * đồng. Cùng tham số trang với màn "Hồ sơ vay" nên dùng chung cache RTK Query;
  * người vay thực tế có ít hợp đồng nên vẽ bằng ScrollView để nền cuộn cùng thẻ.
  */
@@ -36,7 +36,9 @@ export default function MyContractsScreen() {
   const [viewportHeight, setViewportHeight] = useState(0);
 
   const query = useListMyContractsQuery({ page: 0, size: 100 });
-  const contracts = query.data?.data ?? [];
+  // Chỉ liệt kê hợp đồng đã ký (đã ký, đang hiệu lực, đã tất toán). Hợp đồng còn chờ ký mở từ chi tiết
+  // hồ sơ vay; hợp đồng bị từ chối/hết hạn chưa từng được ký nên cũng không hiện ở đây.
+  const contracts = (query.data?.data ?? []).filter(item => SIGNED_CONTRACT_STATUSES.includes(item.status));
   const filter = useContractFilter(contracts);
 
   // Có lỗi thì báo lỗi kèm nút thử lại, kể cả khi cache còn dữ liệu cũ, thay vì
@@ -59,8 +61,8 @@ export default function MyContractsScreen() {
       return (
         <ApplicationListStatus
           kind="empty"
-          title="Bạn chưa có hợp đồng vay nào"
-          hint="Hợp đồng được lập sau khi hồ sơ vay được duyệt. Khi đó bạn đọc và ký hợp đồng ngay tại đây."
+          title="Bạn chưa có hợp đồng đã ký"
+          hint="Hợp đồng được lập sau khi hồ sơ vay được duyệt và gọi đủ vốn. Bạn đọc và ký hợp đồng trong chi tiết hồ sơ vay; ký xong hợp đồng sẽ hiện ở đây."
           action="Xem hồ sơ vay"
           onAction={() => navigation.navigate('MyApplications')}
         />

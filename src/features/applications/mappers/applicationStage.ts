@@ -26,6 +26,7 @@ const APPLICATION_STAGE: Record<LoanApplicationStatus, ApplicationStage> = {
 
 const CONTRACT_STAGE: Record<LoanContractStatus, ApplicationStage> = {
   PENDING_LENDER_SIGNATURES: 'reviewing',
+  PENDING_REFUNDING: 'reviewing',
   PENDING_BORROWER_SIGNATURE: 'action',
   PENDING_SIGNATURE: 'action',
   // Yêu cầu ký đã sang VNPT SmartCA nhưng người vay vẫn phải xác nhận trên ứng dụng đó.

@@ -3,9 +3,9 @@ import type { LoanApplication } from '@/types/loan';
 export type RateDirection = 'lower' | 'same' | 'higher';
 
 export type PricingChangeCopy = {
-  title: string;
-  description: string;
   tone: 'green' | 'blue' | 'amber';
+  /** Lời giải thích chiều thay đổi; lãi giữ nguyên thì không cần báo gì thêm. */
+  notice: { title: string; description: string } | null;
 };
 
 /** Điều khoản trước/sau thẩm định của một hồ sơ, đã sẵn sàng để trình bày. */
@@ -25,29 +25,23 @@ export type PricingChange = {
 
 const COPY: Record<RateDirection, PricingChangeCopy> = {
   lower: {
-    title: 'Bạn được giảm lãi suất',
-    description: 'Kết quả đánh giá tín dụng cho phép áp dụng mức lãi thấp hơn mức cơ sở ban đầu.',
-    tone: 'green',
+    tone: "green",
+    notice: {
+      title: "Bạn được giảm lãi suất",
+      description:
+        "Kết quả đánh giá tín dụng cho phép áp dụng mức lãi thấp hơn mức cơ sở ban đầu.",
+    },
   },
-  same: {
-    title: 'Lãi suất được giữ nguyên',
-    description: 'Kết quả đánh giá không làm thay đổi mức lãi suất cơ sở bạn đã xem khi nộp hồ sơ.',
-    tone: 'blue',
-  },
+  same: { tone: "blue", notice: null },
   higher: {
-    title: 'Lãi suất được điều chỉnh tăng',
-    description: 'Mức lãi mới phản ánh kết quả đánh giá tín dụng và vẫn nằm trong khung đã công bố của sản phẩm.',
-    tone: 'amber',
+    tone: "amber",
+    notice: {
+      title: "Lãi suất được điều chỉnh tăng",
+      description:
+        "Lãi suất mới được xác định sau khi xét duyệt hồ sơ và nằm trong khung lãi suất đã công bố.",
+    },
   },
 };
-
-/** Câu hướng dẫn quyết định, tách theo việc borrower còn phải trả lời đề nghị hay không. */
-export const PRICING_CHOICE_NOTES = {
-  pending:
-    'Hãy đối chiếu lịch trả bên dưới. Hợp đồng chỉ được lập nếu bạn chủ động chấp nhận đề nghị này.',
-  autoContinued:
-    'Điều khoản không bất lợi hơn nên hồ sơ đã tự tiếp tục theo chấp thuận lúc nộp. Bạn vẫn đọc toàn bộ PDF và quyết định ký hoặc từ chối hợp đồng.',
-} as const;
 
 function directionOf(baseRate: number, finalRate: number): RateDirection {
   if (finalRate < baseRate) return 'lower';

@@ -9,7 +9,6 @@ import ContractDetailScaffold from '../components/ContractDetailScaffold';
 import ContractDocumentCard from '../components/ContractDocumentCard';
 import { PdfViewer } from '@/components/feedback';
 import { SIGNATURE_REJECTED_MESSAGE } from '@/constants/contractSignature';
-import ContractPricingCard from '../components/ContractPricingCard';
 import ContractSignaturesCard from '../components/ContractSignaturesCard';
 import ContractSmartCaCard from '../components/ContractSmartCaCard';
 import ContractSummaryCard from '../components/ContractSummaryCard';
@@ -70,7 +69,7 @@ function ContractDetailBody({
   reload: () => void;
 }) {
   const navigation = useNavigation<Nav>();
-  const { contract, pricingApplication, timeline, timelineFailed, countdown, canRespond, canDecline, expiredWhileWaiting } =
+  const { contract, timeline, timelineFailed, countdown, canRespond, canDecline, expiredWhileWaiting } =
     view;
   const pdf = useContractPdf(contract);
   const smartCa = useSmartCaSignature(contract.contractNumber, contract.status, reload);
@@ -97,13 +96,18 @@ function ContractDetailBody({
 
       {expiredWhileWaiting ? (
         <DetailNote tone="warn">
-          Hợp đồng đã quá hạn xác nhận nên không còn ký được. Hệ thống sẽ cập nhật trạng thái sang “Đã
-          hết hạn”; nếu vẫn cần vay, bạn hãy nộp hồ sơ mới.
+          Hợp đồng đã quá hạn xác nhận nên không còn ký được. Hệ thống sẽ cập
+          nhật trạng thái sang “Đã hết hạn”; nếu vẫn cần vay, bạn hãy nộp hồ sơ
+          mới.
         </DetailNote>
       ) : null}
 
-      {contract.status === 'SIGNING' ? (
-        <ContractSmartCaCard checking={smartCa.checking} error={smartCa.error} onCheck={smartCa.check} />
+      {contract.status === "SIGNING" ? (
+        <ContractSmartCaCard
+          checking={smartCa.checking}
+          error={smartCa.error}
+          onCheck={smartCa.check}
+        />
       ) : null}
 
       {/* Thẻ SmartCA đã ẩn khi hợp đồng về chờ ký, nên lý do (chữ ký bị từ chối) hiện ở đây khi người vay còn ký được. */}
@@ -120,23 +124,19 @@ function ContractDetailBody({
         onShare={pdf.sharePdf}
         applicationNumber={contract.applicationNumber}
         onOpenApplication={() =>
-          navigation.navigate('ApplicationDetail', { applicationNumber: contract.applicationNumber })
+          navigation.navigate("ApplicationDetail", {
+            applicationNumber: contract.applicationNumber,
+          })
         }
+        mustRead={canRespond && Boolean(contract.pdfDocument) && !openedCurrentPdf}
       />
 
       {pdf.error ? <DetailNote tone="warn">{pdf.error}</DetailNote> : null}
 
       {canRespond && !contract.pdfDocument ? (
         <DetailNote tone="warn">
-          Hợp đồng cũ này chưa có PDF từ máy chủ nên chưa thể ký trên ứng dụng. Vui lòng liên hệ FINORA
-          để được phát hành đúng tài liệu.
-        </DetailNote>
-      ) : null}
-
-      {canRespond && contract.pdfDocument && !openedCurrentPdf ? (
-        <DetailNote>
-          Hãy mở và đọc bản PDF hiện hành. Khi quay lại ứng dụng, phần xác nhận sẽ xuất hiện ngay bên
-          dưới mà không cần chuyển sang màn khác.
+          Hợp đồng cũ này chưa có PDF từ máy chủ nên chưa thể ký trên ứng dụng.
+          Vui lòng liên hệ FINORA để được phát hành đúng tài liệu.
         </DetailNote>
       ) : null}
 
@@ -170,11 +170,11 @@ function ContractDetailBody({
         )
       ) : null}
 
-      {pricingApplication ? <ContractPricingCard application={pricingApplication} /> : null}
-
       <ContractDisbursementCard contract={contract} />
 
-      {contract.signatureProfile === 'PADES_B_B' ? <ContractSignaturesCard contract={contract} /> : null}
+      {contract.signatureProfile === "PADES_B_B" ? (
+        <ContractSignaturesCard contract={contract} />
+      ) : null}
 
       <ApplicationTimelineCard
         title="Lịch sử hợp đồng"

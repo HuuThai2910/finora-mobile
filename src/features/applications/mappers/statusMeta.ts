@@ -114,6 +114,8 @@ export function contractActionLabel(status: LoanContractStatus): string {
   switch (status) {
     case 'PENDING_LENDER_SIGNATURES':
       return 'Xem hợp đồng đang chờ nhà đầu tư';
+    case 'PENDING_REFUNDING':
+      return 'Xem hợp đồng đang gọi vốn bổ sung';
     case 'PENDING_BORROWER_SIGNATURE':
       return 'Đọc và ký hợp đồng';
     case 'PENDING_SIGNATURE':

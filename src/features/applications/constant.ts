@@ -85,6 +85,13 @@ export const CONTRACT_STATUS: Record<LoanContractStatus, StatusMeta> = {
     meaning: 'Khoản vay đã gọi đủ vốn và các nhà đầu tư đang ký cùng một bản hợp đồng.',
     next: 'Đủ chữ ký nhà đầu tư để mở lượt ký cho bạn',
   },
+  PENDING_REFUNDING: {
+    tone: 'amber',
+    label: 'Đang gọi vốn bổ sung',
+    icon: 'users',
+    meaning: 'Một nhà đầu tư đã rút trước khi ký. Khoản vay được đưa lại lên sàn để gọi phần vốn còn thiếu; các nhà đầu tư đã ký vẫn giữ nguyên.',
+    next: 'Gọi đủ vốn bổ sung để hợp đồng được phát hành lại',
+  },
   PENDING_BORROWER_SIGNATURE: {
     tone: 'amber',
     label: 'Chờ bạn ký',
@@ -235,7 +242,7 @@ export const PRICING_DISCLOSURE_VERSION =
   process.env.EXPO_PUBLIC_PRICING_DISCLOSURE_VERSION ?? 'RATE_DISCLOSURE_V2';
 
 export const PRICING_DISCLOSURE_TEXT =
-  'Tôi đã xem lãi suất cơ sở, khung lãi suất, phí và lịch trả ban đầu. Tôi đồng ý hồ sơ tự tiếp tục nếu điều khoản cuối không bất lợi hơn; nếu lãi, phí hoặc nghĩa vụ trả tăng, FINORA phải hỏi lại trước khi lập hợp đồng.';
+  "Tôi xác nhận đã xem lãi suất, phí và lịch trả nợ. Mọi thay đổi đối với các nội dung này phải được thông báo và có sự đồng ý của tôi trước khi lập hợp đồng.";
 
 /* ---------------- Màn "Hồ sơ vay" (mockup 26/09/2026) ---------------- */
 
@@ -344,6 +351,9 @@ export const CONTRACT_LIST_ART = {
   titleLimit: 467,
 } as const;
 
+/** Hợp đồng người vay đã ký: chỉ những trạng thái này hiện ở màn "Hợp đồng" của tab Hồ sơ. */
+export const SIGNED_CONTRACT_STATUSES: readonly LoanContractStatus[] = ['SIGNED', 'EFFECTIVE', 'COMPLETED'];
+
 /**
  * Thứ tự chip lọc ở màn hợp đồng, cố định để chip không nhảy chỗ sau mỗi lần tải
  * lại: việc cần người vay làm trước, rồi hợp đồng đã ký, cuối cùng là hợp đồng đã
@@ -352,6 +362,7 @@ export const CONTRACT_LIST_ART = {
 export const CONTRACT_FILTER_ORDER: readonly LoanContractStatus[] = [
   'PENDING_BORROWER_SIGNATURE',
   'PENDING_LENDER_SIGNATURES',
+  'PENDING_REFUNDING',
   'PENDING_SIGNATURE',
   'SIGNING',
   'SIGNED',

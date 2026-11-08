@@ -172,8 +172,7 @@ export const PREPAYMENT_OVERDUE_CODE = 'PARTIAL_PREPAYMENT_LOAN_OVERDUE';
 /** Câu giải thích cách Fineract dùng phần gốc trả thêm, theo chiến lược đã chụp trong báo giá. */
 export function prepaymentAllocationNote(strategy: string): string {
   if (strategy.endsWith('/DAILY_INTEREST_RECALCULATION')) {
-    return 'Toàn bộ số tiền được ghi nhận hôm nay: lãi chỉ tính đến hôm nay trên dư nợ thực tế, phần còn lại trừ '
-      + 'vào gốc và dùng cho các kỳ gần nhất theo thứ tự. Kỳ cuối được điều chỉnh theo dư nợ thực tế.';
+    return "Khi trả trước một phần khoản vay, bạn sẽ trả thêm phí tính trên số tiền trả sớm. Số tiền này chỉ tính lãi đến ngày thanh toán. Sau đó, bạn chỉ tiếp tục trả lãi cho số tiền vay còn lại.";
   }
   if (strategy.endsWith('/NEXT_INSTALLMENT')) {
     return 'Khoản trả thêm được phân bổ vào các kỳ gần nhất để ưu tiên rút ngắn thời gian vay.';

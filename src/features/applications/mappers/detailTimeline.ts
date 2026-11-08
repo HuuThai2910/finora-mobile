@@ -2,6 +2,7 @@ import type { Step } from '@/components/phone';
 import type { TagTone } from '@/components/ui';
 import type { LoanContractStatus } from '@/types/contract';
 import type { LoanApplicationStatus } from '@/types/loan';
+import type { StatusMeta } from '../constant';
 import { applicationStatusMeta, contractStatusMeta } from './statusMeta';
 
 /** Cách vẽ một mốc: đã qua, đang ở, sắp tới, hoặc dừng hẳn mà không thành. */
@@ -24,8 +25,17 @@ export type TimelineStop = { label: string; tone: TagTone };
 
 const STOPPED_APPLICATION: readonly LoanApplicationStatus[] = ['REJECTED', 'WITHDRAWN'];
 const STOPPED_CONTRACT: readonly LoanContractStatus[] = ['DECLINED', 'EXPIRED'];
+/** Tông của các trạng thái kết thúc không thành; kết thúc tốt (đã hoàn tất) vẫn là mốc xong. */
+const STOP_TONES: readonly TagTone[] = ['red', 'gray'];
 
-export function applicationTimelineStop(status: LoanApplicationStatus): TimelineStop | null {
+/**
+ * @param journey trạng thái hành trình sau duyệt: hồ sơ đã duyệt vẫn có thể dừng ở bước sau (từ chối điều
+ *                khoản, gọi vốn không thành, dừng trước giải ngân) — mốc cuối khi đó cũng là mốc dừng
+ */
+export function applicationTimelineStop(status: LoanApplicationStatus, journey?: StatusMeta): TimelineStop | null {
+  if (status === 'APPROVED' && journey && journey.next === null && STOP_TONES.includes(journey.tone)) {
+    return { label: journey.label, tone: journey.tone };
+  }
   if (!STOPPED_APPLICATION.includes(status)) return null;
   const meta = applicationStatusMeta(status);
   return { label: meta.label, tone: meta.tone };

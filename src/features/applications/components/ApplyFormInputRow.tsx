@@ -17,7 +17,7 @@ import ApplyFormFieldShell, { applyFormValueStyles } from './ApplyFormFieldShell
 /**
  * `text`: chữ tự do. `number`: bàn phím số, giữ nguyên chữ người dùng gõ để
  * validation của schema chạy y như trước. `money`: bàn phím số, hiện dấu chấm
- * ngăn nghìn nhưng giá trị lưu trong form chỉ là chữ số.
+ * ngăn nghìn ngay khi gõ nhưng giá trị lưu trong form chỉ là chữ số.
  */
 export type ApplyFormInputKind = 'text' | 'number' | 'money';
 
@@ -73,9 +73,9 @@ export default function ApplyFormInputRow({
   const accessoryId = `apply-form-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const numeric = kind !== 'text';
   const withDoneBar = Platform.OS === 'ios' && numeric;
-  // Không chèn dấu phân cách trong lúc gõ: TextInput điều khiển trên iOS/Android
-  // có thể đưa con trỏ về cuối sau mỗi ký tự và làm người dùng không nhập được.
-  const shown = kind === 'money' && !focused ? groupThousands(value) : value;
+  // Chèn dấu chấm ngay trong lúc gõ như ô số tiền vay (`LoanAmountInput`): bàn phím số luôn gõ ở
+  // cuối nên con trỏ ở cuối sau khi định dạng lại là đúng chỗ; giá trị lưu vẫn chỉ là chữ số.
+  const shown = kind === 'money' ? groupThousands(value) : value;
 
   const change = (text: string) => onChangeText(kind === 'money' ? toDigits(text) : text);
 

@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { useAsync } from '@/hooks/useAsync';
 import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
+import { useEkycGate } from '@/features/ekyc';
 import { usePinGuard } from '@/features/pin';
 import type { BookOrder, PlaceOrderInput } from '@/types/orderBook';
 import { cancelBookOrder, getMyPosition, listMyOrders, listOrderBooks, placeBookOrder } from '../api';
@@ -29,6 +30,7 @@ export function usePlaceOrder(listingId: number) {
   const [error, setError] = useState<string | null>(null);
   const intent = useRef<{ fingerprint: string; key: string } | null>(null);
   const { requirePin } = usePinGuard();
+  const ekyc = useEkycGate('giao dịch Note');
 
   const submit = useCallback(
     async (input: PlaceOrderInput): Promise<BookOrder | null> => {
@@ -40,9 +42,12 @@ export function usePlaceOrder(listingId: number) {
       setSubmitting(true);
       setError(null);
       try {
+        // Chưa định danh thì báo ngay, không bắt nhập PIN cho một lệnh chắc chắn bị từ chối.
+        if (!(await ekyc.ensureVerified())) return null;
         const pinToken = await requirePin('ORDER', key);
         if (!pinToken) return null;
-        const order = await placeBookOrder(listingId, input, key, pinToken);
+        const order = await ekyc.run(() => placeBookOrder(listingId, input, key, pinToken));
+        if (!order) return null;
         // Đã thành: lần bấm sau — kể cả cùng nội dung — là một lệnh mới, cần khóa mới.
         intent.current = null;
         return order;
@@ -53,7 +58,7 @@ export function usePlaceOrder(listingId: number) {
         setSubmitting(false);
       }
     },
-    [listingId, requirePin],
+    [ekyc, listingId, requirePin],
   );
 
   return { submit, submitting, error, clearError: () => setError(null) };

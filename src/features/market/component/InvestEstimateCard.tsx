@@ -29,8 +29,8 @@ type Row = { label: string; value: string; tone?: 'gain' | 'strong'; onInfo?: ()
 export default function InvestEstimateCard({ amount, estimate, annualRate, termMonths, repaymentLabel }: Props) {
   const explainInterest = () =>
     Alert.alert(
-      'Lãi dự kiến',
-      `Tính trên số tiền bạn góp theo lãi suất ${formatAnnualRateShort(annualRate)} và cách trả nợ "${repaymentLabel}", giả định người vay trả đúng hạn đủ ${termMonths} kỳ. Số thực nhận theo lịch trả nợ chính thức lập lúc giải ngân nên có thể lệch đôi chút.`,
+      "Lãi dự kiến",
+      `Ước tính theo số tiền bạn góp, lãi suất ${formatAnnualRateShort(annualRate)} và cách trả "${repaymentLabel}", nếu người vay trả đúng hạn ${termMonths} kỳ. Số thực nhận có thể thay đổi.`,
     );
 
   const rows: Row[] = !estimate

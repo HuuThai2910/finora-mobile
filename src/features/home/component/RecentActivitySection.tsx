@@ -60,7 +60,8 @@ export default function RecentActivitySection({ transactions, loading, error, on
         const time = formatRecentTime(tx.occurredAt);
         return (
           <ActivityRow
-            key={tx.id}
+            // Một giao dịch có thể vừa trừ vừa cộng vào cùng ví: mã giao dịch thôi chưa đủ làm khoá.
+            key={`${tx.id}-${tx.direction}`}
             icon={incoming ? 'download' : 'arrowUpRight'}
             tone={incoming ? 'green' : 'blue'}
             title={tx.description}

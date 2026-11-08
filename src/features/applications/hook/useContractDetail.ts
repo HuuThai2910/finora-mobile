@@ -1,19 +1,17 @@
 import type { Step } from '@/components/phone';
 import type { LoanContractDetail } from '@/types/contract';
-import type { LoanApplication } from '@/types/loan';
-import { useGetApplicationQuery, useGetContractHistoryQuery, useGetContractQuery } from '../api/applicationApi';
+import { useGetContractHistoryQuery, useGetContractQuery } from '../api/applicationApi';
 import type { StatusMeta } from '../constant';
 import { toLoadError } from '../mappers/apiError';
 import { contractStatusMeta } from '../mappers/statusMeta';
 import { buildContractTimeline } from '../mappers/timeline';
 import { useCountdown, type Countdown } from './useCountdown';
+import { latestStatus, useHistoryInSync } from './useHistoryInSync';
 
 const HISTORY_PAGE_SIZE = 20;
 
 export type ContractDetailView = {
   contract: LoanContractDetail;
-  /** Hồ sơ gốc dùng giải thích vì sao lãi suất trong hợp đồng khác mức cơ sở ban đầu. */
-  pricingApplication: LoanApplication | null;
   status: StatusMeta;
   timeline: Step[];
   timelineFailed: boolean;
@@ -41,34 +39,37 @@ export type ContractDetailState = {
  * khoá đúng thời điểm hết hạn thay vì chờ người dùng tải lại trang.
  */
 export function useContractDetail(contractNumber: string): ContractDetailState {
-  const contractQuery = useGetContractQuery(contractNumber);
-  const historyQuery = useGetContractHistoryQuery({
-    contractNumber,
-    page: 0,
-    size: HISTORY_PAGE_SIZE,
-  });
+  // Nhà đầu tư ký, SmartCA trả kết quả, hệ thống giải ngân... đều đổi trạng thái ở phía máy chủ:
+  // mở màn là tải mới, không dùng bản đệm của lần xem trước.
+  const contractQuery = useGetContractQuery(contractNumber, { refetchOnMountOrArgChange: true });
+  const historyQuery = useGetContractHistoryQuery(
+    { contractNumber, page: 0, size: HISTORY_PAGE_SIZE },
+    { refetchOnMountOrArgChange: true },
+  );
   const contract = contractQuery.data ?? null;
-  const applicationQuery = useGetApplicationQuery(contract?.applicationNumber ?? '', {
-    skip: !contract?.applicationNumber,
-  });
   const countdown = useCountdown(contract?.expiresAt ?? null);
+  useHistoryInSync(
+    contract?.status,
+    latestStatus(historyQuery.data?.data ?? [], item => item.occurredAt),
+    historyQuery.isFetching,
+    historyQuery.refetch,
+  );
 
   const reload = () => {
     contractQuery.refetch();
     historyQuery.refetch();
-    if (contract?.applicationNumber) applicationQuery.refetch();
   };
 
   const waitingSignature = contract?.status === 'PENDING_SIGNATURE'
     || contract?.status === 'PENDING_BORROWER_SIGNATURE';
   const declineWindow = waitingSignature
     || contract?.status === 'PENDING_LENDER_SIGNATURES'
+    || contract?.status === 'PENDING_REFUNDING'
     || contract?.status === 'SIGNING';
 
   const view: ContractDetailView | null = contract
     ? {
         contract,
-        pricingApplication: applicationQuery.data ?? null,
         status: contractStatusMeta(contract.status),
         timeline: buildContractTimeline(historyQuery.data?.data ?? [], contract.status),
         timelineFailed: Boolean(historyQuery.error),
@@ -85,7 +86,7 @@ export function useContractDetail(contractNumber: string): ContractDetailState {
       contractQuery.error || (!contractQuery.isLoading && !contract)
         ? toLoadError(contractQuery.error, 'Không tải được hợp đồng vay.')
         : null,
-    refreshing: contractQuery.isFetching || historyQuery.isFetching || applicationQuery.isFetching,
+    refreshing: contractQuery.isFetching || historyQuery.isFetching,
     reload,
     view,
   };

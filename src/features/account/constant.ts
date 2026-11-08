@@ -101,13 +101,10 @@ export type UpcomingSetting = { icon: IconName; title: string };
 
 /**
  * Các mục "Sắp có" của nhóm "Bảo mật & Liên kết" (mã PIN và Ngân hàng liên kết đã có màn thật, vẽ thành dòng bấm
- * được). Các mục dưới đây chưa có chức năng nên hiện mờ, không bấm được:
- * - Sinh trắc học: app chưa tích hợp xác thực sinh trắc;
- * - Thiết bị đăng nhập: `finora-user` chưa có API danh sách phiên/thiết bị;
- * - Chữ ký số: SmartCA chỉ dùng khi ký từng hợp đồng, chưa có màn quản lý chứng thư.
+ * được). Mục dưới đây chưa có chức năng nên hiện mờ, không bấm được:
+ * - Thiết bị đăng nhập: `finora-user` chưa có API danh sách phiên/thiết bị.
+ * Sinh trắc học và chữ ký số không còn trong kế hoạch nên không hiện.
  */
 export const SECURITY_SETTINGS: readonly UpcomingSetting[] = [
-  { icon: 'scanFace', title: 'Sinh trắc học (Face ID)' },
   { icon: 'shield', title: 'Thiết bị đăng nhập' },
-  { icon: 'penLine', title: 'Chữ ký số' },
 ];

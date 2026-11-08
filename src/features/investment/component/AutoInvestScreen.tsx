@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/feedback';
 import { Icon } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import { generateIdempotencyKey, toUserMessage } from '@/lib/api';
+import { useEkycGate } from '@/features/ekyc';
 import { usePinGuard } from '@/features/pin';
 import { FontFamily, Radius, Spacing } from '@/theme';
 import type { AutoInvestConfig } from '@/types/invest';
@@ -37,6 +38,7 @@ export default function AutoInvestScreen() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const { requirePin } = usePinGuard();
+  const ekyc = useEkycGate('dùng Auto-Invest');
   // Mỗi lần lưu là một thao tác có mã riêng, token PIN chỉ duyệt đúng lần lưu đó (D38).
   const saveKey = useRef(generateIdempotencyKey());
 
@@ -66,13 +68,19 @@ export default function AutoInvestScreen() {
     // sửa tiêu chí của quy tắc đang bật và đã xác nhận đúng bản này thì không hỏi lại.
     const needsConfirmation = next.enabled && (!saved?.enabled || saved.pausedForRiskAcknowledgement
       || saved.riskAcknowledgedVersion !== RISK_DISCLOSURE_VERSION);
-    if (needsConfirmation && !(await confirmRisk())) return false;
     setSaving(true);
     setSaveError(null);
     try {
-      const pinToken = await requirePin('AUTO_INVEST', saveKey.current);
+      // Backend chỉ đòi eKYC khi quy tắc ở trạng thái bật. Chưa định danh thì báo ngay, trước cả công bố
+      // rủi ro và PIN, vì lần lưu đó chắc chắn bị từ chối; tắt Auto-Invest thì không chặn.
+      if (next.enabled && !(await ekyc.ensureVerified())) return false;
+      if (needsConfirmation && !(await confirmRisk())) return false;
+      const key = saveKey.current;
+      const pinToken = await requirePin('AUTO_INVEST', key);
       if (!pinToken) return false;
-      setSaved(await saveAutoInvest(next, saveKey.current, pinToken, RISK_DISCLOSURE_VERSION));
+      const result = await ekyc.run(() => saveAutoInvest(next, key, pinToken, RISK_DISCLOSURE_VERSION));
+      if (!result) return false;
+      setSaved(result);
       saveKey.current = generateIdempotencyKey();
       return true;
     } catch (e) {
