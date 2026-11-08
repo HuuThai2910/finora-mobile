@@ -196,6 +196,7 @@ const RESCHEDULE_STATUS: Record<RescheduleStatus, StatusLook> = {
   COMPLETED: { label: 'Đã áp dụng', tone: 'green', icon: 'circleCheck' },
   RECONCILIATION_REQUIRED: { label: 'Đang kiểm tra kết quả', tone: 'amber', icon: 'clockAlert' },
   MANUAL_REVIEW: { label: 'Đang kiểm tra thêm', tone: 'amber', icon: 'clockAlert' },
+  CANCELLED: { label: 'Đã đóng do lỗi xử lý', tone: 'gray', icon: 'circleX' },
 };
 
 export const rescheduleStatusLook = (value: RescheduleStatus): StatusLook =>
@@ -207,7 +208,7 @@ export const rescheduleStatusLook = (value: RescheduleStatus): StatusLook =>
  * từ chối (`ACTIVE_RESTRUCTURE_REQUEST_EXISTS`).
  */
 export const isActiveReschedule = (value: RescheduleStatus): boolean =>
-  value !== 'REJECTED' && value !== 'INVESTOR_REJECTED' && value !== 'COMPLETED';
+  value !== 'REJECTED' && value !== 'INVESTOR_REJECTED' && value !== 'COMPLETED' && value !== 'CANCELLED';
 
 /** Tên hai hình thức, dùng chung cho lựa chọn ở biểu mẫu và tiêu đề đề nghị đã gửi. */
 export const RESCHEDULE_TYPE_LABEL = {

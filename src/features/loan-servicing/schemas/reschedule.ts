@@ -1,8 +1,4 @@
-import {
-  RESCHEDULE_EXTRA_TERMS_MAX,
-  RESCHEDULE_EXTRA_TERMS_MIN,
-  RESCHEDULE_REASON_MAX,
-} from '../constants';
+import { RESCHEDULE_EXTRA_TERMS_MIN, RESCHEDULE_REASON_MAX } from '../constants';
 import { isLocalDate } from '../mappers/servicing';
 import type { RescheduleType } from '../types';
 
@@ -25,34 +21,39 @@ const DATE_INVALID = 'Ngày chưa hợp lệ, hãy chọn lại.';
 
 /**
  * Kiểm tra phía app cho biểu mẫu đề nghị cơ cấu, cùng các điều kiện Loan Service kiểm lại:
- * ngày bắt đầu không ở quá khứ (`RESCHEDULE_DATE_IN_PAST`), đổi ngày đến hạn thì ngày mới
- * phải sau ngày bắt đầu, gia hạn 1–120 kỳ, lý do 1–500 ký tự. Chỉ để báo sớm; backend vẫn
+ * đổi ngày đến hạn thì phải chọn kỳ và ngày mới sau kỳ đó; gia hạn chỉ nhập số kỳ,
+ * backend tự chọn kỳ chưa hoàn thành gần nhất. Chỉ để báo sớm; backend vẫn
  * là nơi quyết định.
  */
 export function validateReschedule(
   values: RescheduleValues,
   today: string,
+  maximumExtraTerms: number,
+  maximumTotalTerms: number,
 ): Partial<Record<RescheduleField, FieldError>> {
   const errors: Partial<Record<RescheduleField, FieldError>> = {};
-  const from = values.fromDate.trim();
-  if (!from) errors.fromDate = { message: 'Chọn kỳ bắt đầu áp dụng.', blank: true };
-  else if (!isLocalDate(from)) errors.fromDate = { message: DATE_INVALID, blank: false };
-  else if (from < today) errors.fromDate = { message: 'Ngày bắt đầu không được trước hôm nay.', blank: false };
-
   if (values.type === 'INSTALLMENT_ADJUSTMENT') {
+    const from = values.fromDate.trim();
+    if (!from) errors.fromDate = { message: 'Chọn kỳ muốn đổi ngày trả.', blank: true };
+    else if (!isLocalDate(from)) errors.fromDate = { message: DATE_INVALID, blank: false };
     const adjusted = values.adjustedDate.trim();
     if (!adjusted) errors.adjustedDate = { message: 'Chọn ngày đến hạn mới.', blank: true };
     else if (!isLocalDate(adjusted)) errors.adjustedDate = { message: DATE_INVALID, blank: false };
+    else if (adjusted < today) {
+      errors.adjustedDate = { message: 'Ngày trả mới không được ở quá khứ.', blank: false };
+    }
     else if (!errors.fromDate && adjusted <= from) {
       errors.adjustedDate = { message: 'Ngày đến hạn mới phải sau ngày bắt đầu áp dụng.', blank: false };
     }
   } else if (
     !Number.isInteger(values.extraTerms) ||
     values.extraTerms < RESCHEDULE_EXTRA_TERMS_MIN ||
-    values.extraTerms > RESCHEDULE_EXTRA_TERMS_MAX
+    values.extraTerms > maximumExtraTerms
   ) {
     errors.extraTerms = {
-      message: `Số kỳ gia hạn từ ${RESCHEDULE_EXTRA_TERMS_MIN} đến ${RESCHEDULE_EXTRA_TERMS_MAX}.`,
+      message: maximumExtraTerms > 0
+        ? `Khoản vay này chỉ được gia hạn từ ${RESCHEDULE_EXTRA_TERMS_MIN} đến ${maximumExtraTerms} kỳ để tổng thời hạn không vượt quá ${maximumTotalTerms} tháng.`
+        : `Khoản vay đã đạt thời hạn tối đa ${maximumTotalTerms} tháng nên không thể gia hạn thêm kỳ.`,
       blank: false,
     };
   }

@@ -105,8 +105,8 @@ export const confirmEarlySettlement = (
   timeoutMs: 30_000,
 });
 
-export const getReschedulePolicy = (signal?: AbortSignal): Promise<ReschedulePolicy> =>
-  apiFetch<ReschedulePolicy>('/loans/reschedule-policy', { signal });
+export const getReschedulePolicy = (loanNumber: string, signal?: AbortSignal): Promise<ReschedulePolicy> =>
+  apiFetch<ReschedulePolicy>(`/loans/${encodeURIComponent(loanNumber)}/reschedule-policy`, { signal });
 
 export const listRescheduleRequests = (
   loanNumber: string,

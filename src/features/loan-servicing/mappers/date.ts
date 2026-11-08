@@ -21,6 +21,17 @@ export function addDays(value: string, days: number): string {
   return fromDateParts({ year: next.getFullYear(), month: next.getMonth() + 1, day: next.getDate() });
 }
 
+/** Cộng tháng theo lịch và giữ ngày nếu có; ngày 29–31 được kéo về cuối tháng mới. */
+export function addMonths(value: string, months: number): string {
+  const current = toDateParts(value);
+  const target = new Date(current.year, current.month - 1 + months, 1);
+  return fromDateParts({
+    year: target.getFullYear(),
+    month: target.getMonth() + 1,
+    day: Math.min(current.day, daysInMonth(target.getFullYear(), target.getMonth() + 1)),
+  });
+}
+
 /** Đổi tháng/năm mà ngày đang chọn vượt số ngày của tháng mới (31 → tháng 30 ngày) thì kéo về ngày cuối tháng. */
 export const clampDay = (parts: DateParts): DateParts => ({
   ...parts,

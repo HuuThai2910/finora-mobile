@@ -46,7 +46,7 @@ export default function RescheduleLoanScreen() {
     );
   }
 
-  const { policy, history, loan, periods } = query.data;
+  const { policy, history, loan, periods, scheduledDue } = query.data;
   // Vừa gửi mà lần tải lại chưa xong (hoặc lỗi) thì vẫn hiện đề nghị vừa tạo; tải lại xong
   // thì dùng bản trong lịch sử vì đó là trạng thái mới nhất.
   const createdInHistory = created ? history.some(item => item.requestId === created.requestId) : false;
@@ -78,11 +78,12 @@ export default function RescheduleLoanScreen() {
     return (
       <RescheduleForm
         // Điều khoản đổi phiên bản thì dựng lại biểu mẫu để ô xác nhận phải tích lại.
-        key={policy.termsVersion}
+        key={`${policy.termsVersion}-${policy.maximumExtraTerms}`}
         loanNumber={loanNumber}
         policy={policy}
         loan={loan}
         periods={periods}
+        pendingPaidDueDate={scheduledDue?.pending?.postOn ?? null}
         onSubmitted={submitted}
         onStale={query.reload}
       />

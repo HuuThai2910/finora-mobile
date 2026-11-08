@@ -4,6 +4,7 @@ export type ServicingLoanStatus = 'ACTIVE' | 'RESTRUCTURING' | 'SETTLED' | 'DEFA
 
 export interface ServicingLoanSummary {
   loanNumber: string;
+  loanApplicationId: number;
   applicationNumber: string;
   contractNumber: string;
   status: ServicingLoanStatus;
@@ -185,12 +186,18 @@ export type RescheduleStatus =
   | 'APPROVING'
   | 'COMPLETED'
   | 'RECONCILIATION_REQUIRED'
-  | 'MANUAL_REVIEW';
+  | 'MANUAL_REVIEW'
+  | 'CANCELLED';
 
 export interface ReschedulePolicy {
   termsVersion: string;
   termsText: string;
   termsHash: string;
+  maximumTotalTerms: number;
+  currentTotalTerms: number;
+  maximumExtraTerms: number;
+  termExtensionAllowed: boolean;
+  termExtensionUnavailableReason: string | null;
 }
 
 export interface RescheduleRequest {
@@ -206,6 +213,7 @@ export interface RescheduleRequest {
   originalMaturityDate: string;
   newMaturityDate: string | null;
   decisionComment: string | null;
+  lastErrorCode: string | null;
   decidedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -213,7 +221,7 @@ export interface RescheduleRequest {
 
 export interface CreateRescheduleInput {
   requestType: RescheduleType;
-  rescheduleFromDate: string;
+  rescheduleFromDate?: string;
   adjustedDueDate?: string;
   extraTerms?: number;
   reasonComment: string;

@@ -18,6 +18,9 @@ type Options = {
   termsVersion: string;
   today: string;
   defaultFromDate: string;
+  maximumExtraTerms: number;
+  maximumTotalTerms: number;
+  termExtensionAllowed: boolean;
   onSubmitted: (request: RescheduleRequest) => void;
   onStale: () => void;
 };
@@ -31,10 +34,20 @@ type Options = {
  * - Chống bấm lặp bằng cờ `busy`; lỗi ô chỉ báo đỏ sau lần gửi đầu (trừ lỗi sai dạng).
  * - `valid` cho nút gửi biết khi nào đã điền đủ: chưa đủ thì nút mờ và không bấm được.
  */
-export function useRescheduleForm({ loanNumber, termsVersion, today, defaultFromDate, onSubmitted, onStale }: Options) {
+export function useRescheduleForm({
+  loanNumber,
+  termsVersion,
+  today,
+  defaultFromDate,
+  maximumExtraTerms,
+  maximumTotalTerms,
+  termExtensionAllowed,
+  onSubmitted,
+  onStale,
+}: Options) {
   const key = useRef(generateIdempotencyKey()).current;
   const [values, setValues] = useState<RescheduleValues>({
-    type: 'TERM_EXTENSION',
+    type: termExtensionAllowed ? 'TERM_EXTENSION' : 'INSTALLMENT_ADJUSTMENT',
     fromDate: defaultFromDate,
     adjustedDate: '',
     extraTerms: RESCHEDULE_EXTRA_TERMS_MIN,
@@ -45,7 +58,7 @@ export function useRescheduleForm({ loanNumber, termsVersion, today, defaultFrom
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const errors = validateReschedule(values, today);
+  const errors = validateReschedule(values, today, maximumExtraTerms, maximumTotalTerms);
   const valid = Object.keys(errors).length === 0;
 
   const set = <K extends keyof RescheduleValues>(field: K, value: RescheduleValues[K]) =>
@@ -66,10 +79,12 @@ export function useRescheduleForm({ loanNumber, termsVersion, today, defaultFrom
         loanNumber,
         {
           requestType: values.type,
-          rescheduleFromDate: values.fromDate.trim(),
           ...(values.type === 'TERM_EXTENSION'
             ? { extraTerms: values.extraTerms }
-            : { adjustedDueDate: values.adjustedDate.trim() }),
+            : {
+                rescheduleFromDate: values.fromDate.trim(),
+                adjustedDueDate: values.adjustedDate.trim(),
+              }),
           reasonComment: values.reason.trim(),
           confirmedTermsVersion: termsVersion,
         },

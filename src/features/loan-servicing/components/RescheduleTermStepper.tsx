@@ -3,16 +3,18 @@ import { InputAccessoryView, Keyboard, Platform, Pressable, StyleSheet, Text, Te
 import { Icon } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import { FontFamily, MIN_TOUCH, Radius, Spacing, tabularNums } from '@/theme';
-import { RESCHEDULE_EXTRA_TERMS_MAX, RESCHEDULE_EXTRA_TERMS_MIN } from '../constants';
+import { RESCHEDULE_EXTRA_TERMS_MIN } from '../constants';
 import { rescheduleFieldStyles as f } from './rescheduleFieldStyles';
 
 type Props = {
   value: number;
   onChange: (value: number) => void;
+  maximum: number;
+  maximumTotalTerms: number;
   error?: string;
 };
 
-const clamp = (value: number) => Math.min(Math.max(value, RESCHEDULE_EXTRA_TERMS_MIN), RESCHEDULE_EXTRA_TERMS_MAX);
+const clamp = (value: number, maximum: number) => Math.min(Math.max(value, RESCHEDULE_EXTRA_TERMS_MIN), maximum);
 
 /** Ô số rộng theo số chữ số để chữ "kỳ" đứng sát con số (ô nhập web mặc định rộng ~20 ký tự). */
 const INPUT_FONT = 24;
@@ -20,9 +22,9 @@ const inputWidth = (text: string) => Math.max(2, text.length) * INPUT_FONT * 0.6
 
 /**
  * Số kỳ muốn gia hạn: nút trừ/cộng hai bên như ô số Note ở sổ lệnh, gõ tay vẫn được. Nút
- * giữ con số trong khoảng 1–120 của Loan Service; gõ tay ra ngoài khoảng thì báo bằng chữ.
+ * giữ con số trong hạn mức Loan Service trả riêng cho khoản vay; gõ tay ra ngoài khoảng thì báo bằng chữ.
  */
-export default function RescheduleTermStepper({ value, onChange, error }: Props) {
+export default function RescheduleTermStepper({ value, onChange, maximum, maximumTotalTerms, error }: Props) {
   // Bàn phím số của iOS không có phím Return; thanh phụ "Xong" để đóng, id riêng cho từng ô.
   const accessoryId = `reschedule-terms-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const withAccessory = Platform.OS === 'ios';
@@ -41,7 +43,7 @@ export default function RescheduleTermStepper({ value, onChange, error }: Props)
       </Text>
 
       <View style={[styles.row, !!error && f.boxInvalid]}>
-        <StepButton icon="minus" label="Giảm một kỳ" onPress={() => onChange(clamp(value - 1))} />
+        <StepButton icon="minus" label="Giảm một kỳ" onPress={() => onChange(clamp(value - 1, maximum))} />
         <View style={styles.value}>
           <TextInput
             value={text}
@@ -57,7 +59,7 @@ export default function RescheduleTermStepper({ value, onChange, error }: Props)
             kỳ
           </Text>
         </View>
-        <StepButton icon="plus" label="Tăng một kỳ" onPress={() => onChange(clamp(value + 1))} />
+        <StepButton icon="plus" label="Tăng một kỳ" onPress={() => onChange(clamp(value + 1, maximum))} />
       </View>
 
       {error ? (
@@ -65,7 +67,9 @@ export default function RescheduleTermStepper({ value, onChange, error }: Props)
           {error}
         </Text>
       ) : (
-        <Text style={f.helper}>Từ 1 đến 120 kỳ. Lịch mới chỉ áp dụng sau khi đề nghị được duyệt.</Text>
+        <Text style={f.helper}>
+          {`Khoản vay này có thể gia hạn tối đa ${maximum} kỳ. Tổng thời hạn hợp đồng không được vượt quá ${maximumTotalTerms} tháng.`}
+        </Text>
       )}
 
       {withAccessory ? (

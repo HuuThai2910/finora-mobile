@@ -34,7 +34,7 @@
 ## API contract
 
 - Loan: `GET /loans/me`, `GET /loans/{loanNumber}`,
-  `GET /loans/{loanNumber}/repayment-schedule`, `GET /loans/reschedule-policy`,
+  `GET /loans/{loanNumber}/repayment-schedule`, `GET /loans/{loanNumber}/reschedule-policy`,
   `GET|POST /loans/{loanNumber}/reschedule-requests`.
 - Payment: `POST /repayments`, `GET /repayments/{id}`,
   `POST /repayments/partial-prepayment-quotes`, `POST /repayments/partial-prepayment`,

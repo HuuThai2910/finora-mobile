@@ -1,5 +1,5 @@
 import { useAsync } from '@/hooks/useAsync';
-import { getReschedulePolicy, getServicingSchedule, listRescheduleRequests } from '../api/servicingApi';
+import { getReschedulePolicy, getScheduledDue, getServicingSchedule, listRescheduleRequests } from '../api/servicingApi';
 
 /**
  * Dữ liệu của màn cơ cấu khoản vay, tải song song trong một lần:
@@ -12,9 +12,10 @@ import { getReschedulePolicy, getServicingSchedule, listRescheduleRequests } fro
 export const useReschedule = (loanNumber: string) =>
   useAsync(async signal => {
     const [policy, history, schedule] = await Promise.all([
-      getReschedulePolicy(signal),
+      getReschedulePolicy(loanNumber, signal),
       listRescheduleRequests(loanNumber, signal),
       getServicingSchedule(loanNumber, signal),
     ]);
-    return { policy, history: history.data, loan: schedule.loan, periods: schedule.periods };
+    const scheduledDue = await getScheduledDue(schedule.loan.loanApplicationId, signal).catch(() => null);
+    return { policy, history: history.data, loan: schedule.loan, periods: schedule.periods, scheduledDue };
   }, [loanNumber]);

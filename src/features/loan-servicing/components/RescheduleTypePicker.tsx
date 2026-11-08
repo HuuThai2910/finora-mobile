@@ -17,17 +17,22 @@ const OPTIONS: readonly { value: RescheduleType; hint: string }[] = [
 
 const RADIO = 20;
 
-type Props = { value: RescheduleType; onChange: (value: RescheduleType) => void };
+type Props = {
+  value: RescheduleType;
+  onChange: (value: RescheduleType) => void;
+  termExtensionAllowed: boolean;
+};
 
 /**
  * Hai hình thức cơ cấu Loan Service nhận, xếp thành hai dòng chọn một như nhóm nút radio.
  * Dòng đang chọn có viền xanh, nền xanh nhạt và chấm tròn đặc (không chỉ đổi màu chữ),
  * cùng kiểu ô chọn nhanh ở màn nạp tiền.
  */
-export default function RescheduleTypePicker({ value, onChange }: Props) {
+export default function RescheduleTypePicker({ value, onChange, termExtensionAllowed }: Props) {
+  const options = termExtensionAllowed ? OPTIONS : OPTIONS.filter(option => option.value !== 'TERM_EXTENSION');
   return (
     <View style={styles.group} accessibilityRole="radiogroup" accessibilityLabel="Hình thức đề nghị">
-      {OPTIONS.map(option => {
+      {options.map(option => {
         const selected = option.value === value;
         const label = RESCHEDULE_TYPE_LABEL[option.value];
         return (
