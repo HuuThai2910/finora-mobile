@@ -31,6 +31,8 @@ const KIND_BY_TYPE: Readonly<Record<string, NotificationKind>> = {
   OVERDUE_CURED: 'credit',
   INSTALLMENT_DUE_SOON: 'reminder',
   INSTALLMENT_DUE_TODAY: 'reminder',
+  /** Mã OTP liên kết ngân hàng (BL-001): tin bảo mật, không phải tin dòng tiền. */
+  BANK_LINK_OTP: 'security',
 };
 
 /**

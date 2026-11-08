@@ -26,10 +26,10 @@ export const unregisterDevice = (deviceId: string, accessToken: string): Promise
 export const getPreferences = (signal?: AbortSignal): Promise<PreferencesDto> =>
   notificationFetch<PreferencesDto>('/notifications/preferences', { signal, timeoutMs: 15000 });
 
-/** Chỉ gửi nhóm vừa đổi; nhóm khác giữ nguyên ở backend. */
-export const updatePreference = (category: string, pushEnabled: boolean): Promise<PreferencesDto> =>
+/** Bật/tắt push cho mọi nhóm gửi lên trong một lần `PUT`; nhóm không gửi giữ nguyên ở backend. */
+export const updatePushForCategories = (categories: string[], pushEnabled: boolean): Promise<PreferencesDto> =>
   notificationFetch<PreferencesDto>('/notifications/preferences', {
     method: 'PUT',
-    body: JSON.stringify({ preferences: [{ category, pushEnabled }] }),
+    body: JSON.stringify({ preferences: categories.map(category => ({ category, pushEnabled })) }),
     timeoutMs: 15000,
   });

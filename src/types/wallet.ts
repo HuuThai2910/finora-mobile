@@ -57,7 +57,10 @@ export interface TopUpOrder {
 /** Ngân hàng nhận được hỗ trợ; `code` là mã gửi lại trong lệnh rút. */
 export interface WithdrawalBank {
   code: string;
+  /** Tên ngắn hiển thị, ví dụ "Vietcombank". */
   name: string;
+  fullName?: string;
+  logoUrl?: string;
 }
 
 /**
@@ -109,12 +112,70 @@ export interface Withdrawal {
   completedAt: string | null;
 }
 
-/** Thân `POST /wallets/me/withdrawals`; số tài khoản đầy đủ chỉ đi trong request này, không bao giờ trả lại. */
+/**
+ * Thân `POST /wallets/me/withdrawals`. App chỉ rút về tài khoản đã liên kết và xác thực OTP (BL-001), nên chỉ gửi mã
+ * tài khoản liên kết; số tài khoản đầy đủ không đi qua app nữa.
+ */
 export interface CreateWithdrawalRequest {
   amount: number;
+  bankAccountId: string;
+}
+
+/* ---------- Liên kết tài khoản ngân hàng (BL-001) — khớp DTO của Payment Service ---------- */
+
+/** `GET /wallets/banks`: một ngân hàng trong danh bạ NAPAS (bản chụp danh sách VietQR). */
+export interface Bank {
+  /** Mã VietQR, ví dụ `VCB`, `ICB`. */
+  code: string;
+  /** Mã BIN 6 số NAPAS. */
+  bin: string;
+  shortName: string;
+  /** Tên pháp lý đầy đủ. */
+  name: string;
+  logoUrl: string;
+}
+
+/** Tài khoản ngân hàng đã liên kết; số tài khoản luôn ở dạng che. */
+export interface BankAccount {
+  bankAccountId: string;
+  bankCode: string;
+  bankName: string;
+  bankLogoUrl: string | null;
+  /** Ví dụ "******6789". */
+  accountNumberMasked: string;
+  /** Tên do ngân hàng trả: IN HOA, không dấu. */
+  accountHolderName: string;
+  /** Tài khoản được chọn sẵn khi rút tiền. */
+  defaultAccount: boolean;
+  linkedAt: string;
+}
+
+export interface BankAccountLookupRequest {
   bankCode: string;
   accountNumber: string;
+}
+
+/** `POST /wallets/me/bank-accounts/inquiry`: chủ tài khoản do ngân hàng trả. */
+export interface BankAccountInquiry {
+  bankCode: string;
+  bankName: string;
+  accountNumberMasked: string;
   accountHolderName: string;
+  /** Tài khoản đứng tên đúng họ tên eKYC của người dùng. */
+  nameMatched: boolean;
+}
+
+/** Yêu cầu liên kết đang chờ OTP; mã OTP không bao giờ có trong response. */
+export interface BankLinkChallenge {
+  linkRequestId: string;
+  bankCode: string;
+  bankName: string;
+  accountNumberMasked: string;
+  accountHolderName: string;
+  otpExpiresAt: string;
+  /** Sớm nhất lúc nào được xin gửi lại mã. */
+  resendAvailableAt: string;
+  resendsLeft: number;
 }
 
 /** `PageResponse` chung của finora-common: danh sách nằm ở `content`, trang tính từ 0. */

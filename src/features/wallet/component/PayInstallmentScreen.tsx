@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { PHeader, Screen } from '@/components/phone';
-import { Button, Card, InfoNote } from '@/components/ui';
+import { Button, Card } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import type { TabParamList, WalletStackParamList } from '@/navigation/types';
 import { Spacing, Text_ } from '@/theme';
@@ -30,10 +30,9 @@ export default function PayInstallmentScreen() {
       <PHeader title="Thanh toán khoản vay" back />
       <Card style={styles.card}>
         <Text style={styles.title}>Luồng thanh toán đã được nâng cấp</Text>
-        <Text style={styles.body}>Chọn đúng khoản vay để xem nghĩa vụ từ Fineract và thực hiện trả kỳ, trả trước hoặc tất toán.</Text>
+        <Text style={styles.body}>Chọn khoản vay để xem số tiền cần trả và thực hiện trả kỳ, trả trước hoặc tất toán.</Text>
       </Card>
       <Button label="Mở quản lý khoản vay" onPress={openServicing} style={styles.action} />
-      <InfoNote>Màn này chỉ giữ để các đường dẫn cũ không bị lỗi; không sử dụng dữ liệu trả nợ giả.</InfoNote>
     </Screen>
   );
 }

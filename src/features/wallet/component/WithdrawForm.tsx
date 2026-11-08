@@ -1,23 +1,21 @@
 import { Keyboard, StyleSheet, Text, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { FontFamily, Radius, SoftShadow, Spacing } from '@/theme';
-import type { CreateWithdrawalRequest, WithdrawalPolicy } from '@/types/wallet';
+import type { BankAccount, CreateWithdrawalRequest, WithdrawalPolicy } from '@/types/wallet';
 import { WITHDRAW_FORM_NOTE } from '../constant';
 import { useWithdrawForm } from '../hook/useWithdrawForm';
-import {
-  ACCOUNT_NUMBER_MAX_LENGTH,
-  HOLDER_MAX_LENGTH,
-  maxWithdrawable,
-  withdrawBlockedReason,
-} from '../schemas/withdrawalForm';
+import { maxWithdrawable, withdrawBlockedReason } from '../schemas/withdrawalForm';
 import WalletButton from './WalletButton';
 import WalletNote from './WalletNote';
+import WithdrawAccountPicker from './WithdrawAccountPicker';
 import WithdrawAmountField from './WithdrawAmountField';
-import WithdrawBankPicker from './WithdrawBankPicker';
-import WithdrawInputRow from './WithdrawInputRow';
 
 type Props = {
   policy: WithdrawalPolicy;
+  /** Tài khoản ngân hàng đã liên kết (BL-001), mặc định đứng đầu. */
+  accounts: readonly BankAccount[];
+  /** Mở màn liên kết thêm tài khoản. */
+  onAddAccount: () => void;
   submitting: boolean;
   /** Lỗi khi gửi lệnh (mạng, Payment từ chối, PIN), khác lỗi nhập tại từng ô. */
   submitError: string | null;
@@ -27,13 +25,21 @@ type Props = {
 };
 
 /**
- * Form rút tiền: tài khoản nhận (ngân hàng, số tài khoản, tên chủ tài khoản), số tiền, nút gửi. Form chỉ đưa lên màn
- * request đã hợp lệ; PIN, idempotency và việc gọi API là của màn. Hết hạn mức hoặc số dư chưa đủ mức tối thiểu thì
- * khoá nút và nói rõ lý do thay vì để người dùng nhập rồi mới bị từ chối.
+ * Form rút tiền: tài khoản nhận (một trong các tài khoản đã liên kết), số tiền, nút gửi. Form chỉ đưa lên màn request
+ * đã hợp lệ; PIN, idempotency và việc gọi API là của màn. Hết hạn mức, số dư chưa đủ mức tối thiểu hoặc chưa liên kết
+ * tài khoản nào thì khoá nút và nói rõ lý do thay vì để người dùng nhập rồi mới bị từ chối.
  */
-export default function WithdrawForm({ policy, submitting, submitError, onSubmit, onEdit }: Props) {
-  const form = useWithdrawForm(policy, onEdit);
-  const blocked = withdrawBlockedReason(policy);
+export default function WithdrawForm({
+  policy,
+  accounts,
+  onAddAccount,
+  submitting,
+  submitError,
+  onSubmit,
+  onEdit,
+}: Props) {
+  const form = useWithdrawForm(policy, accounts, onEdit);
+  const blocked = withdrawBlockedReason(policy) ?? (accounts.length === 0 ? 'Liên kết tài khoản ngân hàng để rút tiền.' : null);
 
   const submit = () => {
     if (submitting || blocked) return;
@@ -49,32 +55,12 @@ export default function WithdrawForm({ policy, submitting, submitError, onSubmit
         <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.4}>
           Tài khoản nhận
         </Text>
-        <WithdrawBankPicker
-          banks={policy.banks}
-          value={form.values.bankCode}
-          onChange={code => form.change('bankCode', code)}
-          error={form.errors.bankCode}
-        />
-        <WithdrawInputRow
-          icon="creditCard"
-          label="Số tài khoản"
-          kind="digits"
-          maxLength={ACCOUNT_NUMBER_MAX_LENGTH}
-          value={form.values.accountNumber}
-          onChangeText={value => form.change('accountNumber', value)}
-          placeholder="6–19 chữ số"
-          error={form.errors.accountNumber}
-        />
-        <WithdrawInputRow
-          icon="user"
-          label="Tên chủ tài khoản"
-          kind="name"
-          maxLength={HOLDER_MAX_LENGTH}
-          value={form.values.accountHolderName}
-          onChangeText={value => form.change('accountHolderName', value)}
-          placeholder="VD: NGUYEN VAN AN"
-          helper="Đúng tên trên tài khoản ngân hàng; hệ thống tự viết hoa khi gửi."
-          error={form.errors.accountHolderName}
+        <WithdrawAccountPicker
+          accounts={accounts}
+          value={form.values.bankAccountId}
+          onChange={id => form.change('bankAccountId', id)}
+          onAdd={onAddAccount}
+          error={form.errors.bankAccountId}
         />
       </View>
 

@@ -115,15 +115,23 @@ export default function EkycConsentScreen() {
           </Text>
         ) : null}
 
-        <Button
-          label="Bắt đầu xác minh"
-          icon="shieldCheck"
-          loading={accept.submitting}
-          disabled={!checked || accept.submitting}
-          onPress={() => void onAccept()}
-          style={styles.primary}
-        />
-        <Button label="Để sau" variant="outline" disabled={accept.submitting} onPress={() => nav.goBack()} />
+        <View style={styles.actions}>
+          <Button
+            label="Để sau"
+            variant="outline"
+            disabled={accept.submitting}
+            onPress={() => nav.goBack()}
+            style={styles.later}
+          />
+          <Button
+            label="Bắt đầu xác minh"
+            icon="shieldCheck"
+            loading={accept.submitting}
+            disabled={!checked || accept.submitting}
+            onPress={() => void onAccept()}
+            style={styles.primary}
+          />
+        </View>
       </View>
     </Screen>
   );
@@ -145,5 +153,7 @@ const styles = StyleSheet.create({
   consentLabel: { ...Text_.microBold, color: Colors.ink },
   hint: { ...Text_.caption, color: Colors.ink3 },
   error: { ...Text_.micro, color: Colors.red },
-  primary: { marginTop: Spacing.sm },
+  actions: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.sm },
+  later: { flex: 1 },
+  primary: { flex: 2 },
 });

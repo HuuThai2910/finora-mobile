@@ -44,10 +44,10 @@ export const TOPUP_QUICK_AMOUNTS = [100_000, 200_000, 500_000, 1_000_000, 2_000_
 export const TOPUP_DEFAULT_AMOUNT = 1_000_000;
 
 export const TOPUP_FORM_NOTE =
-  'Bản demo nạp qua ZaloPay sandbox hoặc chế độ giả lập, không phát sinh tiền thật. Số dư chỉ được cộng khi cổng thanh toán xác nhận đã nhận tiền.';
+  'Đây là bản dùng thử, nạp tiền không phát sinh tiền thật. Số dư chỉ được cộng khi cổng thanh toán xác nhận đã nhận tiền.';
 
 export const TOPUP_PAYMENT_NOTE =
-  'Số dư chỉ được cộng khi cổng thanh toán gửi xác nhận hợp lệ, hoặc khi bấm giả lập ở bản demo.';
+  'Số dư chỉ được cộng khi cổng thanh toán xác nhận đã nhận tiền.';
 
 /* ---------------- Rút tiền về ngân hàng (R4, W3B — 17/10/2026) ---------------- */
 
@@ -71,10 +71,14 @@ export const WITHDRAWAL_POLL_WINDOW_MS = 2 * 60_000;
 
 /** Hiện khi Payment báo provider chi tiền là bản giả lập (`simulatedProvider`). */
 export const WITHDRAW_DEMO_NOTE =
-  'Môi trường demo: tiền trong ví là tiền giả lập và lệnh rút do nhà cung cấp giả lập xử lý, không có tiền thật chuyển tới ngân hàng. Số tài khoản kết thúc bằng 0000 mô phỏng tài khoản không hợp lệ để thử trường hợp hoàn tiền.';
+  'Bản dùng thử: tiền trong ví là tiền thử nghiệm, lệnh rút không chuyển tiền thật tới ngân hàng.';
 
 export const WITHDRAW_DEMO_SHORT_NOTE =
-  'Môi trường demo: lệnh rút do nhà cung cấp giả lập xử lý, không có tiền thật chuyển tới ngân hàng.';
+  'Bản dùng thử: lệnh rút không chuyển tiền thật tới ngân hàng.';
+
+/** Chú thích dưới danh sách ngân hàng liên kết (BL-001). */
+export const BANK_LINK_NOTE =
+  'Chỉ liên kết được tài khoản đứng tên chính bạn. Mỗi lần liên kết, ngân hàng gửi mã xác thực vào mục Thông báo của FINORA; liên kết và huỷ liên kết đều cần mã PIN.';
 
 export const WITHDRAW_FORM_NOTE =
   'Tiền được trừ khỏi ví ngay khi lệnh được nhận. Nếu lệnh chi không thành công, toàn bộ số tiền được hoàn lại ví.';

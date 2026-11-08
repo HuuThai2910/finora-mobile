@@ -179,7 +179,7 @@ export default function EkycLivenessScreen() {
             <Text style={styles.waitingText}>
               {phase.kind === 'uploading'
                 ? 'Đang gửi và so khớp khuôn mặt, có thể mất tới một phút.'
-                : 'Đang lấy yêu cầu động tác từ máy chủ.'}
+                : 'Đang chuẩn bị bước kiểm tra khuôn mặt…'}
             </Text>
           </View>
         ) : null}

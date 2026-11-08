@@ -1,24 +1,5 @@
+import { API_BASE_URL } from './apiBaseUrl';
 import { getValidAccessToken, refreshAccessToken } from './authSession';
-
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8081/api/v1';
-
-/**
- * Xác thực và hồ sơ người dùng do `finora-user` phục vụ, đứng sau Gateway ở cổng
- * khác với Loan Service, nên có base URL riêng.
- */
-const AUTH_BASE_URL = process.env.EXPO_PUBLIC_AUTH_API_URL ?? 'http://localhost:8080/api/v1';
-
-/**
- * Investment Service (sàn gọi vốn, Notes) đứng sau Gateway cùng cổng với finora-user,
- * nhưng tách biến riêng để trỏ thẳng vào service khi chạy không có Gateway.
- */
-// Dùng || chứ không phải ??: biến bỏ trống trong .env đến đây là chuỗi rỗng,
-// mà ?? chỉ rơi về mặc định khi null/undefined nên sẽ tạo URL sai.
-const INVESTMENT_BASE_URL =
-  process.env.EXPO_PUBLIC_INVESTMENT_API_URL || AUTH_BASE_URL;
-
-/** Payment Service: ví, nạp tiền, giữ tiền đầu tư và lịch sử giao dịch. */
-const PAYMENT_BASE_URL = process.env.EXPO_PUBLIC_PAYMENT_API_URL || AUTH_BASE_URL;
 
 /**
  * `finora-user` đọc header này để biết trả token trong body thay vì đặt cookie
@@ -189,22 +170,22 @@ async function parseBody<T>(res: Response): Promise<T> {
 
 /** Gọi Loan Service qua gateway, có gắn token của phiên đăng nhập. */
 export const apiFetch = <T>(path: string, init?: ApiRequestInit): Promise<T> =>
-  request<T>(BASE_URL, path, { ...init, authenticated: true });
+  request<T>(API_BASE_URL, path, { ...init, authenticated: true });
 
 /**
  * Lấy response nhị phân từ Loan Service bằng cùng cơ chế token/refresh như JSON API.
  * Dùng cho PDF hợp đồng để không đưa bearer token vào URL hoặc trình duyệt ngoài.
  */
 export const apiFetchResponse = (path: string, init?: ApiRequestInit): Promise<Response> =>
-  response(BASE_URL, path, { ...init, authenticated: true });
+  response(API_BASE_URL, path, { ...init, authenticated: true });
 
 /** Gọi endpoint công khai của `finora-user` — đăng nhập, đăng ký, quên mật khẩu. */
 export const authFetch = <T>(path: string, init?: RequestInit): Promise<T> =>
-  request<T>(AUTH_BASE_URL, path, init ?? {});
+  request<T>(API_BASE_URL, path, init ?? {});
 
 /** Gọi endpoint của `finora-user` cần đăng nhập, ví dụ `GET /users/me`. */
 export const authFetchWithToken = <T>(path: string, init?: ApiRequestInit): Promise<T> =>
-  request<T>(AUTH_BASE_URL, path, { ...init, authenticated: true });
+  request<T>(API_BASE_URL, path, { ...init, authenticated: true });
 
 /**
  * Gửi `multipart/form-data` có token tới `finora-user` — dùng cho video/khung hình eKYC,
@@ -219,11 +200,11 @@ export const authUploadWithToken = <T>(
   form: FormData,
   init: Omit<ApiRequestInit, 'body' | 'authenticated'> = {},
 ): Promise<T> =>
-  request<T>(AUTH_BASE_URL, path, { method: 'POST', ...init, body: form, authenticated: true });
+  request<T>(API_BASE_URL, path, { method: 'POST', ...init, body: form, authenticated: true });
 
 /** Gọi Investment Service qua gateway; mọi endpoint đều cần phiên đăng nhập. */
 export const investmentFetch = <T>(path: string, init?: RequestInit): Promise<T> =>
-  request<T>(INVESTMENT_BASE_URL, path, { ...init, authenticated: true });
+  request<T>(API_BASE_URL, path, { ...init, authenticated: true });
 
 /**
  * URL đầy đủ và header xác thực cho một luồng SSE của Investment Service. Luồng không đi qua
@@ -234,7 +215,7 @@ export const investmentStreamRequest = async (
 ): Promise<{ url: string; headers: Record<string, string> }> => {
   const token = await getValidAccessToken();
   return {
-    url: `${INVESTMENT_BASE_URL}${path}`,
+    url: `${API_BASE_URL}${path}`,
     headers: {
       ...MOBILE_CLIENT_HEADERS,
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -244,11 +225,11 @@ export const investmentStreamRequest = async (
 
 /** Gọi Payment Service bằng access token của người dùng hiện tại. */
 export const paymentFetch = <T>(path: string, init?: ApiRequestInit): Promise<T> =>
-  request<T>(PAYMENT_BASE_URL, path, { ...init, authenticated: true });
+  request<T>(API_BASE_URL, path, { ...init, authenticated: true });
 
 /** Notification Service đi qua Gateway để dùng cùng access token Keycloak. */
 export const notificationFetch = <T>(path: string, init?: ApiRequestInit): Promise<T> =>
-  request<T>(AUTH_BASE_URL, path, { ...init, authenticated: true });
+  request<T>(API_BASE_URL, path, { ...init, authenticated: true });
 
 type ParsedError = { code: string; message: string | null; traceId: string | null };
 

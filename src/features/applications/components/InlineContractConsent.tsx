@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { Checkbox } from '@/components/ui';
 import { Colors } from '@/constants/colors';
-import { padesLegalNotice, SIGNATURE_REJECTED_CODE } from '@/constants/contractSignature';
+import { SIGNATURE_REJECTED_CODE } from '@/constants/contractSignature';
 import { openSmartCaApp, smartCaOpenFailureMessage } from '@/lib/smartCaApp';
 import { FontFamily, Spacing } from '@/theme';
 import type { LoanContractDetail } from '@/types/contract';
@@ -13,7 +13,6 @@ import DeclineForm from './DeclineForm';
 import DetailButton from './DetailButton';
 import DetailCard from './DetailCard';
 import DetailNote from './DetailNote';
-import DisclosureSection from './DisclosureSection';
 
 type Props = {
   contract: LoanContractDetail;
@@ -67,7 +66,7 @@ export default function InlineContractConsent({
           ? openFailure
             ?? 'FINORA đã chuyển sang VNPT SmartCA. Sau khi xác nhận, hãy quay lại FINORA để kiểm tra kết quả.'
           : pades
-            ? 'FINORA đã nhúng chữ ký số của bạn vào tệp PDF hợp đồng. Chữ ký dùng chứng thư demo nên không có giá trị pháp lý.'
+            ? 'FINORA đã nhúng chữ ký số của bạn vào tệp PDF hợp đồng.'
             : 'FINORA đã ghi nhận xác nhận click-wrap của bạn và tạo bản PDF xác nhận.',
         [{ text: 'Đã hiểu', onPress: onDone }],
       );
@@ -175,51 +174,16 @@ export default function InlineContractConsent({
         />
       </View>
 
-      <DisclosureSection
-        title="Thông tin đối chiếu kỹ thuật"
-        hint="Chỉ cần mở khi muốn kiểm tra phiên bản và SHA-256"
-      >
-        <Verification label="Phiên bản điều khoản" value={contract.termsVersion} />
-        <Verification
-          label="Phiên bản PDF"
-          value={contract.pdfDocument?.documentVersion ?? contract.documentVersion}
-        />
-        <Verification
-          label="Mã kiểm tra SHA-256"
-          value={contract.pdfDocument?.contentHash ?? contract.documentHash}
-          monospace
-        />
-      </DisclosureSection>
-
       <Text style={styles.legal}>
         {pades
-          // Hợp đồng PAdES: kể cả với MOCK, backend nhúng một chữ ký số thật (chứng thư demo) vào tệp, nên câu
-          // "chỉ là click-wrap" không còn đúng; nói rõ cách ký và giới hạn pháp lý.
-          ? `Chữ ký số của bạn được nhúng vào chính tệp PDF, sau chữ ký của các bên cho vay. ${padesLegalNotice(contract.availableSignatureProvider)}`
+          // Hợp đồng PAdES: kể cả với MOCK, backend nhúng một chữ ký số thật vào tệp, nên câu
+          // "chỉ là click-wrap" không còn đúng.
+          ? 'Chữ ký số của bạn được nhúng vào chính tệp PDF, sau chữ ký của các bên cho vay.'
           : contract.availableSignatureMethod === 'VNPT_SMART_CA'
             ? 'Hợp đồng chỉ được ghi nhận đã ký sau khi VNPT SmartCA trả kết quả thành công.'
             : 'Đây là xác nhận điện tử dạng click-wrap trong FINORA, chưa phải chữ ký số VNPT SmartCA.'}
       </Text>
     </DetailCard>
-  );
-}
-
-function Verification({
-  label,
-  value,
-  monospace = false,
-}: {
-  label: string;
-  value: string;
-  monospace?: boolean;
-}) {
-  return (
-    <View style={styles.verification}>
-      <Text style={styles.verificationLabel}>{label}</Text>
-      <Text selectable style={[styles.verificationValue, monospace && styles.monospace]}>
-        {value}
-      </Text>
-    </View>
   );
 }
 
@@ -229,8 +193,4 @@ const styles = StyleSheet.create({
   consentText: { fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authLabel },
   actions: { gap: Spacing.md },
   legal: { fontFamily: FontFamily.regular, fontSize: 12, lineHeight: 17, color: Colors.authMuted },
-  verification: { gap: Spacing.xxs, paddingVertical: Spacing.lg },
-  verificationLabel: { fontFamily: FontFamily.regular, fontSize: 12, lineHeight: 17, color: Colors.authMuted },
-  verificationValue: { fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 19, color: Colors.authInk, flexShrink: 1 },
-  monospace: { fontFamily: 'monospace' },
 });

@@ -1,9 +1,10 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import { API_BASE_URL } from '@/lib/apiBaseUrl';
 import { getValidAccessToken, refreshAccessToken } from '@/lib/authSession';
 
 const rawBaseQuery = fetchBaseQuery({
-  baseUrl: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8081/api/v1',
+  baseUrl: API_BASE_URL,
   prepareHeaders: async headers => {
     // Làm mới sớm nếu token sắp hết hạn, nên request bình thường không phải đi
     // hai vòng mạng chỉ để đổi token.
@@ -40,11 +41,9 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
   return rawBaseQuery(args, api, extraOptions);
 };
 
-export const LOAN_API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8081/api/v1';
-
 export function loanApiUrl(path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  return `${LOAN_API_BASE_URL.replace(/\/$/, '')}${normalizedPath}`;
+  return `${API_BASE_URL.replace(/\/$/, '')}${normalizedPath}`;
 }
 
 export const loanApi = createApi({

@@ -19,8 +19,7 @@ cập chéo tài khoản phải lưu thêm evidence theo runbook backend
 
 ## Dịch vụ cần chạy
 
-- `finora-loan` tại URL trong `EXPO_PUBLIC_API_URL`.
-- `finora-payment` tại URL trong `EXPO_PUBLIC_PAYMENT_API_URL`.
+- Gateway tại URL trong `EXPO_PUBLIC_API_URL`, định tuyến tới `finora-loan` và `finora-payment`.
 - Fineract và database tương ứng.
 - Kafka để phát sự kiện trả nợ; `finora-investment` để Note/danh mục nhà đầu tư nhận cập nhật.
 - CIC Node tại `https://cic-service-node.vercel.app/`, `finora-ai` và worker chấm điểm để thử điều kiện nợ xấu/phục hồi.

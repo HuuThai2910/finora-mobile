@@ -9,11 +9,11 @@ import { Colors } from '@/constants/colors';
 import { Spacing } from '@/theme';
 import { WaveBackdrop } from '@/components/phone';
 import { useAuth } from '@/providers/AuthProvider';
-import { useBalance } from '@/features/wallet';
+import { useBalance, useTransactions } from '@/features/wallet';
 import { useMyApplications } from '@/features/applications';
 import type { HomeStackParamList, TabParamList } from '@/navigation/types';
 import { PROMO_SLIDES, type PromoTarget } from '../constant';
-import { useHomeSummary, useUnreadCount } from '../hook/useHome';
+import { useUnreadCount } from '../hook/useHome';
 import Greeting from './Greeting';
 import HomeHeader from './HomeHeader';
 import LatestApplicationSection from './LatestApplicationSection';
@@ -44,7 +44,8 @@ export default function HomeScreen() {
   const width = Math.min(windowWidth, MAX_WIDTH);
   const { session } = useAuth();
   const balance = useBalance();
-  const summary = useHomeSummary();
+  // Giao dịch gần đây đọc thẳng lịch sử ví của Payment Service, cùng nguồn với màn Lịch sử ví.
+  const transactions = useTransactions();
   const applications = useMyApplications();
   const unread = useUnreadCount();
   const hasFocused = useRef(false);
@@ -63,7 +64,7 @@ export default function HomeScreen() {
 
   const reload = () => {
     balance.reload();
-    summary.reload();
+    transactions.reload();
     applications.reload();
     unread.reload();
   };
@@ -72,7 +73,7 @@ export default function HomeScreen() {
   // thẻ đã có khung giả của riêng nó.
   const refreshing =
     (balance.loading && balance.data !== null) ||
-    (summary.loading && summary.data !== null) ||
+    (transactions.loading && transactions.data !== null) ||
     (applications.refreshing && !applications.loading);
 
   const openProducts = () => nav.navigate('Sàn', { screen: 'Products' });
@@ -160,11 +161,12 @@ export default function HomeScreen() {
 
           <View style={styles.section}>
             <RecentActivitySection
-              summary={summary.data}
-              loading={summary.loading}
-              error={summary.error}
-              onRetry={summary.reload}
+              transactions={transactions.data}
+              loading={transactions.loading}
+              error={transactions.error}
+              onRetry={transactions.reload}
               onSeeAll={() => nav.navigate('Ví', { screen: 'WalletHistory' })}
+              onTopUp={() => nav.navigate('Ví', { screen: 'TopUp' })}
             />
           </View>
         </View>

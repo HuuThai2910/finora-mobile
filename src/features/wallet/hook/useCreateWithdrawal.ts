@@ -15,7 +15,7 @@ export type CreateWithdrawalOutcome =
  * Gửi một lệnh rút có xác nhận PIN phạm vi `WITHDRAW`.
  *
  * `Idempotency-Key` được tạo trước khi hỏi PIN, vì token PIN chỉ mở đúng thao tác mang khoá đó (D38). Khoá gắn với
- * một ý định rút: cùng ngân hàng, số tài khoản, tên chủ tài khoản và số tiền. Gửi lại sau lỗi mạng, hết giờ chờ, PIN
+ * một ý định rút: cùng tài khoản nhận đã liên kết và số tiền. Gửi lại sau lỗi mạng, hết giờ chờ, PIN
  * sai hay bị chặn tạm thời thì giữ nguyên khoá, để Payment trả lại đúng lệnh cũ nếu đã tạo và không trừ ví lần hai;
  * đổi bất kỳ thông tin nào là ý định mới nên sinh khoá mới. Tạo thành công thì bỏ khoá: lần rút sau là lệnh mới.
  *
@@ -30,7 +30,7 @@ export function useCreateWithdrawal() {
   const [error, setError] = useState<string | null>(null);
 
   const keyFor = (request: CreateWithdrawalRequest): string => {
-    const fingerprint = [request.amount, request.bankCode, request.accountNumber, request.accountHolderName].join('|');
+    const fingerprint = [request.amount, request.bankAccountId].join('|');
     if (intent.current?.fingerprint !== fingerprint) {
       intent.current = { fingerprint, key: generateIdempotencyKey() };
     }

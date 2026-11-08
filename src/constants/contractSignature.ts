@@ -14,13 +14,3 @@ export const SIGNATURE_IN_PROGRESS_MESSAGE =
 
 export const SIGNATURE_REJECTED_MESSAGE =
   'Chữ ký trả về không khớp chứng thư nên lần ký này đã bị hủy và chưa có chữ ký nào được thêm vào hợp đồng. Bạn có thể ký lại.';
-
-/**
- * Chữ ký hiện có trong FINORA đều chưa có giá trị pháp lý (W3C mục 11): MOCK ký bằng chứng thư demo tự sinh, VNPT
- * SmartCA chỉ dùng thuê bao môi trường thử nghiệm (UAT). Câu này phải đi kèm mọi chỗ hiển thị chữ ký.
- */
-export function padesLegalNotice(provider: 'MOCK' | 'VNPT_SMART_CA'): string {
-  return provider === 'MOCK'
-    ? 'Chữ ký trong tệp dùng chứng thư demo “FINORA DEMO - KHONG CO GIA TRI PHAP LY” nên không có giá trị pháp lý.'
-    : 'Chữ ký trong tệp dùng chứng thư VNPT SmartCA môi trường thử nghiệm (UAT) nên chưa có giá trị pháp lý.';
-}

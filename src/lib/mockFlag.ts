@@ -15,8 +15,6 @@ export type MockDomain =
   | 'wallet'
   | 'invest'
   | 'market'
-  /** Tóm tắt hoạt động trang chủ chưa có REST aggregate riêng. */
-  | 'home'
   | 'notification'
   | 'signature'
   | 'products'

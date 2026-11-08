@@ -70,20 +70,6 @@ export const acceptEkycConsent = async (
 };
 
 /**
- * Rút lại đồng ý: server xoá ảnh/video bằng chứng và đưa hồ sơ về chưa xác minh (vẫn giữ số
- * định danh đã mã hoá để chống một CCCD nhiều tài khoản). Trả về điều khoản với `accepted=false`.
- */
-export const withdrawEkycConsent = async (): Promise<EkycConsent> => {
-  if (isMocked('ekyc')) return ekycMock.withdrawEkycConsent();
-
-  const response = await authFetchWithToken<BaseResponse<EkycConsent>>(CONSENT_PATH, {
-    method: 'DELETE',
-    timeoutMs: DEFAULT_TIMEOUT_MS,
-  });
-  return response.data;
-};
-
-/**
  * Bước quét: gửi ảnh hai mặt CCCD, nhận `DRAFT_READY` (sang liveness), `RETAKE` (chụp lại
  * đúng mặt) hoặc một mã từ chối. Hồ sơ chưa được lưu gì ở bước này.
  */

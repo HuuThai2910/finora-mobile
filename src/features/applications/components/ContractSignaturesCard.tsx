@@ -2,7 +2,6 @@ import { StyleSheet, Text, View } from 'react-native';
 import { PdfViewer } from '@/components/feedback';
 import { PItem } from '@/components/phone';
 import { Colors } from '@/constants/colors';
-import { padesLegalNotice } from '@/constants/contractSignature';
 import { useAuthenticatedPdf } from '@/hooks/useAuthenticatedPdf';
 import { FontFamily, Spacing } from '@/theme';
 import type { LoanContractDetail } from '@/types/contract';
@@ -78,7 +77,6 @@ export default function ContractSignaturesCard({ contract }: { contract: LoanCon
       ) : null}
 
       {pdfError ? <DetailNote tone="warn">{pdfError}</DetailNote> : null}
-      <DetailNote tone="warn">{padesLegalNotice(contract.availableSignatureProvider)}</DetailNote>
 
       <PdfViewer
         visible={signedPdf.previewUri !== null}

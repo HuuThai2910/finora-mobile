@@ -8,7 +8,8 @@ export type PinScope =
   | 'ORDER'
   | 'AUTO_INVEST'
   | 'SIGN_CONTRACT'
-  | 'WITHDRAW';
+  | 'WITHDRAW'
+  | 'BANK_ACCOUNT';
 
 /** `GET /users/me/pin` — cũng là thân trả về của tạo, đổi và đặt lại PIN. */
 export type PinStatus = {

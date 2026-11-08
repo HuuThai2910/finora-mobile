@@ -48,7 +48,6 @@ export default function RepaymentResultCard({ result }: { result: RepaymentResul
         </View>
         <FinancialRows rows={rows} />
         <Text style={styles.reference}>Mã giao dịch: {result.repaymentId}</Text>
-        {result.errorCode && result.status !== 'CANCELLED' ? <Text style={styles.errorCode}>Mã hỗ trợ: {result.errorCode}</Text> : null}
       </Card>
       <InfoNote tone={terminal ? 'success' : 'warn'}>
         {message}
@@ -63,5 +62,4 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.lg },
   title: { ...Text_.title, color: Colors.authInk, flex: 1 },
   reference: { ...Text_.caption, color: Colors.authMuted },
-  errorCode: { ...Text_.captionBold, color: Colors.red },
 });

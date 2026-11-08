@@ -69,6 +69,14 @@ thái và câu chữ, nhãn thành viên thuốc kiểu nhãn định danh, hàn
 tên. Hành vi, hook và API không đổi. Component ở lại feature này vì import `@/features/account` sẽ tạo vòng require
 qua `AuthProvider`. Đã thêm dòng task vào `PLAN.md`.
 
+## Cập nhật 2026-11-06: một công tắc push chung
+
+Hiện tại chỉ cần một công tắc bật/tắt, chưa cần theo nhóm. Thẻ "Tùy chọn thông báo" còn một dòng "Nhận thông
+báo đẩy" (`PushToggleRow`, thay `PreferenceToggleRow`). Không đổi contract backend: công tắc gửi cùng `pushEnabled` cho
+mọi nhóm mà `GET /notifications/preferences` trả về trong một lần `PUT`. Công tắc hiện "bật" khi còn ít nhất một nhóm
+bật push. Đổi lạc quan, lỗi thì trả về giá trị cũ và báo một dòng như trước. `CATEGORY_COPY` giữ lại cho dữ liệu giả và
+để mở lại công tắc theo nhóm sau này. `npx tsc --noEmit` xanh ngày 2026-11-06.
+
 ## Còn lại
 
 - Mục Thông báo vẫn đánh dấu đọc từng tin; backend đã có `POST /notifications/read-all`, đổi hook `useNotificationFeed`

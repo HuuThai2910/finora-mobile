@@ -8,8 +8,16 @@ import type { AppNotification } from '@/types/notification';
  */
 const readIds = new Set<string>();
 
+/** Tin sinh ra trong phiên chạy (ví dụ mã OTP của ngân hàng giả lập), mới nhất trước. */
+let sessionNotifications: AppNotification[] = [];
+
+/** Thêm một tin vào hộp thư giả, như Notification Service nhận event rồi ghi hộp thư. */
+export const deliverMockNotification = (notification: AppNotification): void => {
+  sessionNotifications = [notification, ...sessionNotifications];
+};
+
 const current = (): AppNotification[] =>
-  NOTIFICATIONS.map(n => (readIds.has(n.id) ? { ...n, unread: false } : n));
+  [...sessionNotifications, ...NOTIFICATIONS].map(n => (readIds.has(n.id) ? { ...n, unread: false } : n));
 
 export const list = (): Promise<AppNotification[]> => mockResponse('notification', current());
 
