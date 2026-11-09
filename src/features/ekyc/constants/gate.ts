@@ -11,7 +11,7 @@ export type EkycGateCopy = {
 };
 
 /**
- * Lời báo khi một thao tác cần đã định danh (góp vốn, đặt lệnh Note, Auto-Invest).
+ * Lời báo khi một thao tác cần đã định danh (góp vốn, đặt lệnh Note).
  * `doing` là cụm động từ của thao tác, ví dụ "đầu tư", "giao dịch Note".
  */
 export function ekycGateCopy(status: KycStatus, doing: string): EkycGateCopy {

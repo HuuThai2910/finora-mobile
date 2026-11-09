@@ -17,8 +17,11 @@ export interface MarketLoan {
   /** Enum `repaymentMethod` của backend (`ANNUITY`, `EQUAL_PRINCIPAL`…), giữ nguyên chuỗi gốc. */
   repaymentMethod: string;
   purpose: string;
-  /** Khu vực — người vay luôn ẩn danh trên sàn. */
+  /** Mã `LoanPurpose` để chọn biểu tượng thẻ; `null` thì dùng biểu tượng hồ sơ chung. */
+  purposeCode: string | null;
   region: string;
+  /** Họ tên người vay; chỉ màn chi tiết có, `null` ở danh sách hoặc khi User chưa trả được. */
+  borrowerName: string | null;
   grade: CreditGrade;
   score: number;
   fundedPercent: number;
@@ -37,6 +40,10 @@ export interface MarketLoan {
    * (bản cũ), lúc đó màn hình không hiện thẻ hồ sơ người vay.
    */
   applicationNumber: string | null;
+  /** Mã hiển thị `HS-…` của hồ sơ; `null` với khoản vay niêm yết trước khi Loan có mã. */
+  applicationCode?: string | null;
+  /** Mã hiển thị `HĐ-…` của hợp đồng; có sau khi Loan phát hành hợp đồng. */
+  contractCode?: string | null;
   /**
    * Chỉ có khi `CANCELLED` sau khi đã đủ vốn: `CONTRACT_DECLINED`, `CONTRACT_EXPIRED` hoặc
    * `DISBURSEMENT_FAILED`. Khoản vay không giải ngân và tiền giữ được trả lại ví nhà đầu tư.
@@ -52,23 +59,9 @@ export type BorrowerKycStatus = 'VERIFIED' | 'PENDING' | 'PROCESSING' | 'REJECTE
 /** Ai ra quyết định duyệt hồ sơ: chính sách tín dụng tự động hay chuyên viên thẩm định. */
 export type LoanDecisionSource = 'AI_POLICY' | 'ADMIN' | 'UNKNOWN';
 
-/** Một luật đã chấm, đúng thứ tự AI trả về. */
-export interface BorrowerRuleResult {
-  code: string;
-  description: string;
-  /** Mã trường luật đã đọc trong danh mục trường của AI, ví dụ `cic_score`. */
-  field: string;
-  /** Giá trị luật đọc được; `null` khi luật thiếu dữ liệu. */
-  value: number | string | null;
-  points: number | null;
-  maxPoints: number | null;
-  weight: number | null;
-  missingData: boolean;
-}
-
 /**
- * Hồ sơ người vay nhà đầu tư xem trước khi góp vốn: ẩn danh (không họ tên, CCCD, liên hệ, địa chỉ)
- * và không có giải thích SHAP. Số liệu là bản chụp lúc nộp hồ sơ và lúc chấm điểm; app chỉ hiển thị.
+ * Hồ sơ người vay nhà đầu tư xem trước khi góp vốn: không có CCCD, liên hệ, địa chỉ, không có
+ * giải thích SHAP, lịch sử tín dụng hay bảng luật đã chấm. Số liệu là bản chụp lúc nộp hồ sơ và lúc chấm điểm; app chỉ hiển thị.
  */
 export interface BorrowerProfile {
   applicationNumber: string;
@@ -104,13 +97,6 @@ export interface BorrowerProfile {
     homeOwnership: string | null;
     educationLevel: string | null;
   };
-  /** Lịch sử vay tại FINORA (không phải CIC); `null` khi chưa có dữ liệu. */
-  creditHistory: {
-    hasHistory: boolean;
-    completedLoans: number;
-    delinquenciesLast2Years: number;
-    defaultedLoans: number;
-  } | null;
   /** `null` khi hồ sơ chưa có lần chấm điểm thành công. */
   assessment: {
     evaluationScore: number | null;
@@ -122,7 +108,6 @@ export interface BorrowerProfile {
     decisionSource: LoanDecisionSource | null;
     scoredAt: string | null;
   } | null;
-  rules: BorrowerRuleResult[];
 }
 
 /** Trạng thái lệnh góp vốn, khớp `OrderStatus` của Investment; giá trị lạ rơi về `UNKNOWN`. */
@@ -221,49 +206,16 @@ export interface InvestorRescheduleConsent {
   createdAt: string;
 }
 
-/**
- * Tiêu chí Auto-Invest. Hạng là chuỗi vì bảng hạng là cấu hình động bên AI
- * (admin thêm/xoá được), không cố định A–E như `CreditGrade`.
- */
-export interface AutoInvestConfig {
-  enabled: boolean;
-  grades: string[];
-  minAnnualRate: number;
-  maxTermMonths: number;
-  amountPerLoan: number;
-  /** Phiên bản công bố rủi ro đã xác nhận khi bật quy tắc (Q5); thiếu là chưa từng xác nhận. */
-  riskAcknowledgedVersion?: string | null;
-  /** Đang bật nhưng chưa xác nhận bản công bố hiện hành: backend không đặt lệnh thay nhà đầu tư. */
-  pausedForRiskAcknowledgement?: boolean;
-}
-
-/** Lý do Auto-Invest bỏ qua một khoản; mã do Investment Service trả về. */
-export type AutoInvestSkipReason =
-  | 'ALREADY_INVESTED'
-  | 'BELOW_MINIMUM'
-  | 'INSUFFICIENT_FUNDS'
-  | 'LISTING_FULL'
-  | 'LISTING_CLOSED'
-  | 'RISK_ACKNOWLEDGEMENT_OUTDATED'
-  | (string & {});
-
-export interface AutoInvestMatch {
-  /** ISO-8601. */
-  at: string;
-  loanId: string;
-  grade: string | null;
-  annualRate: number | null;
-  matched: boolean;
-  amount?: number;
-  reason?: AutoInvestSkipReason;
-}
-
 export type SignatureMethod = 'PASSWORD_OTP' | 'APP_CONFIRM';
 
 export interface InvestmentContract {
+  /** Mã tra cứu `LC-…` dùng gọi API; không hiện cho người dùng. */
   reference: string;
   loanApplicationId: number;
   applicationNumber: string;
+  /** Mã hiển thị `HĐ-…`/`HS-…`; `null` khi backend chưa trả. */
+  contractCode: string | null;
+  applicationCode: string | null;
   loanNumber: string | null;
   purpose: string;
   amount: number;

@@ -51,9 +51,9 @@ export default function PlaceOrderForm({ book, freeNotes, form, submitError }: P
     selected: form.quantity === q,
   }));
 
-  const denomination = `1 Note = ${formatDong(book.noteDenomination)}`;
+  const denomination = `1 phần vốn = ${formatDong(book.noteDenomination)}`;
   const quantityHint = !buy && freeNotes !== null
-    ? `Bạn còn ${freeNotes} Note bán được. ${denomination}`
+    ? `Bạn còn ${freeNotes} phần vốn bán được. ${denomination}`
     : denomination;
 
   return (
@@ -72,14 +72,14 @@ export default function PlaceOrderForm({ book, freeNotes, form, submitError }: P
         onInfo={() =>
           Alert.alert(
             'Giá theo % dư nợ gốc',
-            'Giá là phần trăm số gốc người vay còn nợ trên mỗi Note. 98% nghĩa là trả 98% dư nợ gốc còn lại; 100% là trả đúng bằng dư nợ.',
+            'Giá là phần trăm số gốc người vay còn nợ trên mỗi phần vốn. 98% nghĩa là trả 98% dư nợ gốc còn lại; 100% là trả đúng bằng dư nợ.',
           )
         }
         quick={priceQuick}
       />
 
       <StepperField
-        label="Số Note"
+        label="Số phần vốn"
         text={form.quantityInput}
         onChangeText={form.setQuantityInput}
         onStep={form.stepQuantity}
@@ -88,8 +88,8 @@ export default function PlaceOrderForm({ book, freeNotes, form, submitError }: P
         error={form.quantityError}
         onInfo={() =>
           Alert.alert(
-            'Note là gì?',
-            `Mỗi Note là một phần bằng nhau của khoản vay, mệnh giá ${formatDong(book.noteDenomination)}. Người giữ Note nhận gốc và lãi người vay trả theo phần đó.`,
+            'Phần vốn là gì?',
+            `Mỗi phần vốn ${formatDong(book.noteDenomination)} là một phần của khoản vay; bạn nhận gốc và lãi theo số phần vốn đang giữ và có thể chuyển nhượng cho nhà đầu tư khác.`,
           )
         }
         quick={quantityQuick}

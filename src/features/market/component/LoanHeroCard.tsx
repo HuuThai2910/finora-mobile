@@ -5,7 +5,7 @@ import { Colors } from '@/constants/colors';
 import type { IconName } from '@/constants/icons';
 import { FontFamily, Radius, tabularNums } from '@/theme';
 import type { MarketLoan } from '@/types/invest';
-import { formatAnnualRateShort, formatDong } from '@/utils/format';
+import { formatDong, formatPercentValue } from '@/utils/format';
 import { LOAN_HERO_MASCOT, MARKET_MAX_WIDTH, MARKET_PADDING } from '../constant';
 
 /** Robot toàn thân 480×510, đứng ở góc phải thẻ, chân dừng trên hàng chip. */
@@ -17,20 +17,20 @@ const DESIGN_WIDTH = 361;
 /**
  * Thẻ đầu màn chi tiết khoản vay, cùng dáng thẻ giá của sổ lệnh: nền xanh đậm dần như thẻ ví,
  * robot cầm đồng xu ở góc phải, con số lớn là số tiền khoản vay cần gọi, dòng phụ là mục đích và
- * khu vực, dưới cùng là ba chip hạng, lãi suất, kỳ hạn. Mascot vẽ trước nên nằm dưới chữ.
+ * khu vực, dưới cùng là hai chip lãi suất, kỳ hạn. Mascot vẽ trước nên nằm dưới chữ.
  */
 export default function LoanHeroCard({ loan }: { loan: MarketLoan }) {
   const windowWidth = useWindowDimensions().width;
-  // Ba chip phải nằm một hàng kể cả lãi suất lẻ ("10,5%/năm", tối đa 4 chữ số lẻ); máy hẹp
+  // Các chip phải nằm một hàng kể cả lãi suất lẻ ("10,5%", tối đa 4 chữ số lẻ); máy hẹp
   // (360pt) nhỏ thêm một bậc.
   const compact = windowWidth < 380;
   // Số tiền nằm cạnh robot nên cỡ chữ co theo bề rộng thẻ, chặn hai đầu cho máy tính bảng.
   const cardWidth = Math.min(windowWidth, MARKET_MAX_WIDTH) - MARKET_PADDING * 2;
   const unit = Math.min(1.1, Math.max(0.82, cardWidth / DESIGN_WIDTH));
   const amount = formatDong(loan.amount);
+  // Không hiện hạng tín dụng: nhà đầu tư chọn theo lãi suất; hạng vẫn xem được ở màn hồ sơ người vay.
   const chips: { icon: IconName; label: string }[] = [
-    { icon: 'shieldCheck', label: `Hạng ${loan.grade}` },
-    { icon: 'chartNoAxesColumn', label: formatAnnualRateShort(loan.annualRate) },
+    { icon: 'chartNoAxesColumn', label: formatPercentValue(loan.annualRate, 4) },
     { icon: 'clock', label: `${loan.termMonths} tháng` },
   ];
 

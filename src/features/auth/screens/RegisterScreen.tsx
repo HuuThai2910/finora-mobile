@@ -5,10 +5,12 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '@/constants/colors';
 import { FontFamily } from '@/theme';
 import type { AuthStackParamList } from '@/navigation/types';
+import type { SelfRegisterRole } from '@/types/auth';
 import AuthButton from '../components/AuthButton';
 import AuthCheckbox from '../components/AuthCheckbox';
 import AuthField from '../components/AuthField';
 import AuthLayout from '../components/AuthLayout';
+import AuthRoleChoice from '../components/AuthRoleChoice';
 import AuthSwitchLink from '../components/AuthSwitchLink';
 import FormError from '../components/FormError';
 import { PASSWORD_MIN_LENGTH, PRIVACY_LABEL, TERMS_LABEL } from '../constants';
@@ -36,6 +38,7 @@ const keepTogether = (name: string) => name.replace(/ /g, ' ');
 export default function RegisterScreen() {
   const nav = useNavigation<Nav>();
 
+  const [role, setRole] = useState<SelfRegisterRole>('BORROWER');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -53,7 +56,7 @@ export default function RegisterScreen() {
     if (!validateSubmit(values)) return;
 
     // `confirmPassword` chỉ để người dùng tự soát; backend chỉ nhận một mật khẩu.
-    const challenge = await submit({ email, phone, password });
+    const challenge = await submit({ email, phone, password, role });
     if (!challenge) return;
 
     nav.navigate('RegisterOtp', {
@@ -65,6 +68,8 @@ export default function RegisterScreen() {
 
   return (
     <AuthLayout title="Tạo tài khoản" subtitle="Miễn phí · chỉ mất 3 phút">
+      <AuthRoleChoice value={role} onChange={setRole} disabled={submitting} />
+
       <AuthField
         label="Email"
         icon="mail"

@@ -4,6 +4,7 @@ import { applicationJourneyStatus } from '@/features/applications';
 import type { LoanApplication } from '@/types/loan';
 import type { LoanContractSummary } from '@/types/contract';
 import { formatDong } from '@/utils/format';
+import { loanSummaryLine } from '@/utils/loanSummary';
 import ActivityRow from './ActivityRow';
 import HomeSection, { RowSkeleton, SectionMessage } from './HomeSection';
 
@@ -60,22 +61,25 @@ export default function LatestApplicationSection({
     application.funding?.status,
   );
   const amount = formatDong(application.requestedAmount);
+  // Tiêu đề là khoản vay người đọc hiểu được; dòng phụ thêm mã HS-… khi backend đã trả.
+  const title = loanSummaryLine({ purposeCode: application.purposeCode, termMonths: application.requestedTermMonths });
+  const subtitle = application.applicationCode ? `${amount} · ${application.applicationCode}` : amount;
 
   return (
     <HomeSection title={TITLE} onSeeAll={onSeeAll} seeAllLabel="Xem tất cả hồ sơ vay">
       <ActivityRow
         icon="fileText"
         shape="square"
-        title={application.applicationNumber}
-        titleEllipsis="middle"
-        subtitle={amount}
+        title={title}
+        subtitle={subtitle}
         right={
           <Tag tone={status.tone} small style={styles.status}>
             {status.label}
           </Tag>
         }
         onPress={() => onOpen(application.applicationNumber)}
-        accessibilityLabel={`Hồ sơ ${application.applicationNumber}, ${amount}, ${status.label}`}
+        accessibilityLabel={`${title}, ${amount}, ${status.label}`
+          + (application.applicationCode ? `, mã hồ sơ ${application.applicationCode}` : '')}
       />
     </HomeSection>
   );

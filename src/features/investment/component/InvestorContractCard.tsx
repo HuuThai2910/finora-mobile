@@ -4,6 +4,7 @@ import { Colors } from '@/constants/colors';
 import { FontFamily, Radius, SoftShadow, Spacing, tabularNums } from '@/theme';
 import type { InvestmentContract } from '@/types/invest';
 import { formatDateTime, formatDong } from '@/utils/format';
+import { displayCodesLine, loanSummaryLine, splitPurpose } from '@/utils/loanSummary';
 
 type Props = {
   contract: InvestmentContract;
@@ -52,7 +53,10 @@ const statusOf = (contract: InvestmentContract): { label: string; bg: string; fg
 /** Một hợp đồng trong lịch sử của nhà đầu tư; chỉ dùng mã nghiệp vụ công khai, không lộ danh tính người vay. */
 export default function InvestorContractCard({ contract, onPress }: Props) {
   const status = statusOf(contract);
-  const primaryReference = contract.loanNumber ?? contract.applicationNumber;
+  // Tiêu đề là khoản vay người đọc hiểu được; mã HĐ-/HS- ở dòng phụ, mã kỹ thuật LC-/LA- không hiện.
+  const purpose = splitPurpose(contract.purpose);
+  const title = loanSummaryLine({ purposeLabel: purpose.label, termMonths: contract.termMonths });
+  const codes = displayCodesLine(contract.applicationCode, contract.contractCode);
   const dateLine = contract.investorSignedAt
     ? `Bạn ký lúc ${formatDateTime(contract.investorSignedAt)}`
     : `Hạn ký ${formatDateTime(contract.expiresAt)}`;
@@ -61,7 +65,7 @@ export default function InvestorContractCard({ contract, onPress }: Props) {
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${primaryReference}, hợp đồng ${contract.reference}, ${status.label}`}
+      accessibilityLabel={[title, codes, status.label].filter(Boolean).join(', ')}
       accessibilityHint="Mở hợp đồng và các tệp chữ ký"
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
@@ -70,10 +74,12 @@ export default function InvestorContractCard({ contract, onPress }: Props) {
           <Icon name="file" size={20} color={Colors.authPrimary} />
         </View>
         <View style={styles.titleBlock}>
-          <Text style={styles.reference} maxFontSizeMultiplier={1.35}>{primaryReference}</Text>
-          <Text style={styles.contractNumber} numberOfLines={1} maxFontSizeMultiplier={1.35}>
-            {`Hồ sơ ${contract.applicationNumber} · Hợp đồng ${contract.reference}`}
-          </Text>
+          <Text style={styles.reference} maxFontSizeMultiplier={1.35}>{title}</Text>
+          {codes ? (
+            <Text style={styles.contractNumber} numberOfLines={2} maxFontSizeMultiplier={1.35}>
+              {codes}
+            </Text>
+          ) : null}
         </View>
         <View style={[styles.pill, { backgroundColor: status.bg }]}>
           <Text style={[styles.pillText, { color: status.fg }]} maxFontSizeMultiplier={1.3}>
@@ -82,7 +88,9 @@ export default function InvestorContractCard({ contract, onPress }: Props) {
         </View>
       </View>
 
-      <Text style={styles.purpose} numberOfLines={2} maxFontSizeMultiplier={1.4}>{contract.purpose}</Text>
+      {purpose.detail ? (
+        <Text style={styles.purpose} numberOfLines={2} maxFontSizeMultiplier={1.4}>{purpose.detail}</Text>
+      ) : null}
 
       <View style={styles.facts}>
         <View style={styles.fact}>

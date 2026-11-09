@@ -2,8 +2,11 @@ import { useMemo } from 'react';
 import type { LoanContractSummary } from '@/types/contract';
 import { useListMyApplicationsQuery, useListMyContractsQuery } from '../api/applicationApi';
 
-export const useMyApplications = () => {
-  const applications = useListMyApplicationsQuery({ page: 0, size: 20 });
+/**
+ * @param skip không tải (tài khoản nhà đầu tư không có hồ sơ vay; Trang chủ của họ không có mục hồ sơ).
+ */
+export const useMyApplications = ({ skip = false }: { skip?: boolean } = {}) => {
+  const applications = useListMyApplicationsQuery({ page: 0, size: 20 }, { skip });
   const hasContractEligibleApplication = applications.data?.data.some(item =>
     item.status === 'APPROVED' && (
       item.termsConfirmation == null
@@ -32,6 +35,8 @@ export const useMyApplications = () => {
   }, [contracts.data]);
 
   const reload = () => {
+    // Query đang bỏ qua thì chưa từng chạy, gọi refetch sẽ báo lỗi.
+    if (skip) return;
     applications.refetch();
     if (hasContractEligibleApplication) contracts.refetch();
   };

@@ -54,9 +54,11 @@ export default function ApplicationCard({ application, contract, onPress }: Prop
 
         <View style={styles.details}>
           <Text style={styles.name}>{view.productName}</Text>
-          <Text style={styles.number} numberOfLines={1} ellipsizeMode="middle">
-            {view.applicationNumber}
-          </Text>
+          {view.codeLine ? (
+            <Text style={styles.number} numberOfLines={1} ellipsizeMode="middle">
+              {view.codeLine}
+            </Text>
+          ) : null}
           <Text style={styles.amount}>{view.amount}</Text>
           <View style={styles.metaRow}>
             <Meta icon="clock" text={view.term} />

@@ -4,6 +4,7 @@ import { Colors } from '@/constants/colors';
 import { FontFamily, MIN_TOUCH, Radius, SoftShadow, Spacing, tabularNums } from '@/theme';
 import type { InvestmentCommitment, InvestmentContract } from '@/types/invest';
 import { formatDong } from '@/utils/format';
+import { loanSummaryLine, splitPurpose } from '@/utils/loanSummary';
 
 type Props = {
   commitment: InvestmentCommitment;
@@ -32,8 +33,12 @@ export default function PendingCommitmentCard({ commitment, contract, cancelling
       <View style={styles.head}>
         <View style={styles.icon}><Icon name="clock" size={20} color={Colors.authPrimary} /></View>
         <View style={styles.headText}>
-          <Text style={styles.title}>{contract?.applicationNumber ?? `Đợt gọi vốn #${commitment.listingId}`}</Text>
-          <Text style={styles.meta}>{stage} · {commitment.noteCount} Note · {commitment.sharePercent}% khoản vay</Text>
+          <Text style={styles.title}>
+            {contract
+              ? loanSummaryLine({ purposeLabel: splitPurpose(contract.purpose).label, termMonths: contract.termMonths })
+              : `Đợt gọi vốn #${commitment.listingId}`}
+          </Text>
+          <Text style={styles.meta}>{stage} · {commitment.noteCount} phần vốn · {commitment.sharePercent}% khoản vay</Text>
         </View>
         <Text style={styles.amount}>{formatDong(commitment.amount)}</Text>
       </View>
@@ -45,17 +50,17 @@ export default function PendingCommitmentCard({ commitment, contract, cancelling
             ? 'Khoản vay đã đủ vốn; tiền chỉ chuyển sau khi hợp đồng được ký đủ.'
             : refunding
               ? 'Một nhà đầu tư khác đã rút trước khi ký. Phần vốn của bạn được giữ nguyên trong lúc khoản vay tìm người góp thay.'
-              : 'Khoản đầu tư đang hoàn tất trước khi phát hành Note.'}
+              : 'Khoản đầu tư đang hoàn tất trước khi phát hành phần vốn.'}
       </Text>
 
       {contract ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Xem hợp đồng ${contract.reference}`}
+          accessibilityLabel={contract.contractCode ? `Xem hợp đồng ${contract.contractCode}` : 'Xem hợp đồng'}
           onPress={() => onViewContract(contract.reference)}
           style={({ pressed }) => [styles.contract, pressed && styles.pressed]}
         >
-          <Text style={styles.contractText}>Xem hợp đồng {contract.reference}</Text>
+          <Text style={styles.contractText}>{contract.contractCode ? `Xem hợp đồng ${contract.contractCode}` : 'Xem hợp đồng'}</Text>
           <Icon name="chevronRight" size={18} color={Colors.authPrimary} />
         </Pressable>
       ) : null}

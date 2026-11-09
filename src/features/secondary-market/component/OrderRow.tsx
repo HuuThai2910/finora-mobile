@@ -26,7 +26,7 @@ const isCancellable = (order: BookOrder) => order.status === 'OPEN' || order.sta
  */
 export default function OrderRow({ order, loanLabel, onCancel, cancelling = false, first = false }: Props) {
   const buy = order.side === 'BID';
-  const progress = `Đã khớp ${order.filled}/${order.quantity} Note`;
+  const progress = `Đã khớp ${order.filled}/${order.quantity} phần vốn`;
   const detail = detailOf(order);
 
   return (

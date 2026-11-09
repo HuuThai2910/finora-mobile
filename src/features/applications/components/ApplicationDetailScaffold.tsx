@@ -18,8 +18,10 @@ import ApplicationsBackdrop from './ApplicationsBackdrop';
 const BOTTOM_SPACE = 56;
 
 type Props = {
-  /** Mã hồ sơ in ở đầu trang; lấy từ tham số điều hướng nên có ngay cả khi đang tải. */
-  applicationNumber: string;
+  /** Dòng tóm tắt khoản vay ở đầu trang; `null` khi đang tải hoặc lỗi. */
+  summary?: string | null;
+  /** "Mã hồ sơ HS-…" ở dòng phụ; `null` khi chưa có. */
+  codeLine?: string | null;
   /** Kéo xuống để tải lại; bỏ trống ở lần tải đầu (đã có khung giả). */
   onRefresh?: () => void;
   refreshing?: boolean;
@@ -33,7 +35,8 @@ type Props = {
  * nhập (lý do rút hồ sơ, lý do từ chối điều khoản).
  */
 export default function ApplicationDetailScaffold({
-  applicationNumber,
+  summary,
+  codeLine,
   onRefresh,
   refreshing = false,
   children,
@@ -68,7 +71,8 @@ export default function ApplicationDetailScaffold({
           <ApplicationDetailHeader
             width={width}
             topInset={insets.top}
-            applicationNumber={applicationNumber}
+            summary={summary}
+            codeLine={codeLine}
           />
           <View style={styles.cards}>{children}</View>
         </ScrollView>

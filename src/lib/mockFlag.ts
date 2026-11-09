@@ -28,7 +28,9 @@ export type MockDomain =
    * (danh mục) để bật mock riêng phần này mà vẫn gọi thật hai phần kia — backend chợ thứ cấp đã
    * có, nên miền này mặc định **không** nằm trong danh sách mock.
    */
-  | 'secondary';
+  | 'secondary'
+  /** "Thiết bị đăng nhập" của tab Hồ sơ (`GET /users/me/devices`); bật để xem màn khi backend chưa có bảng thiết bị. */
+  | 'devices';
 
 const parse = (raw: string | undefined): ReadonlySet<string> =>
   new Set(

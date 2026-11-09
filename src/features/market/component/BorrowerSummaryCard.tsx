@@ -5,7 +5,7 @@ import { Colors } from '@/constants/colors';
 import { FontFamily, MIN_TOUCH, Radius, SoftShadow, Spacing } from '@/theme';
 import type { BorrowerProfile } from '@/types/invest';
 import { formatDong, formatPercentValue } from '@/utils/format';
-import { KYC_LABEL, formatScore, ruleValue } from '../borrowerDisplay';
+import { KYC_LABEL, formatScore } from '../borrowerDisplay';
 import { useBorrowerProfile } from '../hook/useMarket';
 import InfoGrid from './InfoGrid';
 
@@ -24,7 +24,7 @@ export default function BorrowerSummaryCard({ applicationNumber, onOpen }: Props
 
   return (
     <View style={styles.card}>
-      {/* "Ẩn danh" đã nằm ngay ô "Người vay" của thẻ phía trên nên không lặp lại ở đây. */}
+      {/* Họ tên người vay đã nằm ở ô "Người vay" của thẻ phía trên nên không lặp lại ở đây. */}
       <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.4}>
         Hồ sơ người vay
       </Text>
@@ -96,8 +96,8 @@ function scoreText(assessment: BorrowerProfile['assessment']): string {
 }
 
 /**
- * Dòng nhân thân ngắn. Hồ sơ giả lập không in tuổi và eKYC như số liệu thật. Điểm CIC chỉ có khi
- * bảng luật có luật đọc trường này.
+ * Dòng nhân thân ngắn. Hồ sơ giả lập không in tuổi và eKYC như số liệu thật. Không có điểm CIC:
+ * lịch sử tín dụng không công bố cho nhà đầu tư.
  */
 function factsLine(profile: BorrowerProfile): string | null {
   const parts: string[] = [];
@@ -106,8 +106,6 @@ function factsLine(profile: BorrowerProfile): string | null {
     if (background.kycStatus) parts.push(`eKYC ${KYC_LABEL[background.kycStatus].toLowerCase()}`);
     if (background.age != null) parts.push(`${background.age} tuổi`);
   }
-  const cic = ruleValue(profile.rules, 'cic_score');
-  if (typeof cic === 'number') parts.push(`Điểm CIC ${formatScore(cic)}`);
   return parts.length ? parts.join(' · ') : null;
 }
 

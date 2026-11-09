@@ -72,10 +72,14 @@ export interface LoginRequest {
 }
 
 /** Đăng ký không thu họ tên — tên được điền từ OCR CCCD khi quét eKYC. */
+/** Vai trò được tự chọn khi đăng ký; ADMIN/STAFF bị `finora-user` từ chối (ROLE_NOT_ALLOWED). */
+export type SelfRegisterRole = Extract<UserRole, 'BORROWER' | 'INVESTOR'>;
+
 export interface RegisterRequest {
   email: string;
   phone: string;
   password: string;
+  role: SelfRegisterRole;
 }
 
 export interface VerifyRegistrationRequest {
@@ -87,4 +91,23 @@ export interface ResetPasswordRequest {
   email: string;
   otp: string;
   newPassword: string;
+}
+
+/** Một thiết bị đã đăng nhập vào tài khoản (`GET /users/me/devices` của finora-user). */
+export interface LoginDevice {
+  id: number;
+  /** Tên client tự khai ("samsung SM-S918B") hoặc server suy từ trình duyệt ("Chrome trên Windows"). */
+  deviceName: string;
+  osName: string | null;
+  clientType: 'MOBILE' | 'WEB';
+  appVersion: string | null;
+  /** IP lần đăng nhập cuối, server đã che ("113.161.*.*"). */
+  ipAddress: string | null;
+  firstLoginAt: string;
+  lastLoginAt: string;
+  loginCount: number;
+  /** Chính máy đang dùng app. */
+  current: boolean;
+  /** Đăng xuất từ xa được (máy khác còn phiên đăng nhập). */
+  canSignOut: boolean;
 }

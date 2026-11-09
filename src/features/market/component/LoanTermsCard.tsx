@@ -9,13 +9,13 @@ import InfoGrid from './InfoGrid';
 /**
  * Thông tin khoản vay ngoài thẻ đầu màn: lưới 2×2 ngăn bởi đường kẻ mảnh, cùng kiểu thẻ điều
  * khoản ở bước "Nhập khoản vay". Mệnh giá và mức tối thiểu là hai số nhà đầu tư cần trước khi
- * nhập số tiền; người vay luôn ẩn danh trên sàn.
+ * nhập số tiền; ô "Người vay" là họ tên theo hồ sơ, chưa có thì ghi "Chưa cập nhật".
  */
 export default function LoanTermsCard({ loan }: { loan: MarketLoan }) {
   const items = [
     { label: 'Cách trả nợ', value: REPAYMENT_METHOD_LABEL[loan.repaymentMethod] ?? loan.repaymentMethod },
-    { label: 'Người vay', value: 'Ẩn danh' },
-    { label: 'Mệnh giá Note', value: formatDong(loan.noteDenomination) },
+    { label: 'Người vay', value: loan.borrowerName ?? 'Chưa cập nhật' },
+    { label: 'Mệnh giá mỗi phần vốn', value: formatDong(loan.noteDenomination) },
     { label: 'Đầu tư tối thiểu', value: formatDong(loan.minInvestmentAmount) },
   ];
 

@@ -17,16 +17,18 @@ type Props = {
   annualRate: number;
   termMonths: number;
   repaymentLabel: string;
+  /** Mệnh giá mỗi phần vốn của khoản vay, cho câu giải thích "phần vốn" lần đầu người dùng gặp chữ này. */
+  noteDenomination: number;
 };
 
 type Row = { label: string; value: string; tone?: 'gain' | 'strong'; onInfo?: () => void };
 
 /**
- * Số tạm tính dưới ô số tiền, cùng dáng thẻ "Tạm tính" của form đặt lệnh: số Note nhận, tỷ lệ trong
+ * Số tạm tính dưới ô số tiền, cùng dáng thẻ "Tạm tính" của form đặt lệnh: số phần vốn nhận, tỷ lệ trong
  * khoản vay, lãi dự kiến và số tiền sẽ bị giữ trong ví. Robot cầm đồng xu đứng góc dưới-phải cạnh
  * lời giải thích, các dòng số nằm phía trên nên robot không che con số nào.
  */
-export default function InvestEstimateCard({ amount, estimate, annualRate, termMonths, repaymentLabel }: Props) {
+export default function InvestEstimateCard({ amount, estimate, annualRate, termMonths, repaymentLabel, noteDenomination }: Props) {
   const explainInterest = () =>
     Alert.alert(
       "Lãi dự kiến",
@@ -36,7 +38,7 @@ export default function InvestEstimateCard({ amount, estimate, annualRate, termM
   const rows: Row[] = !estimate
     ? []
     : [
-        { label: 'Số Note nhận', value: `${estimate.notes} Note` },
+        { label: 'Số phần vốn nhận', value: `${estimate.notes} phần vốn` },
         { label: 'Tỷ lệ trong khoản vay', value: formatPercentValue(estimate.sharePercent) },
         ...(estimate.interest !== null
           ? [{ label: `Lãi dự kiến ${termMonths} tháng`, value: `+${formatDong(estimate.interest)}`, tone: 'gain' as const, onInfo: explainInterest }]
@@ -74,6 +76,12 @@ export default function InvestEstimateCard({ amount, estimate, annualRate, termM
       ) : (
         <Text style={styles.note}>Nhập số tiền hợp lệ để xem tạm tính.</Text>
       )}
+      {/* Lần đầu người dùng gặp chữ "phần vốn" khi góp vốn: giải thích ngắn, mệnh giá lấy từ khoản vay. */}
+      {noteDenomination > 0 ? (
+        <Text style={styles.note}>
+          {`Mỗi phần vốn ${formatDong(noteDenomination)} là một phần của khoản vay; bạn nhận gốc và lãi theo số phần vốn đang giữ và có thể chuyển nhượng cho nhà đầu tư khác.`}
+        </Text>
+      ) : null}
       <View style={styles.noteRow}>
         <Text style={styles.note}>{INVEST_NOTE}</Text>
         <Image

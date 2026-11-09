@@ -100,7 +100,8 @@ export default function ApplyFormScreen() {
 
     Alert.alert(
       'Đã nộp hồ sơ',
-      `Mã ${created.applicationNumber}. Hệ thống đang kiểm tra điều kiện và đánh giá hồ sơ.`,
+      `${created.applicationCode ? `Mã hồ sơ ${created.applicationCode}. ` : ''}`
+        + 'Hệ thống đang kiểm tra điều kiện và đánh giá hồ sơ.',
       [
         { text: 'Về sản phẩm', onPress: () => navigation.popToTop() },
         {

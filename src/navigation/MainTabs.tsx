@@ -29,7 +29,6 @@ import {
   WithdrawScreen,
 } from '@/features/wallet';
 import {
-  AutoInvestScreen,
   InvestContractScreen,
   InvestorContractsScreen,
   PortfolioScreen,
@@ -41,8 +40,7 @@ import {
   PlaceOrderScreen,
   SecondaryMarketScreen,
 } from '@/features/secondary-market';
-import { AccountInfoScreen, AccountScreen } from '@/features/account';
-import { NotificationSettingsScreen } from '@/features/push-notifications';
+import { AccountInfoScreen, AccountScreen, LoginDevicesScreen } from '@/features/account';
 import { TermsScreen } from '@/features/legal';
 import { useAuth } from '@/providers/AuthProvider';
 import {
@@ -82,9 +80,14 @@ function HomeTab() {
 }
 
 const MarketStack = createNativeStackNavigator<MarketStackParamList>();
+/**
+ * Tab thứ hai theo vai trò: nhà đầu tư mở Sàn khoản vay, người vay mở danh sách sản phẩm vay (tab tên "Vay"). Mọi màn
+ * vẫn đăng ký cho cả hai vai trò để link cũ không gãy; chỉ màn gốc và lối vào khác nhau.
+ */
 function MarketTab() {
+  const investor = useAuth().session?.profile.role === 'INVESTOR';
   return (
-    <MarketStack.Navigator screenOptions={stackOptions}>
+    <MarketStack.Navigator screenOptions={stackOptions} initialRouteName={investor ? 'Market' : 'Products'}>
       <MarketStack.Screen name="Market" component={MarketScreen} />
       <MarketStack.Screen name="LoanDetail" component={LoanDetailScreen} />
       <MarketStack.Screen name="BorrowerProfile" component={BorrowerProfileScreen} />
@@ -109,7 +112,6 @@ function WalletTab() {
       <WalletStack.Screen name="WithdrawalDetail" component={WithdrawalDetailScreen} />
       <WalletStack.Screen name="PayInstallment" component={PayInstallmentScreen} />
       <WalletStack.Screen name="Portfolio" component={PortfolioScreen} />
-      <WalletStack.Screen name="AutoInvest" component={AutoInvestScreen} />
       <WalletStack.Screen name="InvestorContracts" component={InvestorContractsScreen} />
       <WalletStack.Screen name="InvestContract" component={InvestContractScreen} />
       <WalletStack.Screen name="RescheduleConsents" component={RescheduleConsentsScreen} />
@@ -141,6 +143,7 @@ function ProfileTab() {
       <ProfileStack.Navigator screenOptions={stackOptions}>
       <ProfileStack.Screen name="Profile" component={AccountScreen} />
       <ProfileStack.Screen name="AccountInfo" component={AccountInfoScreen} />
+      <ProfileStack.Screen name="LoginDevices" component={LoginDevicesScreen} />
       <ProfileStack.Screen name="BankAccounts" component={BankAccountsScreen} />
       <ProfileStack.Screen name="LinkBankAccount" component={LinkBankAccountScreen} />
       <ProfileStack.Screen name="EkycConsent" component={EkycConsentScreen} />
@@ -166,7 +169,6 @@ function ProfileTab() {
       <ProfileStack.Screen name="PartialPrepayment" component={PartialPrepaymentScreen} />
       <ProfileStack.Screen name="EarlySettlement" component={EarlySettlementScreen} />
       <ProfileStack.Screen name="RescheduleLoan" component={RescheduleLoanScreen} />
-      <ProfileStack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
       <ProfileStack.Screen name="Terms" component={TermsScreen} />
       </ProfileStack.Navigator>
     </EkycSessionProvider>
@@ -189,13 +191,15 @@ const Tab = createBottomTabNavigator<TabParamList>();
 const FULLSCREEN_SCREENS: ReadonlySet<string> = new Set(['EkycConsent']);
 
 export default function MainTabs() {
+  const investor = useAuth().session?.profile.role === 'INVESTOR';
   return (
     <Tab.Navigator
       screenOptions={{ headerShown: false, unmountOnBlur: true }}
       tabBar={props => <TabBar {...props} hiddenOn={FULLSCREEN_SCREENS} />}
     >
       <Tab.Screen name="Trang chủ" component={HomeTab} />
-      <Tab.Screen name="Sàn" component={MarketTab} />
+      {/* Tên route giữ "Sàn" cho mọi link điều hướng; nhãn hiển thị đổi theo vai trò. */}
+      <Tab.Screen name="Sàn" component={MarketTab} options={{ title: investor ? 'Sàn' : 'Vay' }} />
       <Tab.Screen name="Ví" component={WalletTab} />
       <Tab.Screen name="Hồ sơ" component={ProfileTab} />
     </Tab.Navigator>

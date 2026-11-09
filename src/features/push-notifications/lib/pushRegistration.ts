@@ -28,7 +28,7 @@ let inFlight: Promise<void> | null = null;
 
 /**
  * Xin quyền (theo `prompt`), lấy Expo push token và đăng ký với finora-notification. Gộp các lời gọi trùng (cầu nối
- * lúc mở phiên và nút ở màn cài đặt có thể chạy cùng lúc) thành một. Không ném lỗi: kết quả nằm ở trạng thái đăng ký.
+ * lúc mở phiên và công tắc ở màn Hồ sơ có thể chạy cùng lúc) thành một. Không ném lỗi: kết quả nằm ở trạng thái đăng ký.
  */
 export function registerForPush(prompt: PromptPolicy): Promise<void> {
   if (!inFlight) {

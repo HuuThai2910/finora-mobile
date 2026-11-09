@@ -4,13 +4,13 @@ import type { NotificationCategory } from '../types';
 type CategoryCopy = { title: string; description: string; icon: IconName };
 
 /**
- * Nhãn tiếng Việt và icon của từng nhóm thông báo. Màn cài đặt hiện chỉ có một công tắc chung nên chỉ dữ liệu giả đọc
+ * Nhãn tiếng Việt và icon của từng nhóm thông báo. Màn Hồ sơ chỉ có một công tắc push chung nên chỉ dữ liệu giả đọc
  * danh sách nhóm; giữ nhãn để mở lại công tắc theo nhóm khi cần.
  */
 export const CATEGORY_COPY: Readonly<Record<NotificationCategory, CategoryCopy>> = {
   FUNDING: { title: 'Gọi vốn', description: 'Hồ sơ lên sàn, đủ vốn, hết hạn hoặc bị hủy', icon: 'coins' },
   CONTRACT: { title: 'Hợp đồng và chữ ký', description: 'Đến lượt ký, hợp đồng có hiệu lực', icon: 'penLine' },
-  DISBURSEMENT: { title: 'Giải ngân', description: 'Tiền vay vào ví, Note được phát hành', icon: 'banknoteArrowUp' },
+  DISBURSEMENT: { title: 'Giải ngân', description: 'Tiền vay vào ví, phần vốn được phát hành', icon: 'banknoteArrowUp' },
   REPAYMENT: {
     title: 'Trả nợ và nhắc lịch',
     description: 'Kỳ sắp đến hạn, khoản trả đã ghi nhận, tiền nhận được',

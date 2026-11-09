@@ -13,7 +13,7 @@ export const isEkycRequiredError = (error: unknown): boolean =>
   error instanceof ApiError && error.code === EKYC_REQUIRED_CODE;
 
 /**
- * Chặn các thao tác cần đã định danh (góp vốn, đặt lệnh Note, Auto-Invest) <b>trước</b> khi hỏi
+ * Chặn các thao tác cần đã định danh (góp vốn, đặt lệnh Note) <b>trước</b> khi hỏi
  * mã PIN, và nói rõ lý do thay vì để người dùng nhập PIN xong mới nhận một dòng lỗi.
  *
  * Investment kiểm claim `ekyc_status` trong access token, còn app đọc trạng thái từ hồ sơ. Hai

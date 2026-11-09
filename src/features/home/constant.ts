@@ -12,8 +12,6 @@ export const NOTIFICATION_ICON: Record<NotificationKind, IconName> = {
   cashflow: 'handCoins',
   /** Vốn đã chuyển cho người vay. */
   disbursement: 'banknoteArrowUp',
-  /** Auto-Invest tự rót vốn theo tiêu chí. */
-  autoinvest: 'zap',
   /** Lịch trả nợ được cơ cấu, kỳ sắp đến hạn. */
   reminder: 'calendarClock',
   /** Mã băm hợp đồng đã ghi lên sổ cái để đối chiếu. */
@@ -30,7 +28,6 @@ export const NOTIFICATION_ICON: Record<NotificationKind, IconName> = {
 export const NOTIFICATION_LABEL: Record<NotificationKind, string> = {
   cashflow: 'Dòng tiền',
   disbursement: 'Giải ngân',
-  autoinvest: 'Auto-Invest',
   reminder: 'Lịch trả nợ',
   chain: 'Sổ cái',
   security: 'Bảo mật',
@@ -50,7 +47,6 @@ export type NotificationTone = 'money' | 'info' | 'danger';
 export const NOTIFICATION_TONE: Record<NotificationKind, NotificationTone> = {
   cashflow: 'money',
   disbursement: 'info',
-  autoinvest: 'info',
   reminder: 'danger',
   chain: 'info',
   security: 'danger',
@@ -83,7 +79,7 @@ export const NOTIFICATIONS_ART = {
 export const WALLET_MASCOT: ImageSourcePropType = require('@/assets/mascot-coin.png');
 
 /** Nơi mỗi thẻ giới thiệu dẫn tới; màn chính tự đổi sang lệnh điều hướng. */
-export type PromoTarget = 'products' | 'topUp' | 'payInstallment';
+export type PromoTarget = 'products' | 'topUp' | 'payInstallment' | 'market' | 'notesMarket';
 
 export type PromoSlide = {
   target: PromoTarget;
@@ -97,7 +93,7 @@ export type PromoSlide = {
 
 /**
  * Ba thẻ giới thiệu chạy ngang cạnh lời chào (mockup vẽ ba chấm trang). Thẻ đầu
- * lấy nguyên câu của mockup; hai thẻ sau dẫn tới các việc người vay hay làm nhất
+ * lấy nguyên câu của mockup; hai thẻ sau dẫn tới các việc người vay hay làm nhất (bộ thẻ của người vay)
  * trên app. Mỗi thẻ mở đúng một màn có sẵn, không có nội dung khuyến mãi giả.
  */
 export const PROMO_SLIDES: readonly PromoSlide[] = [
@@ -118,5 +114,27 @@ export const PROMO_SLIDES: readonly PromoSlide[] = [
     title: 'Trả nợ từ ví chỉ vài chạm',
     icon: 'calendarCheck',
     hint: 'Mở màn trả nợ kỳ này',
+  },
+];
+
+/** Thẻ giới thiệu cho nhà đầu tư: không mời vay hay trả nợ, chỉ những việc họ làm trên app. */
+export const INVESTOR_PROMO_SLIDES: readonly PromoSlide[] = [
+  {
+    target: 'market',
+    title: 'Đầu tư khoản vay, nhận lãi hằng tháng',
+    icon: 'chart',
+    hint: 'Mở sàn khoản vay',
+  },
+  {
+    target: 'topUp',
+    title: 'Nạp ví nhanh qua VietQR',
+    icon: 'qrCode',
+    hint: 'Mở màn nạp tiền vào ví',
+  },
+  {
+    target: 'notesMarket',
+    title: 'Cần tiền sớm? Chuyển nhượng phần vốn',
+    icon: 'layers',
+    hint: 'Mở chợ chuyển nhượng phần vốn',
   },
 ];

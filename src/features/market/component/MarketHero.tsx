@@ -37,6 +37,9 @@ type Props = {
   /** Bề rộng cột nội dung (đã giới hạn trên web). */
   width: number;
   topInset: number;
+  /** Ô tìm đang mở: kính lúp đổi thành dấu x để đóng. */
+  searchOpen: boolean;
+  onToggleSearch: () => void;
 };
 
 /**
@@ -47,7 +50,7 @@ type Props = {
  * Banner lùi xuống theo vùng an toàn cùng tiêu đề, nên trên máy có tai thỏ robot
  * vẫn nằm dưới hàng tiêu đề như mockup.
  */
-export default function MarketHero({ width, topInset }: Props) {
+export default function MarketHero({ width, topInset, searchOpen, onToggleSearch }: Props) {
   const nav = useNavigation();
   // Sàn là màn gốc của tab; quay lại vẫn được nhờ lịch sử tab (về Trang chủ),
   // nên hỏi `canGoBack` của cả cây điều hướng.
@@ -82,11 +85,15 @@ export default function MarketHero({ width, topInset }: Props) {
         <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.4}>
           Sàn khoản vay
         </Text>
-        {/* Chưa có tìm kiếm trên sàn (Investment Service chưa có tham số lọc): giữ
-            biểu tượng như mockup nhưng không làm nút, tránh một nút bấm không làm gì. */}
-        <View style={styles.search} {...hiddenFromReader}>
-          <Icon name="search" size={24} color={Colors.authInk} />
-        </View>
+        <Pressable
+          onPress={onToggleSearch}
+          accessibilityRole="button"
+          accessibilityLabel={searchOpen ? 'Đóng tìm kiếm' : 'Tìm khoản vay'}
+          accessibilityState={{ expanded: searchOpen }}
+          style={({ pressed }) => [styles.search, pressed && styles.pressed]}
+        >
+          <Icon name={searchOpen ? 'x' : 'search'} size={24} color={Colors.authInk} />
+        </Pressable>
       </View>
     </View>
   );

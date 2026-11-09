@@ -19,8 +19,8 @@ export const CONTRACT_TILE = 40;
 const CHEVRON_SPACE = 22;
 
 /**
- * Thẻ một hợp đồng ở màn "Hợp đồng của tôi" (mockup 26/09/2026): mã hợp đồng và
- * nhãn trạng thái, số tiền vay, kỳ hạn | lãi suất, rồi dòng ngày. Cả thẻ là một
+ * Thẻ một hợp đồng ở màn "Hợp đồng của tôi" (mockup 26/09/2026): mục đích vay và
+ * nhãn trạng thái, mã hợp đồng `HĐ-…` ở dòng phụ, số tiền vay, kỳ hạn | lãi suất, rồi dòng ngày. Cả thẻ là một
  * nút mở chi tiết hợp đồng; "Xem hợp đồng" chỉ là gợi ý thị giác bên trong nút đó.
  */
 export default function ContractListCard({ contract, onPress }: Props) {
@@ -39,13 +39,18 @@ export default function ContractListCard({ contract, onPress }: Props) {
       </View>
 
       <View style={styles.body}>
-        {/* Nhãn dài ("Đang chờ SmartCA") trên máy hẹp thì xuống dòng, không cắt mã hợp đồng. */}
+        {/* Nhãn dài ("Đang chờ SmartCA") trên máy hẹp thì xuống dòng, không cắt tiêu đề. */}
         <View style={styles.topRow}>
-          <Text style={styles.number} maxFontSizeMultiplier={1.4}>
-            {view.contractNumber}
+          <Text style={styles.title} maxFontSizeMultiplier={1.4}>
+            {view.title}
           </Text>
           <ApplicationStatusPill status={view.status} />
         </View>
+        {view.codeLine ? (
+          <Text style={styles.number} selectable maxFontSizeMultiplier={1.4}>
+            {view.codeLine}
+          </Text>
+        ) : null}
 
         <View style={styles.details}>
           <Text style={styles.amount} maxFontSizeMultiplier={1.4}>
@@ -118,9 +123,16 @@ const styles = StyleSheet.create({
     columnGap: Spacing.xs,
     rowGap: Spacing.xs,
   },
-  // 12pt, không dùng chữ số đều nét: mã 23 ký tự (~190pt) vừa cùng hàng nhãn
-  // "Đã hết hạn" ở 393pt; máy hẹp hơn thì nhãn xuống dòng dưới mã.
+  title: {
+    flexShrink: 1,
+    fontFamily: FontFamily.semibold,
+    fontSize: 14,
+    lineHeight: 20,
+    color: Colors.authInk,
+  },
+  // Mã hiển thị 16 ký tự ở dòng phụ, cỡ 12pt như mã cũ.
   number: {
+    marginTop: 2,
     flexShrink: 1,
     fontFamily: FontFamily.medium,
     fontSize: 12,

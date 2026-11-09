@@ -38,7 +38,8 @@ type Nav = CompositeNavigationProp<
 >;
 type Route = RouteProp<MarketStackParamList, 'LoanDetail'>;
 
-const titleOf = (listingId: string) => `Khoản vay #${listingId}`;
+/** Không hiện mã đợt gọi vốn: thẻ đầu màn đã ghi mục đích vay để nhận ra khoản vay. */
+const TITLE = 'Chi tiết khoản vay';
 
 /**
  * Màn 19 — chi tiết khoản vay trên sàn và góp vốn, vẽ lại cùng bộ với sổ lệnh chợ Notes: nền sóng
@@ -54,7 +55,7 @@ export default function LoanDetailScreen() {
     return <LoanInvest loan={loan.data} refreshing={loan.loading} onRefresh={loan.reload} />;
   }
   return (
-    <LoanDetailFrame title={titleOf(loanId)}>
+    <LoanDetailFrame title={TITLE}>
       {loan.error ? (
         <LoanStatusCard
           icon="alert"
@@ -87,7 +88,7 @@ function LoanInvest({ loan, refreshing, onRefresh }: InvestProps) {
   // Chưa định danh thì nói ngay từ đầu, thay vì để nhập số tiền, nhập PIN rồi mới bị từ chối.
   const needsEkyc = session?.profile.role === 'INVESTOR' && !form.ekyc.verified;
   const { recheck } = form.ekyc;
-  const title = titleOf(loan.id);
+  const title = TITLE;
   const toMarket = () => nav.navigate('Market');
 
   // Hồ sơ trong phiên có thể cũ (nhân viên vừa duyệt eKYC): tải lại một lần khi mở màn.
@@ -103,7 +104,7 @@ function LoanInvest({ loan, refreshing, onRefresh }: InvestProps) {
       retry: { label: 'Chọn số tiền khác', onPress: () => { form.clearResult(); onRefresh(); } },
       market: { label: 'Về sàn khoản vay', onPress: toMarket },
     };
-    const view = describeResult(form.result, loan.id);
+    const view = describeResult(form.result, loan.purpose);
     return (
       <LoanDetailFrame title={title}>
         <LoanStatusCard
@@ -174,6 +175,7 @@ function LoanInvest({ loan, refreshing, onRefresh }: InvestProps) {
             annualRate={loan.annualRate}
             termMonths={loan.termMonths}
             repaymentLabel={repaymentLabel}
+            noteDenomination={loan.noteDenomination}
           />
           <View style={styles.riskBox}>
             <Checkbox
@@ -211,13 +213,14 @@ type ResultView = {
  * Một câu nói đúng điều vừa xảy ra với lệnh. Backend trả 201 cả khi ví không giữ được tiền, nên
  * phải đọc `status`; thiếu số dư thì mời nạp tiền như gợi ý của `OrderResponse`.
  */
-function describeResult(order: InvestOrderResult, listingId: string): ResultView {
+function describeResult(order: InvestOrderResult, purpose: string): ResultView {
   const amount = formatDong(order.amount);
+  const loanName = purpose ? `khoản vay "${purpose}"` : 'khoản vay này';
   switch (order.status) {
     case 'COMMITTED':
       return {
         title: 'Đã đặt lệnh đầu tư',
-        message: `${amount} đang được giữ tạm trong ví cho khoản vay #${listingId}. Khi khoản vay gọi đủ vốn, bạn ký hợp đồng đầu tư để khoản vay được giải ngân.`,
+        message: `${amount} đang được giữ tạm trong ví cho ${loanName}. Khi khoản vay gọi đủ vốn, bạn ký hợp đồng đầu tư để khoản vay được giải ngân.`,
         primary: 'portfolio',
         secondary: 'market',
       };

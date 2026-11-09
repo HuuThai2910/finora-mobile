@@ -9,14 +9,13 @@ import { Colors } from '@/constants/colors';
 import type { WalletStackParamList } from '@/navigation/types';
 import { useAuth } from '@/providers/AuthProvider';
 import { FontFamily, Spacing } from '@/theme';
-import { RECONCILE_NOTE, WALLET_HISTORY_MAX_WIDTH, WALLET_HISTORY_PADDING } from '../constant';
+import { WALLET_HISTORY_MAX_WIDTH, WALLET_HISTORY_PADDING } from '../constant';
 import { useBalance, useTransactions } from '../hook/useWallet';
 import { groupWalletTransactions } from '../mappers/walletHistory';
 import WalletAccountCard from './WalletAccountCard';
 import WalletHeader from './WalletHeader';
 import WalletHistorySkeleton from './WalletHistorySkeleton';
 import WalletHistoryStatus from './WalletHistoryStatus';
-import WalletNote from './WalletNote';
 import WalletTxCard from './WalletTxCard';
 import InvestorWalletActions from './InvestorWalletActions';
 
@@ -90,7 +89,6 @@ export default function WalletHistoryScreen() {
             ))}
           </View>
         ))}
-        <WalletNote text={RECONCILE_NOTE} />
       </>
     );
   };
@@ -115,7 +113,7 @@ export default function WalletHistoryScreen() {
       <View style={{ width, minHeight: viewportHeight }}>
         <WaveBackdrop background={WALLET_HISTORY_WAVES} width={width} />
         <View style={styles.content}>
-          <WalletHeader title="Lịch sử ví" statementIcon width={width} topInset={insets.top} />
+          <WalletHeader title="Lịch sử ví" width={width} topInset={insets.top} />
           <WalletAccountCard
             available={balance.data?.available ?? null}
             held={balance.data?.held ?? null}

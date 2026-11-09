@@ -12,25 +12,13 @@ import {
   HOME_OWNERSHIP_LABEL,
   KYC_LABEL,
   formatEmployment,
-  formatRuleValue,
-  ruleValue,
 } from '../borrowerDisplay';
 import { ProfileCard, ProfileFootnote, ProfileRows, type ProfileRowData } from './ProfileCard';
 
 /*
- * Bốn thẻ số liệu của màn hồ sơ người vay, cùng thứ tự với trang thẩm định của admin: khả năng trả
- * nợ, lịch sử tín dụng, nhân thân (không định danh) và khoản vay người vay đề nghị.
+ * Ba thẻ số liệu của màn hồ sơ người vay, cùng thứ tự với trang thẩm định của admin: khả năng trả
+ * nợ, nhân thân (không định danh) và khoản vay người vay đề nghị.
  */
-
-/**
- * Dòng lấy từ bảng luật chỉ có khi có luật đọc trường đó (luật do admin cấu hình); luật có nhưng
- * thiếu dữ liệu thì ghi rõ thay vì bỏ trống.
- */
-function traceRow(profile: BorrowerProfile, field: string, label: string): ProfileRowData | null {
-  const value = ruleValue(profile.rules, field);
-  if (value === undefined) return null;
-  return { label, value: value === null ? 'Chưa tra được' : formatRuleValue(field, value) };
-}
 
 export function CapacityCard({ profile }: { profile: BorrowerProfile }) {
   const { capacity } = profile;
@@ -45,7 +33,6 @@ export function CapacityCard({ profile }: { profile: BorrowerProfile }) {
             hint: 'Phần thu nhập đang dùng để trả các khoản nợ hiện có',
             value: formatPercentValue(capacity.dtiPercent),
           },
-          traceRow(profile, 'ty_le_tra_no_thang', 'Tiền trả mỗi kỳ so với thu nhập'),
           { label: 'Thâm niên làm việc', value: formatEmployment(capacity.employmentMonths) },
         ]}
       />
@@ -54,32 +41,6 @@ export function CapacityCard({ profile }: { profile: BorrowerProfile }) {
           {`Người vay tự khai lúc nộp hồ sơ${capacity.capturedAt ? ` ngày ${formatDate(capacity.capturedAt)}` : ''}.`}
         </ProfileFootnote>
       ) : null}
-    </ProfileCard>
-  );
-}
-
-export function CreditHistoryCard({ profile }: { profile: BorrowerProfile }) {
-  const cic = traceRow(profile, 'cic_score', 'Điểm tín dụng CIC');
-  const inquiries = traceRow(profile, 'so_lan_tra_cuu', 'Tra cứu CIC trong 6 tháng');
-  const history = profile.creditHistory;
-  const finora: ProfileRowData[] = !history
-    ? [{ label: 'Lịch sử vay tại FINORA', value: 'Chưa có dữ liệu' }]
-    : !history.hasHistory
-      ? [{ label: 'Lịch sử vay tại FINORA', value: 'Chưa từng vay' }]
-      : [
-          { label: 'Đã tất toán tại FINORA', value: `${history.completedLoans} khoản` },
-          { label: 'Trễ hạn tại FINORA trong 2 năm', value: `${history.delinquenciesLast2Years} lần` },
-          { label: 'Vỡ nợ tại FINORA', value: `${history.defaultedLoans} khoản` },
-        ];
-
-  return (
-    <ProfileCard title="Lịch sử tín dụng">
-      <ProfileRows rows={[cic, inquiries, ...finora]} />
-      <ProfileFootnote>
-        {cic || inquiries
-          ? 'Số liệu CIC do hệ thống đọc lúc chấm điểm hồ sơ.'
-          : 'Lần chấm điểm này không có luật đọc dữ liệu CIC.'}
-      </ProfileFootnote>
     </ProfileCard>
   );
 }

@@ -6,7 +6,6 @@ export type PinScope =
   | 'REPAYMENT'
   | 'INVEST'
   | 'ORDER'
-  | 'AUTO_INVEST'
   | 'SIGN_CONTRACT'
   | 'WITHDRAW'
   | 'BANK_ACCOUNT';

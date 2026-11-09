@@ -5,6 +5,7 @@ export { default as ScheduleScreen } from './component/ScheduleScreen';
 export { default as VentoPackagesScreen } from './component/VentoPackagesScreen';
 export { default as PackageDetailScreen } from './component/PackageDetailScreen';
 export { default as ProductCard } from './components/ProductCard';
+export { default as SearchField } from './components/ProductSearchField';
 export { useProduct, useProducts, usePurposes } from './hook/useProducts';
 export { REPAYMENT_METHOD_LABEL, termOptions } from './constant';
 // Khung chung của luồng nhập khoản vay ba bước; bước 3 "Nộp hồ sơ" (feature

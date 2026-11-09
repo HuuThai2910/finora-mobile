@@ -3,20 +3,14 @@ import * as investMock from '@/lib/mocks/invest';
 import { apiFetch, investmentFetch } from '@/lib/api';
 import { PIN_TOKEN_HEADER } from '@/features/pin';
 import type {
-  AutoInvestConfig,
-  AutoInvestMatch,
   InvestmentContract,
   InvestmentCommitment,
   InvestorRescheduleConsent,
   PortfolioSummary,
 } from '@/types/invest';
 import {
-  toAutoInvestConfig,
-  toAutoInvestMatch,
   toInvestmentContract,
   toPortfolioSummary,
-  type AutoInvestConfigDto,
-  type AutoInvestMatchDto,
   type InvestorContractDto,
   type InvestmentCommitmentDto,
   type PortfolioDto,
@@ -28,48 +22,6 @@ export const getPortfolio = async (): Promise<PortfolioSummary> => {
 
   const portfolio = await investmentFetch<PortfolioDto>('/investments/portfolio');
   return toPortfolioSummary(portfolio);
-};
-
-export const getAutoInvest = async (signal?: AbortSignal): Promise<AutoInvestConfig> => {
-  if (isMocked('invest')) return investMock.getAutoInvest();
-  const dto = await investmentFetch<AutoInvestConfigDto>('/investments/auto-invest', { signal });
-  return toAutoInvestConfig(dto);
-};
-
-export const getAutoInvestMatches = async (signal?: AbortSignal): Promise<AutoInvestMatch[]> => {
-  if (isMocked('invest')) return investMock.getAutoInvestMatches();
-  const dtos = await investmentFetch<AutoInvestMatchDto[]>('/investments/auto-invest/matches?limit=20', {
-    signal,
-  });
-  return dtos.map(toAutoInvestMatch);
-};
-
-/**
- * Lưu toàn bộ tiêu chí; bật lại sau khi tắt thì xuống cuối hàng chờ khớp lệnh.
- * Cần token PIN phạm vi `AUTO_INVEST` vì cấu hình này tự giữ tiền trong ví khi khớp. Bật quy tắc phải kèm phiên bản
- * công bố rủi ro người dùng vừa đọc (Q5); backend từ chối `RISK_DISCLOSURE_OUTDATED` nếu bản đã đổi.
- */
-export const saveAutoInvest = async (
-  config: AutoInvestConfig,
-  idempotencyKey: string,
-  pinToken: string,
-  riskAcknowledgementVersion?: string,
-): Promise<AutoInvestConfig> => {
-  if (isMocked('invest')) return investMock.saveAutoInvest(config);
-  const dto = await investmentFetch<AutoInvestConfigDto>('/investments/auto-invest', {
-    method: 'PUT',
-    // Token PIN gắn với đúng lần lưu này qua Idempotency-Key (D38).
-    headers: { 'Idempotency-Key': idempotencyKey, [PIN_TOKEN_HEADER]: pinToken },
-    body: JSON.stringify({
-      enabled: config.enabled,
-      grades: config.grades,
-      minAnnualRate: config.minAnnualRate,
-      maxTermMonths: config.maxTermMonths,
-      amountPerLoan: config.amountPerLoan,
-      riskAcknowledgementVersion: config.enabled ? riskAcknowledgementVersion : undefined,
-    }),
-  });
-  return toAutoInvestConfig(dto);
 };
 
 /**

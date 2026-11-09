@@ -100,11 +100,8 @@ export const COMING_SOON = 'Sắp có';
 export type UpcomingSetting = { icon: IconName; title: string };
 
 /**
- * Các mục "Sắp có" của nhóm "Bảo mật & Liên kết" (mã PIN và Ngân hàng liên kết đã có màn thật, vẽ thành dòng bấm
- * được). Mục dưới đây chưa có chức năng nên hiện mờ, không bấm được:
- * - Thiết bị đăng nhập: `finora-user` chưa có API danh sách phiên/thiết bị.
+ * Các mục "Sắp có" của nhóm "Bảo mật & Liên kết". Mã PIN, Ngân hàng liên kết và Thiết bị đăng nhập
+ * (`GET /users/me/devices`, LOGIN-DEVICE-001) đã có màn thật, vẽ thành dòng bấm được nên không còn ở đây.
  * Sinh trắc học và chữ ký số không còn trong kế hoạch nên không hiện.
  */
-export const SECURITY_SETTINGS: readonly UpcomingSetting[] = [
-  { icon: 'shield', title: 'Thiết bị đăng nhập' },
-];
+export const SECURITY_SETTINGS: readonly UpcomingSetting[] = [];

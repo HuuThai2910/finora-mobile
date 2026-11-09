@@ -1,7 +1,5 @@
 import { mockResponse } from './delay';
 import {
-  AUTO_INVEST,
-  AUTO_INVEST_MATCHES,
   BALANCE,
   BORROWER_PROFILES,
   INVESTMENT_CONTRACT,
@@ -9,8 +7,6 @@ import {
   PORTFOLIO,
 } from './fixtures';
 import type {
-  AutoInvestConfig,
-  AutoInvestMatch,
   BorrowerProfile,
   InvestmentContract,
   InvestOrderResult,
@@ -30,14 +26,6 @@ export const getBorrowerProfile = (applicationNumber: string): Promise<BorrowerP
   mockResponse('market', BORROWER_PROFILES[applicationNumber] ?? BORROWER_PROFILES['LA-MOCK-2044']);
 
 export const getPortfolio = (): Promise<PortfolioSummary> => mockResponse('invest', PORTFOLIO);
-
-export const getAutoInvest = (): Promise<AutoInvestConfig> => mockResponse('invest', AUTO_INVEST);
-
-export const getAutoInvestMatches = (): Promise<AutoInvestMatch[]> =>
-  mockResponse('invest', AUTO_INVEST_MATCHES);
-
-export const saveAutoInvest = (config: AutoInvestConfig): Promise<AutoInvestConfig> =>
-  mockResponse('invest', config);
 
 export const getInvestmentContract = (): Promise<InvestmentContract> =>
   mockResponse('signature', INVESTMENT_CONTRACT);

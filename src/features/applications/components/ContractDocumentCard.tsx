@@ -14,7 +14,8 @@ type Props = {
   sharing: boolean;
   onOpen: () => void;
   onShare: () => void;
-  applicationNumber: string;
+  /** Mã hiển thị `HS-…` của hồ sơ gốc; `null` khi backend chưa trả (nút chỉ ghi "Xem hồ sơ gốc"). */
+  applicationCode?: string | null;
   onOpenApplication: () => void;
   /** Đang chờ ký mà chưa mở bản PDF hiện hành: dòng mô tả nhắc phải đọc PDF trước khi ký. */
   mustRead?: boolean;
@@ -32,7 +33,7 @@ export default function ContractDocumentCard({
   sharing,
   onOpen,
   onShare,
-  applicationNumber,
+  applicationCode,
   onOpenApplication,
   mustRead = false,
 }: Props) {
@@ -84,12 +85,12 @@ export default function ContractDocumentCard({
 
       <DetailButton
         // Ký tự nối từ (U+2060) quanh dấu gạch: mã hồ sơ xuống dòng nguyên khối
-        // thay vì bị bẻ đôi ở "LA-".
-        label={`Lập từ hồ sơ ${applicationNumber.replace(/-/g, '⁠-⁠')}`}
+        // thay vì bị bẻ đôi ở "HS-".
+        label={applicationCode ? `Lập từ hồ sơ ${applicationCode.replace(/-/g, '⁠-⁠')}` : 'Xem hồ sơ gốc'}
         icon="folder"
         variant="row"
         onPress={onOpenApplication}
-        accessibilityLabel={`Mở hồ sơ ${applicationNumber}`}
+        accessibilityLabel={applicationCode ? `Mở hồ sơ ${applicationCode}` : 'Mở hồ sơ gốc'}
       />
     </DetailCard>
   );

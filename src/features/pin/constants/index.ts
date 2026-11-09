@@ -10,8 +10,7 @@ export const PIN_TOKEN_HEADER = 'X-Pin-Token';
 export const PIN_SCOPE_LABEL: Record<PinScope, string> = {
   REPAYMENT: "Xác nhận thanh toán khoản vay",
   INVEST: "Xác nhận đặt lệnh đầu tư",
-  ORDER: "Xác nhận đặt lệnh mua/bán Note",
-  AUTO_INVEST: "Xác nhận lưu cài đặt Auto-Invest",
+  ORDER: "Xác nhận đặt lệnh mua/bán phần vốn",
   SIGN_CONTRACT: "Nhập mã PIN để tiếp tục ký hợp đồng qua VNPT SmartCA.",
   WITHDRAW: "Xác nhận rút tiền",
   BANK_ACCOUNT: "Xác nhận liên kết hoặc huỷ liên kết ngân hàng",

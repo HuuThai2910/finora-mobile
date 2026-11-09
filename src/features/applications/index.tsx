@@ -15,5 +15,5 @@ export { default as ApplicationFilterChips } from './components/ApplicationFilte
 export { default as ApplicationListStatus } from './components/ApplicationListStatus';
 export { default as ApplicationDetailError } from './components/ApplicationDetailError';
 export { useMyApplications } from './hook/useApplications';
-export { APPLICATION_STATUS } from './constant';
+export { APPLICATION_STATUS, NEUTRAL_PURPOSE_ICON, PURPOSE_ICONS } from './constant';
 export { applicationJourneyStatus } from './mappers/statusMeta';

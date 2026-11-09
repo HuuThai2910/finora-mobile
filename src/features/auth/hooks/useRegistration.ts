@@ -19,6 +19,7 @@ export function useRegistration() {
         email: normalizeEmail(values.email),
         phone: normalizePhone(values.phone),
         password: values.password,
+        role: values.role,
       }),
     [],
   );

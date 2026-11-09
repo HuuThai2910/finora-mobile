@@ -2,16 +2,18 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import { FontFamily, Radius, SoftShadow, Spacing, tabularNums } from '@/theme';
+import { NEUTRAL_PURPOSE_ICON, PURPOSE_ICONS } from '@/features/applications';
 import type { BookSummary } from '@/types/orderBook';
 import { formatBookPrice, formatDenomination } from '../format';
-import GradePill from './GradePill';
+import RatePill from './RatePill';
 
 /** Ô biểu tượng tròn cùng cỡ thẻ khoản vay trên Sàn. */
 const TILE = 44;
 
 /**
- * Một khoản vay trên chợ Notes: mã, hạng và lãi suất, rồi ba con số người mua bán nhìn đầu tiên —
- * giá mua cao nhất, giá bán thấp nhất, giá khớp gần nhất. Cả thẻ là nút mở sổ lệnh.
+ * Một khoản vay trên chợ Notes, cùng cách gọi tên với thẻ trên Sàn: biểu tượng và tên theo mục đích
+ * vay (không hiện mã số hay hạng), lãi suất, rồi ba con số người mua bán nhìn đầu tiên — giá mua
+ * cao nhất, giá bán thấp nhất, giá khớp gần nhất. Cả thẻ là nút mở sổ lệnh.
  */
 export default function BookSummaryCard({ book, onPress }: { book: BookSummary; onPress: () => void }) {
   const quotes = [
@@ -19,6 +21,8 @@ export default function BookSummaryCard({ book, onPress }: { book: BookSummary; 
     { label: 'Bán thấp nhất', value: book.bestAsk, color: Colors.bookAsk },
     { label: 'Khớp gần nhất', value: book.lastTrade, color: Colors.authInk },
   ];
+  const icon = (book.purposeCode && PURPOSE_ICONS[book.purposeCode]) || NEUTRAL_PURPOSE_ICON;
+  const title = book.purpose || 'Khoản vay';
   const spoken = quotes
     .map(q => `${q.label} ${q.value == null ? 'chưa có' : formatBookPrice(q.value)}`)
     .join(', ');
@@ -27,25 +31,25 @@ export default function BookSummaryCard({ book, onPress }: { book: BookSummary; 
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`Khoản vay ${book.loanId}${book.defaulted ? ', đang nợ xấu' : ''}, ${spoken}`}
+      accessibilityLabel={`${title}, lãi suất ${book.annualRate}% một năm${book.defaulted ? ', đang nợ xấu' : ''}, ${spoken}`}
       accessibilityHint="Mở sổ lệnh của khoản vay"
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
       <View style={styles.top}>
         <View style={styles.tile}>
-          <Icon name="layers" size={22} color={Colors.authPrimary} />
+          <Icon name={icon} size={22} color={Colors.authPrimary} />
         </View>
-        {/* Viên hạng nằm cùng hàng tên khoản vay; dòng kỳ hạn bên dưới dùng trọn bề ngang
-            nên không bị viên hạng ép xuống dòng trên máy hẹp. */}
+        {/* Viên lãi suất nằm cùng hàng tên khoản vay; dòng kỳ hạn bên dưới dùng trọn bề ngang
+            nên không bị viên lãi suất ép xuống dòng trên máy hẹp. */}
         <View style={styles.titleBlock}>
           <View style={styles.titleRow}>
-            <Text style={styles.title} maxFontSizeMultiplier={1.4}>{`Khoản vay #${book.loanId}`}</Text>
-            <GradePill grade={book.grade} annualRate={book.annualRate} />
+            <Text style={styles.title} numberOfLines={1} maxFontSizeMultiplier={1.4}>{title}</Text>
+            <RatePill annualRate={book.annualRate} />
           </View>
           <View style={styles.meta}>
             <Icon name="clock" size={14} color={Colors.authMuted} />
             <Text style={styles.metaText} maxFontSizeMultiplier={1.4}>
-              {`${book.termMonths} tháng, mỗi Note ${formatDenomination(book.noteDenomination)}`}
+              {`${book.termMonths} tháng, mỗi phần vốn ${formatDenomination(book.noteDenomination)}`}
             </Text>
           </View>
         </View>

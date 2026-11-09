@@ -6,10 +6,12 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EmptyState, ErrorState } from '@/components/feedback';
 import { Colors } from '@/constants/colors';
+import { SearchField } from '@/features/products';
 import type { MarketStackParamList, TabParamList } from '@/navigation/types';
 import { Spacing } from '@/theme';
 import { MARKET_MAX_WIDTH, MARKET_PADDING } from '../constant';
 import { useMarketLoans } from '../hook/useMarket';
+import { filterMarketLoans } from '../mapper';
 import LoanCard from './LoanCard';
 import MarketFooter from './MarketFooter';
 import MarketHero from './MarketHero';
@@ -24,9 +26,9 @@ type Nav = CompositeNavigationProp<
 const BOTTOM_SPACE = 40;
 
 /**
- * Màn gốc của tab Sàn — sàn khoản vay (mockup 26/09/2026): banner robot, thẻ
- * từng khoản vay đang gọi vốn, ghi chú phong toả tiền và hai lối sang sản phẩm
- * vay / gói vay ưu đãi. Hai lối đó luôn hiện, kể cả khi sàn lỗi hoặc trống.
+ * Màn gốc của tab Sàn (chỉ nhà đầu tư) — sàn khoản vay (mockup 26/09/2026): banner robot, thẻ từng khoản vay đang
+ * gọi vốn (kính lúp mở ô lọc theo mục đích vay, khu vực, mã hồ sơ), ghi chú phong toả tiền và lối sang chợ Notes.
+ * Lối đó luôn hiện, kể cả khi sàn lỗi hoặc trống.
  */
 export default function MarketScreen() {
   const nav = useNavigation<Nav>();
@@ -36,6 +38,15 @@ export default function MarketScreen() {
   // Nội dung cao ít nhất bằng khung cuộn để nền liền màu tới đáy màn.
   const [viewportHeight, setViewportHeight] = useState(0);
   const { data, loading, error, reload } = useMarketLoans();
+  // Ô tìm chỉ là lựa chọn tạm trên màn này nên giữ state cục bộ, cùng cách màn Sản phẩm vay.
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState('');
+
+  const toggleSearch = () => {
+    // Đóng ô tìm thì bỏ luôn từ khoá để danh sách trở lại đầy đủ.
+    if (searchOpen) setQuery('');
+    setSearchOpen(!searchOpen);
+  };
 
   const renderLoans = () => {
     if (loading && !data) return <MarketSkeleton />;
@@ -45,11 +56,21 @@ export default function MarketScreen() {
         <EmptyState
           icon="search"
           title="Chưa có khoản vay đang gọi vốn"
-          hint="Bật Auto-Invest để được khớp ngay khi có hồ sơ mới."
+          hint="Hồ sơ mới sẽ hiện ở đây khi được duyệt. Kéo xuống để tải lại."
         />
       );
     }
-    return data.map(loan => (
+    const loans = filterMarketLoans(data, query);
+    if (!loans.length) {
+      return (
+        <EmptyState
+          icon="search"
+          title="Không tìm thấy khoản vay phù hợp"
+          hint="Thử từ khoá khác, ví dụ mục đích vay như “kinh doanh”, “học phí” hoặc mã hồ sơ HS-…"
+        />
+      );
+    }
+    return loans.map(loan => (
       <LoanCard key={loan.id} loan={loan} onPress={() => nav.navigate('LoanDetail', { loanId: loan.id })} />
     ));
   };
@@ -59,6 +80,7 @@ export default function MarketScreen() {
       style={styles.root}
       contentContainerStyle={styles.scroll}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
       onLayout={e => setViewportHeight(e.nativeEvent.layout.height)}
       refreshControl={
         <RefreshControl
@@ -72,12 +94,19 @@ export default function MarketScreen() {
       }
     >
       <View style={{ width, minHeight: viewportHeight }}>
-        <MarketHero width={width} topInset={insets.top} />
+        <MarketHero width={width} topInset={insets.top} searchOpen={searchOpen} onToggleSearch={toggleSearch} />
         <View style={styles.content}>
+          {searchOpen ? (
+            <SearchField
+              value={query}
+              onChangeText={setQuery}
+              onClear={() => setQuery('')}
+              placeholder="Tìm theo mục đích vay, khu vực, mã hồ sơ"
+              accessibilityLabel="Tìm khoản vay trên sàn"
+            />
+          ) : null}
           <View style={styles.cards}>{renderLoans()}</View>
           <MarketFooter
-            onProducts={() => nav.navigate('Products')}
-            onPackages={() => nav.navigate('VentoPackages')}
             onNotesMarket={() => nav.navigate('Ví', { screen: 'SecondaryMarket' })}
           />
         </View>

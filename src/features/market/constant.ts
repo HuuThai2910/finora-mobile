@@ -17,7 +17,7 @@ export const GRADE_TONE: Record<CreditGrade, TagTone> = {
 };
 
 export const MARKET_NOTE =
-  'Người vay ẩn danh. Tiền góp bị phong tỏa trong ví — chỉ chuyển đi khi gọi đủ 100% vốn và người vay ký số.';
+  'Tiền góp bị phong tỏa trong ví — chỉ chuyển đi khi gọi đủ 100% vốn và người vay ký số.';
 
 /** Trên web và máy tính bảng, giữ cột nội dung cỡ điện thoại thay vì giãn theo cửa sổ. */
 export const MARKET_MAX_WIDTH = 480;
@@ -65,7 +65,7 @@ export const DEFAULT_INVEST_AMOUNT = 5_000_000;
 export const RISK_DISCLOSURE_VERSION = 'INVESTOR_RISK_V1';
 
 export const RISK_DISCLOSURE_TEXT =
-  "Tôi xác nhận đã xem thông tin khoản vay, hồ sơ người vay ẩn danh và đồng ý với các điều khoản, rủi ro đầu tư.";
+  "Tôi xác nhận đã xem thông tin khoản vay, hồ sơ người vay và đồng ý với các điều khoản, rủi ro đầu tư.";
 
 export const INVEST_NOTE =
   "Tiền được tạm giữ khi đặt lệnh, chỉ chuyển khi khoản vay đủ vốn và các bên đã ký hợp đồng.";
@@ -102,7 +102,7 @@ export function cancelledListingHint(reasonCode: string | null): string {
 /** Thay chỗ ô nhập số tiền khi khoản vay không nhận lệnh mới nữa. */
 export const INVEST_BLOCK_COPY: Record<InvestBlock, { icon: IconName; title: string; hint: string }> = {
   EXPIRED: { icon: 'clock', title: 'Đã hết hạn gọi vốn', hint: `Khoản vay này không nhận thêm lệnh mới. ${PICK_ANOTHER}` },
-  FULLY_FUNDED: { icon: 'circleCheck', title: 'Khoản vay đã gọi đủ vốn', hint: `Không còn phần vốn nào để góp. ${PICK_ANOTHER}` },
+  FULLY_FUNDED: { icon: 'circleCheck', title: 'Khoản vay đã gọi đủ vốn', hint: `Khoản vay đã đủ vốn, không còn chỗ để góp. ${PICK_ANOTHER}` },
   CLOSED: { icon: 'lock', title: 'Khoản vay đã đóng gọi vốn', hint: `Khoản vay này không nhận thêm lệnh mới. ${PICK_ANOTHER}` },
   CANCELLED: { icon: 'circleX', title: 'Đợt gọi vốn đã bị huỷ', hint: `Khoản vay này không nhận thêm lệnh mới. ${PICK_ANOTHER}` },
   UNKNOWN: { icon: 'info', title: 'Khoản vay chưa mở nhận vốn', hint: `Khoản vay này chưa nhận lệnh góp vốn. ${PICK_ANOTHER}` },

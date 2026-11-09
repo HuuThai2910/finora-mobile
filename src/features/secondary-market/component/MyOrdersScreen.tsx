@@ -56,8 +56,8 @@ export default function MyOrdersScreen() {
         <BookStatusCard
           icon="receipt"
           title={activeOnly ? 'Không có lệnh nào đang chờ khớp' : 'Bạn chưa đặt lệnh nào'}
-          hint="Mở một khoản vay trên chợ Notes rồi bấm Mua hoặc Bán."
-          action={{ label: 'Mở chợ Notes', onPress: () => nav.navigate('SecondaryMarket') }}
+          hint="Mở một khoản vay trên chợ chuyển nhượng rồi bấm Mua hoặc Bán."
+          action={{ label: 'Mở chợ chuyển nhượng', onPress: () => nav.navigate('SecondaryMarket') }}
         />
       );
     }
@@ -72,7 +72,7 @@ export default function MyOrdersScreen() {
             <OrderRow
               order={order}
               first={i === 0}
-              loanLabel={order.loanId != null ? `Khoản vay #${order.loanId}` : undefined}
+              loanLabel={order.loanPurpose ?? undefined}
               onCancel={cancel.cancel}
               cancelling={cancel.cancelling === order.reference}
             />

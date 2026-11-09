@@ -31,7 +31,7 @@ export type HomeStackParamList = {
 export type MarketStackParamList = {
   Market: undefined;
   LoanDetail: { loanId: string };
-  /** Hồ sơ người vay ẩn danh của một khoản vay trên sàn, theo mã hồ sơ vay của Loan. */
+  /** Hồ sơ người vay của một khoản vay trên sàn, theo mã hồ sơ vay của Loan. */
   BorrowerProfile: { applicationNumber: string };
   Products: undefined;
   ProductDetail: { productId: number };
@@ -51,7 +51,6 @@ export type WalletStackParamList = {
   WithdrawalDetail: { withdrawalId: string };
   PayInstallment: undefined;
   Portfolio: undefined;
-  AutoInvest: undefined;
   InvestorContracts: undefined;
   InvestContract: { contractNumber?: string } | undefined;
   RescheduleConsents: undefined;
@@ -73,6 +72,8 @@ export type ProfileStackParamList = {
   Profile: undefined;
   /** Toàn bộ thông tin `GET /users/me` của tài khoản đang đăng nhập, chỉ đọc. */
   AccountInfo: undefined;
+  /** Các thiết bị đã đăng nhập vào tài khoản, đăng xuất từ xa thiết bị khác (LOGIN-DEVICE-001). */
+  LoginDevices: undefined;
   /** Tài khoản ngân hàng đã liên kết nhận tiền rút (BL-001). */
   BankAccounts: undefined;
   /** Thêm tài khoản: tra cứu chủ tài khoản, PIN, OTP của ngân hàng. */
@@ -112,7 +113,6 @@ export type ProfileStackParamList = {
   EarlySettlement: { loanNumber: string };
   RescheduleLoan: { loanNumber: string };
   /** Thông báo đẩy của thiết bị và một công tắc push chung (finora-notification R7). */
-  NotificationSettings: undefined;
   /** Điều khoản sử dụng FINORA, nội dung tĩnh trong app. */
   Terms: undefined;
 };

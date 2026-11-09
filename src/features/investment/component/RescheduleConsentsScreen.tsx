@@ -139,7 +139,7 @@ export default function RescheduleConsentsScreen() {
   const body = () => {
     if (state.loading && !state.data) return <InvestStatusCard icon="clock" title="Đang tải đề nghị" hint="Vui lòng chờ trong giây lát." />;
     if (state.error) return <InvestStatusCard icon="alert" danger title={state.error} hint="Kiểm tra kết nối rồi thử lại." action={{ label: 'Thử lại', onPress: state.reload }} />;
-    if (!state.data?.length) return <InvestStatusCard icon="file" title="Không có đề nghị cần xử lý" hint="Khi người vay xin cơ cấu khoản vay bạn đang nắm Note, đề nghị sẽ xuất hiện tại đây." />;
+    if (!state.data?.length) return <InvestStatusCard icon="file" title="Không có đề nghị cần xử lý" hint="Khi người vay xin cơ cấu khoản vay bạn đang giữ phần vốn, đề nghị sẽ xuất hiện tại đây." />;
     return state.data.map(item => (
       <ConsentCard key={item.requestId} item={item} busy={busyId === item.requestId} onDecide={(value, approve) => void decide(value, approve)} />
     ));

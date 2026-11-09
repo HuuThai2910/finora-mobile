@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 import type { PushRegistrationState } from '../types';
 
 /**
- * Trạng thái đăng ký push của máy này, dùng chung giữa cầu nối chạy nền (đăng ký lúc mở phiên) và màn Cài đặt thông
+ * Trạng thái đăng ký push của máy này, dùng chung giữa cầu nối chạy nền (đăng ký lúc mở phiên) và công tắc thông
  * báo. Đặt ở biến module như `authSession` vì phần đăng xuất trong `AuthProvider` cũng cần `deviceId` mà không phải
  * component con của cầu nối.
  *
@@ -31,7 +31,7 @@ const subscribe = (listener: () => void): (() => void) => {
   return () => listeners.delete(listener);
 };
 
-/** Trạng thái đăng ký push cho component; cập nhật ngay khi cầu nối hoặc màn cài đặt đăng ký xong. */
+/** Trạng thái đăng ký push cho component; cập nhật ngay khi cầu nối hoặc công tắc ở màn Hồ sơ đăng ký xong. */
 export function usePushRegistrationState(): PushRegistrationState {
   return useSyncExternalStore(subscribe, getRegistrationState, getRegistrationState);
 }

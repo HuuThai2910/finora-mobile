@@ -120,7 +120,7 @@ function OrderEntry({ book, position, initialSide, initialPrice, width, topInset
   const buy = form.side === 'BID';
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Frame width={width} topInset={topInset} title={buy ? 'Đặt lệnh mua' : 'Đặt lệnh bán'} subtitle={`Khoản vay #${book.loanId}`}>
+      <Frame width={width} topInset={topInset} title={buy ? 'Đặt lệnh mua' : 'Đặt lệnh bán'} subtitle={book.purpose ?? undefined}>
         <PlaceOrderForm book={book} freeNotes={position?.freeNotes ?? null} form={form} submitError={placing.error} />
       </Frame>
       <PinnedBar>

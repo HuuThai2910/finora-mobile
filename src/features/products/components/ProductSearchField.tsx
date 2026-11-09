@@ -8,10 +8,19 @@ type Props = {
   value: string;
   onChangeText: (text: string) => void;
   onClear: () => void;
+  /** Màn khác dùng lại ô này (Sàn khoản vay) thì đổi chữ gợi ý và nhãn đọc cho đúng thứ đang tìm. */
+  placeholder?: string;
+  accessibilityLabel?: string;
 };
 
-/** Ô lọc sản phẩm theo tên, hiện ngay dưới đầu màn khi bấm biểu tượng kính lúp. */
-export default function ProductSearchField({ value, onChangeText, onClear }: Props) {
+/** Ô lọc theo từ khoá, hiện ngay dưới đầu màn khi bấm biểu tượng kính lúp (Sản phẩm vay, Sàn khoản vay). */
+export default function ProductSearchField({
+  value,
+  onChangeText,
+  onClear,
+  placeholder = 'Tìm theo tên sản phẩm',
+  accessibilityLabel = 'Tìm sản phẩm vay theo tên',
+}: Props) {
   const [focused, setFocused] = useState(false);
 
   return (
@@ -22,9 +31,9 @@ export default function ProductSearchField({ value, onChangeText, onClear }: Pro
         onChangeText={onChangeText}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        placeholder="Tìm theo tên sản phẩm"
+        placeholder={placeholder}
         placeholderTextColor={Colors.authMuted}
-        accessibilityLabel="Tìm sản phẩm vay theo tên"
+        accessibilityLabel={accessibilityLabel}
         // Người dùng vừa bấm kính lúp để tìm, nên mở sẵn bàn phím.
         autoFocus
         autoCorrect={false}

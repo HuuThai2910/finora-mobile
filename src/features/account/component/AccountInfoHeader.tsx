@@ -10,8 +10,11 @@ import { Icon } from '@/components/ui';
  */
 const TITLE_SIZE = FontSize.title;
 
-/** Đầu màn "Thông tin tài khoản" nằm thẳng trên nền sóng (không có thẻ nền): nút quay lại và tiêu đề. */
-export default function AccountInfoHeader() {
+/**
+ * Đầu các màn con của tab Hồ sơ nằm thẳng trên nền sóng (không có thẻ nền): nút quay lại và tiêu đề. Mặc định là
+ * "Thông tin tài khoản"; màn "Thiết bị đăng nhập" dùng lại với tiêu đề riêng.
+ */
+export default function AccountInfoHeader({ title = 'Thông tin tài khoản' }: { title?: string }) {
   const nav = useNavigation();
   // Mở thẳng bằng đường dẫn (tải lại trang trên web) thì không còn màn nào phía
   // sau: ẩn nút thay vì để một nút bấm không làm gì.
@@ -31,7 +34,7 @@ export default function AccountInfoHeader() {
       ) : null}
 
       <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.6}>
-        Thông tin tài khoản
+        {title}
       </Text>
     </View>
   );

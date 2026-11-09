@@ -9,7 +9,7 @@ type Props = {
   topInset: number;
   /** Dòng phụ dưới tiêu đề, như hạng và lãi suất của khoản vay. */
   subtitle?: string;
-  /** Phần bên phải hàng tiêu đề, như chấm trạng thái "Trực tiếp". */
+  /** Phần bên phải hàng tiêu đề (nút, nhãn trạng thái). */
   right?: React.ReactNode;
   /** Khối cao tối thiểu chừng này (đã gồm vùng an toàn), để thẻ đầu nằm dưới hình minh hoạ của nền. */
   minHeight?: number;
@@ -45,7 +45,8 @@ export default function BookHeader({ title, topInset, subtitle, right, minHeight
             {title}
           </Text>
           {subtitle ? (
-            <Text style={styles.subtitle} maxFontSizeMultiplier={1.4}>
+            // Dòng phụ là mục đích vay, có thể kèm chi tiết người vay tự nhập dài: cắt ở hai dòng.
+            <Text style={styles.subtitle} numberOfLines={2} maxFontSizeMultiplier={1.4}>
               {subtitle}
             </Text>
           ) : null}

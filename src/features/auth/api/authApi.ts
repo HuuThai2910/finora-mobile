@@ -65,7 +65,7 @@ export const login = async (req: LoginRequest): Promise<AuthTokens> => {
 export const register = (req: RegisterRequest): Promise<RegistrationChallenge> => {
   return authFetch<RegistrationChallengeDto>(
     '/auth/register',
-    json({ email: req.email, password: req.password, phone: req.phone }),
+    json({ email: req.email, password: req.password, phone: req.phone, role: req.role }),
   );
 };
 

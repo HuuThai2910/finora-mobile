@@ -1,6 +1,4 @@
 import type {
-  AutoInvestConfig,
-  AutoInvestMatch,
   InvestmentContract,
   InvestmentCommitment,
   PortfolioPosition,
@@ -53,6 +51,9 @@ export interface InvestorContractDto {
   contractNumber: string;
   loanApplicationId: number;
   applicationNumber: string;
+  /** Mã hiển thị; backend cũ chưa trả. */
+  contractCode?: string | null;
+  applicationCode?: string | null;
   loanNumber: string | null;
   purpose: string;
   contractStatus: string;
@@ -145,6 +146,8 @@ export function toInvestmentContract(dto: InvestorContractDto): InvestmentContra
     reference: dto.contractNumber,
     loanApplicationId: dto.loanApplicationId,
     applicationNumber: dto.applicationNumber,
+    contractCode: dto.contractCode ?? null,
+    applicationCode: dto.applicationCode ?? null,
     loanNumber: dto.loanNumber,
     purpose: dto.purpose,
     amount: Number(dto.investorAmount),
@@ -193,48 +196,3 @@ export const toInvestmentCommitment = (dto: InvestmentCommitmentDto): Investment
   createdAt: dto.createdAt,
 });
 
-/** Tiền và lãi suất đi dạng chuỗi để không mất chính xác khi parse JSON. */
-export interface AutoInvestConfigDto {
-  enabled: boolean;
-  grades: string[];
-  minAnnualRate: string;
-  maxTermMonths: number;
-  amountPerLoan: string;
-  enabledAt: string | null;
-  riskAcknowledgedVersion?: string | null;
-  riskAcknowledgedAt?: string | null;
-  riskDisclosureVersion?: string;
-  pausedForRiskAcknowledgement?: boolean;
-}
-
-export interface AutoInvestMatchDto {
-  at: string;
-  listingId: number;
-  applicationNumber: string | null;
-  creditGrade: string | null;
-  annualInterestRate: string | null;
-  outcome: 'MATCHED' | 'SKIPPED';
-  reason: string | null;
-  amount: string | null;
-  orderReference: string | null;
-}
-
-export const toAutoInvestConfig = (dto: AutoInvestConfigDto): AutoInvestConfig => ({
-  enabled: dto.enabled,
-  grades: dto.grades,
-  minAnnualRate: Number(dto.minAnnualRate),
-  maxTermMonths: dto.maxTermMonths,
-  amountPerLoan: Number(dto.amountPerLoan),
-  riskAcknowledgedVersion: dto.riskAcknowledgedVersion ?? null,
-  pausedForRiskAcknowledgement: dto.pausedForRiskAcknowledgement ?? false,
-});
-
-export const toAutoInvestMatch = (dto: AutoInvestMatchDto): AutoInvestMatch => ({
-  at: dto.at,
-  loanId: dto.applicationNumber ?? `#${dto.listingId}`,
-  grade: dto.creditGrade,
-  annualRate: dto.annualInterestRate == null ? null : Number(dto.annualInterestRate),
-  matched: dto.outcome === 'MATCHED',
-  amount: dto.amount == null ? undefined : Number(dto.amount),
-  reason: dto.reason ?? undefined,
-});
