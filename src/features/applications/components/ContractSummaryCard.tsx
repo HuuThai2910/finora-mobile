@@ -3,6 +3,7 @@ import { Colors } from '@/constants/colors';
 import { FontFamily, tabularNums } from '@/theme';
 import type { LoanContractDetail } from '@/types/contract';
 import { formatDong } from '@/utils/format';
+import { displayCodeLine, loanSummaryLine } from '@/utils/loanSummary';
 import type { Countdown } from '../hook/useCountdown';
 import { contractFact, contractKeyTerms } from '../mappers/contractSummary';
 import { contractStatusMeta } from '../mappers/statusMeta';
@@ -25,11 +26,18 @@ export default function ContractSummaryCard({ contract, countdown }: Props) {
   const status = contractStatusMeta(contract.status);
   const fact = contractFact(contract, countdown);
   const amount = formatDong(contract.principalAmount);
+  const summary = loanSummaryLine({
+    purposeCode: contract.purposeCode,
+    amount: contract.principalAmount,
+    termMonths: contract.termMonths,
+    date: contract.createdAt,
+    dateVerb: 'lập',
+  });
+  const codeLine = displayCodeLine('Mã hợp đồng', contract.contractCode);
 
   return (
     <DetailCard>
-      {/* Nhãn trạng thái đứng cùng hàng dòng chữ nhỏ để mã hợp đồng (23 ký tự) có
-          trọn bề ngang, không bị bẻ ở "LC-" trên máy 360pt. */}
+      {/* Nhãn trạng thái đứng cùng hàng dòng chữ nhỏ để dòng tóm tắt có trọn bề ngang. */}
       <View>
         <View style={styles.top}>
           <Text style={styles.eyebrow} maxFontSizeMultiplier={1.3}>
@@ -37,10 +45,15 @@ export default function ContractSummaryCard({ contract, countdown }: Props) {
           </Text>
           <DetailStatusPill status={status} />
         </View>
-        {/* Chọn được để sao chép bằng nhấn giữ; app chưa có thư viện clipboard. */}
-        <Text selectable style={styles.number} maxFontSizeMultiplier={1.3}>
-          {contract.contractNumber}
+        <Text style={styles.summary} maxFontSizeMultiplier={1.3}>
+          {summary}
         </Text>
+        {/* Chọn được để sao chép bằng nhấn giữ; app chưa có thư viện clipboard. */}
+        {codeLine ? (
+          <Text selectable style={styles.number} maxFontSizeMultiplier={1.3}>
+            {codeLine}
+          </Text>
+        ) : null}
       </View>
 
       <View accessible accessibilityLabel={`Số tiền vay ${amount}`}>
@@ -79,6 +92,13 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     letterSpacing: 0.4,
     color: Colors.authMuted,
+  },
+  summary: {
+    marginTop: 4,
+    fontFamily: FontFamily.semibold,
+    fontSize: 14,
+    lineHeight: 20,
+    color: Colors.authInk,
   },
   number: {
     fontFamily: FontFamily.bold,

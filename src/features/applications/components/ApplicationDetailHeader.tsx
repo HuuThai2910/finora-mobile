@@ -10,7 +10,10 @@ type Props = {
   /** Bề rộng cột nội dung (đã giới hạn trên web). */
   width: number;
   topInset: number;
-  applicationNumber: string;
+  /** Dòng tóm tắt "Vay kinh doanh 60 triệu · 18 tháng · nộp 09/11/2026"; `null` khi đang tải. */
+  summary?: string | null;
+  /** "Mã hồ sơ HS-…"; `null` khi chưa tải hoặc backend chưa trả mã hiển thị. */
+  codeLine?: string | null;
 };
 
 const TOP_GAP = 6;
@@ -18,17 +21,18 @@ const TOP_GAP = 6;
 const BACK_PULL = 12;
 /**
  * Khoảng trống tối thiểu giữa khối chữ và vật thể gần nhất của hình minh hoạ
- * (tờ giấy mờ). Đủ để mã hồ sơ 23 ký tự cỡ 11pt nằm trọn một dòng ở màn 360pt.
+ * (tờ giấy mờ). Đủ để mã hồ sơ 21 ký tự cỡ 11pt nằm trọn một dòng ở màn 360pt.
  */
 const TEXT_GAP = 4;
 
 /**
  * Đầu màn chi tiết nằm thẳng trên nền sóng như mockup: mũi tên quay lại, tiêu
- * đề và mã hồ sơ bên trái hình minh hoạ tập hồ sơ. Mã hồ sơ chọn được để sao
- * chép bằng thao tác nhấn giữ của hệ điều hành; app chưa có thư viện clipboard
- * nên không vẽ nút sao chép.
+ * đề, dòng tóm tắt khoản vay và mã hồ sơ `HS-…` bên trái hình minh hoạ tập hồ
+ * sơ. Mã kỹ thuật `LA-…` không hiện. Mã hồ sơ chọn được để sao chép bằng thao
+ * tác nhấn giữ của hệ điều hành; app chưa có thư viện clipboard nên không vẽ
+ * nút sao chép.
  */
-export default function ApplicationDetailHeader({ width, topInset, applicationNumber }: Props) {
+export default function ApplicationDetailHeader({ width, topInset, summary, codeLine }: Props) {
   const nav = useNavigation();
   // Mở từ lối tắt ở trang chủ thì stack Hồ sơ có thể chỉ có màn này; quay lại vẫn
   // được nhờ lịch sử tab, nên hỏi `canGoBack` của cả cây điều hướng.
@@ -60,14 +64,16 @@ export default function ApplicationDetailHeader({ width, topInset, applicationNu
           <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.4}>
             Chi tiết hồ sơ vay
           </Text>
-          <Text
-            style={styles.number}
-            selectable
-            maxFontSizeMultiplier={1.2}
-            accessibilityLabel={`Mã hồ sơ ${applicationNumber}`}
-          >
-            {applicationNumber}
-          </Text>
+          {summary ? (
+            <Text style={styles.summary} maxFontSizeMultiplier={1.3}>
+              {summary}
+            </Text>
+          ) : null}
+          {codeLine ? (
+            <Text style={styles.number} selectable maxFontSizeMultiplier={1.2}>
+              {codeLine}
+            </Text>
+          ) : null}
         </View>
       </View>
     </View>
@@ -101,5 +107,6 @@ const styles = StyleSheet.create({
   },
   // `authMuted` chỉ đạt ~3,4:1 trên dải sóng đậm nhất quanh đầu trang (đo ở màn
   // danh sách cùng ảnh); `ink2` vẫn là chữ phụ nhưng giữ được mức AA.
+  summary: { fontFamily: FontFamily.semibold, fontSize: 12.5, lineHeight: 18, color: Colors.authInk },
   number: { fontFamily: FontFamily.regular, fontSize: 11, lineHeight: 16, color: Colors.ink2 },
 });

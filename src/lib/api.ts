@@ -1,5 +1,6 @@
 import { API_BASE_URL } from './apiBaseUrl';
 import { getValidAccessToken, refreshAccessToken } from './authSession';
+import { deviceHeaders } from './deviceIdentity';
 
 /**
  * `finora-user` đọc header này để biết trả token trong body thay vì đặt cookie
@@ -86,6 +87,7 @@ export type ApiRequestInit = RequestInit & {
 async function send(baseUrl: string, path: string, init: ApiRequestInit): Promise<Response> {
   const { headers, authenticated, timeoutMs, signal: callerSignal, ...rest } = init;
   const token = authenticated ? await getValidAccessToken() : null;
+  const device = await deviceHeaders();
   const controller = new AbortController();
   let timedOut = false;
   const forwardAbort = () => controller.abort();
@@ -109,6 +111,7 @@ async function send(baseUrl: string, path: string, init: ApiRequestInit): Promis
       headers: {
         ...(multipart ? {} : { 'Content-Type': 'application/json' }),
         ...MOBILE_CLIENT_HEADERS,
+        ...device,
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(headers as Record<string, string>),
       },

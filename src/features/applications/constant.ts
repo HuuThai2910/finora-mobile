@@ -89,7 +89,7 @@ export const CONTRACT_STATUS: Record<LoanContractStatus, StatusMeta> = {
     tone: 'amber',
     label: 'Đang gọi vốn bổ sung',
     icon: 'users',
-    meaning: 'Một nhà đầu tư đã rút trước khi ký. Khoản vay được đưa lại lên sàn để gọi phần vốn còn thiếu; các nhà đầu tư đã ký vẫn giữ nguyên.',
+    meaning: 'Một nhà đầu tư đã rút trước khi ký. Khoản vay được đưa lại lên sàn để gọi số vốn còn thiếu; các nhà đầu tư đã ký vẫn giữ nguyên.',
     next: 'Gọi đủ vốn bổ sung để hợp đồng được phát hành lại',
   },
   PENDING_BORROWER_SIGNATURE: {

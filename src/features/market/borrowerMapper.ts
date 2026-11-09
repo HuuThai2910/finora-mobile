@@ -1,7 +1,6 @@
 import type {
   BorrowerKycStatus,
   BorrowerProfile,
-  BorrowerRuleResult,
   LoanDecisionSource,
 } from '@/types/invest';
 
@@ -43,13 +42,6 @@ export interface BorrowerProfileDto {
     homeOwnership: string | null;
     educationLevel: string | null;
   };
-  creditHistory: {
-    hasInternalCreditHistory: boolean;
-    completedLoanCount: number;
-    internalDelinquenciesLast2Years: number;
-    internalDefaultedLoanCount: number;
-    source: string;
-  } | null;
   assessment: {
     evaluationScore: number | null;
     creditGrade: string | null;
@@ -58,19 +50,7 @@ export interface BorrowerProfileDto {
     decisionSource: string | null;
     scoredAt: string | null;
   } | null;
-  ruleResults: RuleResultDto[] | null;
 }
-
-type RuleResultDto = {
-  code: string | null;
-  description: string | null;
-  field: string | null;
-  value?: number | string | null;
-  points: number | null;
-  maxPoints: number | null;
-  weight: number | null;
-  missingData: boolean;
-};
 
 const KYC_STATUSES: readonly BorrowerKycStatus[] = ['VERIFIED', 'PENDING', 'PROCESSING', 'REJECTED', 'EXPIRED'];
 const DECISION_SOURCES: readonly LoanDecisionSource[] = ['AI_POLICY', 'ADMIN'];
@@ -81,22 +61,8 @@ function toEnum<T extends string>(allowed: readonly T[], value: string | null | 
   return allowed.find(item => item === value) ?? 'UNKNOWN';
 }
 
-function toRule(dto: RuleResultDto, index: number): BorrowerRuleResult {
-  return {
-    // Luật do admin cấu hình nên phòng trường hợp thiếu mã/mô tả: vẫn hiện được một dòng đọc được.
-    code: dto.code ?? `RULE_${index + 1}`,
-    description: dto.description ?? 'Luật chấm điểm',
-    field: dto.field ?? '',
-    value: dto.value ?? null,
-    points: dto.points,
-    maxPoints: dto.maxPoints,
-    weight: dto.weight,
-    missingData: dto.missingData,
-  };
-}
-
 export function toBorrowerProfile(dto: BorrowerProfileDto): BorrowerProfile {
-  const { loan, capacity, background, creditHistory, assessment } = dto;
+  const { loan, capacity, background, assessment } = dto;
   const purposeDetail = loan.purposeDetail?.trim();
   return {
     applicationNumber: dto.applicationNumber,
@@ -127,14 +93,6 @@ export function toBorrowerProfile(dto: BorrowerProfileDto): BorrowerProfile {
       homeOwnership: background.homeOwnership,
       educationLevel: background.educationLevel,
     },
-    creditHistory: creditHistory
-      ? {
-          hasHistory: creditHistory.hasInternalCreditHistory,
-          completedLoans: creditHistory.completedLoanCount,
-          delinquenciesLast2Years: creditHistory.internalDelinquenciesLast2Years,
-          defaultedLoans: creditHistory.internalDefaultedLoanCount,
-        }
-      : null,
     assessment: assessment
       ? {
           evaluationScore: assessment.evaluationScore,
@@ -146,6 +104,5 @@ export function toBorrowerProfile(dto: BorrowerProfileDto): BorrowerProfile {
           scoredAt: assessment.scoredAt,
         }
       : null,
-    rules: (dto.ruleResults ?? []).map(toRule),
   };
 }

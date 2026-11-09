@@ -1,7 +1,6 @@
 export type NotificationKind =
   | 'cashflow'
   | 'disbursement'
-  | 'autoinvest'
   | 'reminder'
   | 'chain'
   | 'security'

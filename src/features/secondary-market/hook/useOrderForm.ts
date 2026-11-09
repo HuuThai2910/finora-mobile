@@ -38,12 +38,12 @@ export function useOrderForm({ side: initialSide, initialPrice, freeNotes, defau
   })();
 
   const quantityError = (() => {
-    if (!Number.isInteger(quantity) || quantity < 1) return 'Nhập số Note từ 1 trở lên.';
-    if (quantity > QUANTITY_MAX) return 'Một lệnh đặt tối đa 10.000 Note.';
+    if (!Number.isInteger(quantity) || quantity < 1) return 'Nhập số phần vốn từ 1 trở lên.';
+    if (quantity > QUANTITY_MAX) return 'Một lệnh đặt tối đa 10.000 phần vốn.';
     if (side === 'ASK' && freeNotes !== null && quantity > freeNotes) {
       return freeNotes === 0
-        ? 'Bạn không còn Note nào của khoản vay này để bán.'
-        : `Bạn chỉ còn ${freeNotes} Note bán được.`;
+        ? 'Bạn không còn phần vốn nào của khoản vay này để bán.'
+        : `Bạn chỉ còn ${freeNotes} phần vốn bán được.`;
     }
     return null;
   })();

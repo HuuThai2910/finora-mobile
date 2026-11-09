@@ -34,9 +34,9 @@ export default function PositionCard({ position, loading, error, onCancel, cance
   return (
     <View style={cardStyle}>
       <View style={styles.stats}>
-        <Stat label="Note còn bán được" value={position.freeNotes} />
+        <Stat label="Phần vốn còn bán được" value={position.freeNotes} />
         <View style={styles.statDivider} />
-        <Stat label="Note đang trong lệnh bán" value={position.lockedNotes} />
+        <Stat label="Phần vốn đang trong lệnh bán" value={position.lockedNotes} />
       </View>
 
       {position.activeOrders.length === 0 ? (

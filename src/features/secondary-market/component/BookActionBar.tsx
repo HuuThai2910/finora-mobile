@@ -15,8 +15,8 @@ const BUTTON_HEIGHT = 48;
 export default function BookActionBar({ onOrder }: { onOrder: (side: OrderSide) => void }) {
   return (
     <PinnedBar>
-      <SideButton label="Mua Note" onPress={() => onOrder('BID')} />
-      <SideButton label="Bán Note" variant="outline" onPress={() => onOrder('ASK')} />
+      <SideButton label="Mua phần vốn" onPress={() => onOrder('BID')} />
+      <SideButton label="Bán phần vốn" variant="outline" onPress={() => onOrder('ASK')} />
     </PinnedBar>
   );
 }

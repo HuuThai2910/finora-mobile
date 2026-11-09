@@ -57,7 +57,7 @@ export default function SecondaryMarketScreen() {
       );
     }
     if (!books.data?.length) {
-      return <BookStatusCard icon="layers" title="Chưa có Note nào đang lưu hành" hint={MARKET_INTRO} />;
+      return <BookStatusCard icon="layers" title="Chưa có phần vốn nào đang lưu hành" hint={MARKET_INTRO} />;
     }
     return books.data.map(book => (
       <BookSummaryCard
@@ -88,7 +88,7 @@ export default function SecondaryMarketScreen() {
         <WaveBackdrop background={NOTES_MARKET_WAVES} width={width} />
         <View style={styles.content}>
           <BookHeader
-            title="Chợ Notes"
+            title="Chợ chuyển nhượng"
             topInset={insets.top}
             minHeight={headerHeight}
           />

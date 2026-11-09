@@ -122,7 +122,7 @@ function ContractDetailBody({
         sharing={pdf.sharing}
         onOpen={openPdf}
         onShare={pdf.sharePdf}
-        applicationNumber={contract.applicationNumber}
+        applicationCode={contract.applicationCode}
         onOpenApplication={() =>
           navigation.navigate("ApplicationDetail", {
             applicationNumber: contract.applicationNumber,
@@ -186,7 +186,7 @@ function ContractDetailBody({
       <PdfViewer
         visible={pdf.previewUri !== null}
         uri={pdf.previewUri}
-        title={`Hợp đồng ${contract.contractNumber}`}
+        title={contract.contractCode ? `Hợp đồng ${contract.contractCode}` : 'Hợp đồng vay'}
         onClose={pdf.closePreview}
         onShare={pdf.sharePdf}
         sharing={pdf.sharing}

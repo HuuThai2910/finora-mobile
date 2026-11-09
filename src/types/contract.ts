@@ -59,8 +59,15 @@ export interface LoanContractSignedPdfDocument {
 }
 
 export interface LoanContractSummary {
+  /** Mã tra cứu `LC-…`: khóa của mọi API hợp đồng, không hiện cho người dùng. */
   contractNumber: string;
   applicationNumber: string;
+  /** Mã hiển thị `HĐ-yyyyMMdd-XXXX`; backend cũ chưa trả thì không hiện mã. */
+  contractCode?: string | null;
+  /** Mã hiển thị `HS-…` của hồ sơ gốc. */
+  applicationCode?: string | null;
+  /** Mục đích vay của hồ sơ gốc, để dòng tóm tắt thay cho mã. */
+  purposeCode?: string | null;
   principalAmount: number;
   termMonths: number;
   annualInterestRate: number;

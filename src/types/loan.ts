@@ -140,7 +140,10 @@ export interface CalculationSnapshot {
 
 export interface LoanApplication {
   id: number;
+  /** Mã tra cứu `LA-…`: khóa của mọi API hồ sơ, không hiện cho người dùng. */
   applicationNumber: string;
+  /** Mã hiển thị `HS-yyyyMMdd-XXXX`; backend cũ chưa trả thì không hiện mã. */
+  applicationCode?: string | null;
   borrowerId: string;
   loanProductId: number;
   requestedAmount: number;

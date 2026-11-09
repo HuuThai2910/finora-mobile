@@ -6,6 +6,7 @@ import type {
   MarketLoan,
 } from '@/types/invest';
 import { formatDong } from '@/utils/format';
+import { normalizeForMatch } from '@/utils/search';
 
 /**
  * Chuyển contract của Investment Service sang model mà màn hình đang dùng.
@@ -37,8 +38,15 @@ export interface MarketListingDto {
   fundingClosesAt: string | null;
   /** Mã hồ sơ vay của Loan; bản backend cũ chưa trả field này. */
   applicationNumber?: string | null;
+  /** Mã hiển thị `HS-…`/`HĐ-…`; listing tạo trước khi Loan có mã để null. */
+  applicationCode?: string | null;
+  contractCode?: string | null;
+  /** Mã `LoanPurpose` của Loan (`EDUCATION`…); listing cũ hoặc bản backend cũ không có. */
+  purposeCode?: string | null;
   /** Lý do Loan hủy đợt gọi vốn đã đủ vốn; bản backend cũ chưa trả field này. */
   cancellationReason?: string | null;
+  /** Họ tên người vay; chỉ API chi tiết trả, danh sách và bản backend cũ không có. */
+  borrowerFullName?: string | null;
 }
 
 export interface PageDto<T> {
@@ -93,6 +101,7 @@ export function toMarketLoan(dto: MarketListingDto): MarketLoan {
     termMonths: dto.termMonths,
     repaymentMethod: dto.repaymentMethod,
     purpose: dto.purpose,
+    purposeCode: dto.purposeCode ?? null,
     region: dto.region,
     grade: toGrade(dto.creditGrade),
     score: dto.creditScore,
@@ -104,7 +113,10 @@ export function toMarketLoan(dto: MarketListingDto): MarketLoan {
     contractNumber: dto.contractNumber,
     contractStatus: dto.contractStatus,
     applicationNumber: dto.applicationNumber ?? null,
+    applicationCode: dto.applicationCode ?? null,
+    contractCode: dto.contractCode ?? null,
     cancellationReason: dto.cancellationReason ?? null,
+    borrowerName: dto.borrowerFullName?.trim() || null,
   };
 }
 
@@ -113,6 +125,19 @@ export function toMarketLoan(dto: MarketListingDto): MarketLoan {
  * đổi tại chỗ thành "6.000.000 đ" như mọi số tiền khác trên app, phần chữ giữ nguyên. Khoảng
  * trắng trước "đ" không ngắt để chữ "đ" không rơi một mình xuống dòng.
  */
+/**
+ * Lọc khoản vay trên Sàn theo từ khoá người dùng gõ: mục đích vay (kèm chi tiết người vay tự nhập), khu vực và mã
+ * hồ sơ `HS-…`. Bỏ dấu cả hai phía nên gõ "giáo dục" hay "giao duc" đều khớp; từ khoá trống thì giữ nguyên.
+ */
+export function filterMarketLoans(loans: readonly MarketLoan[], query: string): MarketLoan[] {
+  const needle = normalizeForMatch(query);
+  if (!needle) return [...loans];
+  return loans.filter(loan =>
+    [loan.purpose, loan.region, loan.applicationCode ?? '']
+      .some(text => normalizeForMatch(text).includes(needle)),
+  );
+}
+
 export const readableAmounts = (message: string): string =>
   message.replace(/(\d+)(?:\.(\d+))?\s*đồng/g, (_match, whole: string, fraction?: string) =>
     formatDong(Number(fraction && Number(fraction) > 0 ? `${whole}.${fraction}` : whole)).replace(' ', ' '),

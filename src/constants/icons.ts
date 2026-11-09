@@ -138,6 +138,12 @@ export const ICONS = {
     { t: 'rect', x: 5, y: 2, w: 14, h: 20, rx: 2 },
     { t: 'path', d: 'M12 18h.01' },
   ],
+  /** Lucide `monitor` — thiết bị đăng nhập bằng trình duyệt. */
+  monitor: [
+    { t: 'rect', x: 2, y: 3, w: 20, h: 14, rx: 2 },
+    { t: 'line', x1: 8, y1: 21, x2: 16, y2: 21 },
+    { t: 'line', x1: 12, y1: 17, x2: 12, y2: 21 },
+  ],
   grid: [
     { t: 'rect', x: 3, y: 3, w: 7, h: 7, rx: 1 },
     { t: 'rect', x: 14, y: 3, w: 7, h: 7, rx: 1 },

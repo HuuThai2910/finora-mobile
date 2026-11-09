@@ -17,6 +17,11 @@ type Props = {
   danger?: boolean;
   /** Kẻ ngăn cách phía trên; bắt đầu từ cột chữ, không chạy dưới ô icon. */
   divider?: boolean;
+  /**
+   * Điều khiển đặt ở cuối dòng thay cho mũi tên (công tắc bật/tắt). Có `right` thì dòng không bấm được: chạm vào
+   * chính điều khiển, điều khiển tự mang nhãn cho trình đọc màn hình.
+   */
+  right?: React.ReactNode;
   accessibilityHint?: string;
 };
 
@@ -26,7 +31,7 @@ const TONES = {
   upcoming: { tile: Colors.surfaceMuted, icon: Colors.chevronMuted, title: Colors.authMuted },
 } as const;
 
-/** Một dòng trong thẻ cài đặt: ô icon xanh nhạt, tên, chữ phụ và mũi tên. */
+/** Một dòng trong thẻ cài đặt: ô icon xanh nhạt, tên, chữ phụ và mũi tên (hoặc công tắc ở `right`). */
 export default function SettingsRow({
   icon,
   title,
@@ -35,8 +40,9 @@ export default function SettingsRow({
   danger = false,
   divider = false,
   accessibilityHint,
+  right,
 }: Props) {
-  const tone = !onPress ? TONES.upcoming : danger ? TONES.danger : TONES.normal;
+  const tone = right ? TONES.normal : !onPress ? TONES.upcoming : danger ? TONES.danger : TONES.normal;
   const spoken = subtitle ? `${title}. ${subtitle}` : title;
 
   const body = (
@@ -49,12 +55,16 @@ export default function SettingsRow({
           <Text style={[styles.title, { color: tone.title }, danger && styles.titleDanger]}>{title}</Text>
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
-        {onPress && !danger ? (
+        {right ?? (onPress && !danger ? (
           <Icon name="chevronRight" size={18} color={Colors.chevronMuted} strokeWidth={2.2} />
-        ) : null}
+        ) : null)}
       </View>
     </>
   );
+
+  if (right) {
+    return <View style={styles.row}>{body}</View>;
+  }
 
   if (!onPress) {
     return (

@@ -94,7 +94,7 @@ export default function ContractSignedFilesCard({ contract }: { contract: Invest
       <PdfViewer
         visible={signedPdf.previewUri !== null}
         uri={signedPdf.previewUri}
-        title={`Bản đang ký ${contract.reference}`}
+        title={contract.contractCode ? `Bản đang ký ${contract.contractCode}` : 'Bản đang ký'}
         onClose={signedPdf.closePreview}
         onShare={signedPdf.sharePdf}
         sharing={signedPdf.sharing}
@@ -102,7 +102,7 @@ export default function ContractSignedFilesCard({ contract }: { contract: Invest
       <PdfViewer
         visible={receiptPdf.previewUri !== null}
         uri={receiptPdf.previewUri}
-        title={`Biên nhận chữ ký ${contract.reference}`}
+        title={contract.contractCode ? `Biên nhận chữ ký ${contract.contractCode}` : 'Biên nhận chữ ký'}
         onClose={receiptPdf.closePreview}
         onShare={receiptPdf.sharePdf}
         sharing={receiptPdf.sharing}

@@ -46,8 +46,12 @@ export default function PendingLoanActivationCard({ activation }: Props) {
           {!needsSupport ? <ActivityIndicator size="small" color={Colors.authPrimary} /> : null}
         </View>
         <Text style={styles.amount} maxFontSizeMultiplier={1.4}>{formatDong(activation.principalAmount)}</Text>
-        <Text style={styles.number} maxFontSizeMultiplier={1.4}>Hồ sơ {activation.applicationNumber}</Text>
-        <Text style={styles.number} maxFontSizeMultiplier={1.4}>Hợp đồng {activation.contractNumber}</Text>
+        {activation.applicationCode ? (
+          <Text style={styles.number} maxFontSizeMultiplier={1.4}>Mã hồ sơ {activation.applicationCode}</Text>
+        ) : null}
+        {activation.contractCode ? (
+          <Text style={styles.number} maxFontSizeMultiplier={1.4}>Mã hợp đồng {activation.contractCode}</Text>
+        ) : null}
         <Text style={styles.hint} maxFontSizeMultiplier={1.4}>{content.hint}</Text>
         <Text style={styles.updated} maxFontSizeMultiplier={1.4}>Cập nhật {formatRecentTime(activation.updatedAt)}</Text>
       </View>

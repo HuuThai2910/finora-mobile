@@ -19,8 +19,11 @@ import {
  * không phải sửa dòng code nào trong màn hình.
  */
 
-/** Trang đầu đủ dùng cho danh sách trên điện thoại; không tải không giới hạn. */
-const PAGE_SIZE = 20;
+/**
+ * Một trang tối đa backend cho phép. Ô tìm trên Sàn lọc ngay trên máy (bỏ dấu, theo mục đích vay), nên
+ * tải đủ các khoản đang gọi vốn để kết quả không sót khoản nằm ở trang sau.
+ */
+const PAGE_SIZE = 100;
 
 export const listMarketLoans = async (): Promise<MarketLoan[]> => {
   if (isMocked('market')) return investMock.listMarketLoans();
@@ -39,7 +42,7 @@ export const getMarketLoan = async (listingId: string): Promise<MarketLoan> => {
 };
 
 /**
- * Hồ sơ người vay (ẩn danh, không có SHAP) của một khoản vay trên sàn. Loan là nguồn chuẩn của hồ sơ
+ * Hồ sơ người vay (không có CCCD, liên hệ, SHAP) của một khoản vay trên sàn. Loan là nguồn chuẩn của hồ sơ
  * và kết quả chấm điểm nên app gọi thẳng Loan, như khi tải PDF hợp đồng; Investment không chép số
  * liệu này. Chỉ tài khoản nhà đầu tư gọi được.
  */

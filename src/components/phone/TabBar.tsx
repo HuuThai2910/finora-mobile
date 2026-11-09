@@ -11,6 +11,8 @@ import type { IconName } from '@/constants/icons';
 export const TAB_ICONS: Record<string, IconName> = {
   'Trang chủ': 'home',
   Sàn: 'search',
+  // Tab thứ hai của người vay (cùng route "Sàn", mở danh sách sản phẩm vay).
+  Vay: 'handCoins',
   Ví: 'wallet',
   'Hồ sơ': 'users',
 };

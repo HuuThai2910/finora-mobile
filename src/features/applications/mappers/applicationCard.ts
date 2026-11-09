@@ -2,12 +2,15 @@ import type { IconName } from '@/constants/icons';
 import type { LoanContractSummary } from '@/types/contract';
 import type { LoanApplication } from '@/types/loan';
 import { formatDate, formatDong } from '@/utils/format';
+import { displayCodeLine } from '@/utils/loanSummary';
 import { NEUTRAL_PURPOSE_ICON, PURPOSE_ICONS, PURPOSE_LABELS, type StatusMeta } from '../constant';
 import { applicationJourneyStatus } from './statusMeta';
 
 /** Dữ liệu đã sẵn sàng để vẽ một thẻ ở màn "Hồ sơ vay". */
 export type ApplicationCardView = {
   applicationNumber: string;
+  /** "Mã hồ sơ HS-…" ở dòng phụ; `null` khi backend chưa trả mã hiển thị (không hiện mã kỹ thuật). */
+  codeLine: string | null;
   productName: string;
   purposeLabel: string;
   icon: IconName;
@@ -62,6 +65,7 @@ export function toApplicationCardView(
 
   return {
     applicationNumber: application.applicationNumber,
+    codeLine: displayCodeLine('Mã hồ sơ', application.applicationCode),
     productName,
     purposeLabel: purpose,
     icon: PURPOSE_ICONS[application.purposeCode] ?? NEUTRAL_PURPOSE_ICON,
@@ -72,6 +76,7 @@ export function toApplicationCardView(
     status,
     accessibilityLabel:
       `${productName}, ${status.label}. Số tiền ${amount}, kỳ hạn ${term}, lãi suất ${rate}. ` +
-      `Mục đích: ${purpose}. Mã hồ sơ ${application.applicationNumber}, nộp ngày ${submittedOn}.`,
+      `Mục đích: ${purpose}. ${application.applicationCode ? `Mã hồ sơ ${application.applicationCode}, ` : ''}` +
+      `nộp ngày ${submittedOn}.`,
   };
 }

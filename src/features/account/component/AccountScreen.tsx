@@ -1,13 +1,16 @@
 import { Alert, RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, type CompositeNavigationProp } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
 import { Spacing } from '@/theme';
 import type { IconName } from '@/constants/icons';
 import { ErrorState } from '@/components/feedback';
+import { Switch } from '@/components/ui';
+import { usePushToggle } from '@/features/push-notifications';
 import { useAuth } from '@/providers/AuthProvider';
-import type { ProfileStackParamList } from '@/navigation/types';
+import type { ProfileStackParamList, TabParamList } from '@/navigation/types';
 import {
   COMING_SOON,
   EKYC_ROW_SUBTITLE,
@@ -27,7 +30,10 @@ import ProfileSkeleton from './ProfileSkeleton';
 import SettingsCard from './SettingsCard';
 import SettingsRow from './SettingsRow';
 
-type Nav = NativeStackNavigationProp<ProfileStackParamList, 'Profile'>;
+type Nav = CompositeNavigationProp<
+  NativeStackNavigationProp<ProfileStackParamList, 'Profile'>,
+  BottomTabNavigationProp<TabParamList>
+>;
 
 /**
  * Màn 26 — hồ sơ cá nhân, màn gốc của tab Hồ sơ (vẽ lại theo mockup 26/09/2026).
@@ -42,9 +48,10 @@ export default function AccountScreen() {
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const width = Math.min(windowWidth, PROFILE_MAX_WIDTH);
-  const { signOut } = useAuth();
+  const { session, signOut } = useAuth();
   const profile = useMyProfile();
   const pin = usePinSetting();
+  const push = usePushToggle();
 
   const openInfo = () => nav.navigate('AccountInfo');
   // Luôn vào qua màn điều khoản; đã đồng ý bản hiện hành thì màn đó tự chuyển sang chụp thẻ.
@@ -56,7 +63,30 @@ export default function AccountScreen() {
       { text: 'Đăng xuất', style: 'destructive', onPress: signOut },
     ]);
 
-  const shortcuts: readonly ProfileShortcut[] = [
+  // Lối tắt theo vai trò: nhà đầu tư không có hồ sơ vay hay khoản vay để trả nợ.
+  const investorShortcuts: readonly ProfileShortcut[] = [
+    {
+      icon: 'chart',
+      title: 'Danh mục',
+      subtitle: 'Khoản đầu tư và tiền đã nhận',
+      onPress: () => nav.navigate('Ví', { screen: 'Portfolio' }),
+      hint: 'Mở danh mục đầu tư ở tab Ví',
+    },
+    {
+      icon: 'file',
+      title: 'Hợp đồng',
+      subtitle: 'Hợp đồng góp vốn đã ký',
+      onPress: () => nav.navigate('MyContracts'),
+    },
+    {
+      icon: 'layers',
+      title: 'Chợ chuyển nhượng',
+      subtitle: 'Mua bán phần vốn đang nắm giữ',
+      onPress: () => nav.navigate('Ví', { screen: 'SecondaryMarket' }),
+      hint: 'Mở chợ chuyển nhượng phần vốn ở tab Ví',
+    },
+  ];
+  const borrowerShortcuts: readonly ProfileShortcut[] = [
     {
       icon: 'fileText',
       title: 'Hồ sơ vay',
@@ -77,6 +107,7 @@ export default function AccountScreen() {
       hint: 'Mở danh sách khoản vay đã giải ngân',
     },
   ];
+  const shortcuts = session?.profile.role === 'INVESTOR' ? investorShortcuts : borrowerShortcuts;
 
   const p = profile.data;
   const verified = p?.kycStatus === 'KYC_VERIFIED';
@@ -139,14 +170,29 @@ export default function AccountScreen() {
               accessibilityHint="Mở danh sách tài khoản ngân hàng đã liên kết"
               divider
             />
+            <SettingsRow
+              icon="shield"
+              title="Thiết bị đăng nhập"
+              subtitle="Các máy đang dùng tài khoản của bạn"
+              onPress={() => nav.navigate('LoginDevices')}
+              accessibilityHint="Mở danh sách thiết bị đã đăng nhập"
+              divider
+            />
           </UpcomingGroup>
           <SettingsCard icon="bell" title="Thông báo & Cài đặt">
+            {/* Bật/tắt ngay tại dòng, không mở màn cài đặt riêng. */}
             <SettingsRow
               icon="bell"
-              title="Cài đặt thông báo"
-              subtitle="Bật hoặc tắt thông báo đẩy"
-              onPress={() => nav.navigate('NotificationSettings')}
-              accessibilityHint="Mở màn cài đặt thông báo đẩy"
+              title="Thông báo đẩy"
+              subtitle={push.subtitle}
+              right={
+                <Switch
+                  value={push.value}
+                  onValueChange={push.onChange}
+                  disabled={push.disabled}
+                  label="Nhận thông báo đẩy"
+                />
+              }
             />
             <SettingsRow
               icon="fileText"

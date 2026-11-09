@@ -17,11 +17,11 @@ function headlineOf(order: BookOrder): { title: string; detail: string; ok: bool
   const verb = SIDE_LABEL[order.side].toLowerCase();
   switch (order.status) {
     case 'FILLED':
-      return { title: `Đã ${verb} xong ${order.quantity} Note`, detail: 'Note đã đổi chủ ngay lúc khớp; tiền được thanh toán tự động sau đó.', ok: true };
+      return { title: `Đã ${verb} xong ${order.quantity} phần vốn`, detail: 'Phần vốn đã đổi chủ ngay lúc khớp; tiền được thanh toán tự động sau đó.', ok: true };
     case 'PARTIALLY_FILLED':
       return {
-        title: `Đã khớp ${order.filled}/${order.quantity} Note`,
-        detail: `${order.remaining} Note còn lại nằm trong sổ ở giá ${formatBookPrice(order.price)}, chờ người ${order.side === 'BID' ? 'bán' : 'mua'}.`,
+        title: `Đã khớp ${order.filled}/${order.quantity} phần vốn`,
+        detail: `${order.remaining} phần vốn còn lại nằm trong sổ ở giá ${formatBookPrice(order.price)}, chờ người ${order.side === 'BID' ? 'bán' : 'mua'}.`,
         ok: true,
       };
     case 'OPEN':

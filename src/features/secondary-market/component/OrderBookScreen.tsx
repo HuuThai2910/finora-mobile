@@ -22,7 +22,6 @@ import BookHeader from './BookHeader';
 import BookPriceCard from './BookPriceCard';
 import BookStatusCard from './BookStatusCard';
 import DepthLadder from './DepthLadder';
-import LiveBadge from './LiveBadge';
 import PositionCard from './PositionCard';
 import RecentTrades, { RECENT_TRADES_SHOWN } from './RecentTrades';
 
@@ -72,7 +71,7 @@ export default function OrderBookScreen() {
   const explainNote = () =>
     Alert.alert(
       'Giá theo % dư nợ',
-      'Mỗi Note là một phần của khoản vay. Giá là phần trăm số gốc người vay còn nợ trên Note đó: 98% nghĩa là trả 98% dư nợ gốc còn lại. Note còn nợ ít hơn mệnh giá thì tiền mỗi Note cũng ít hơn.',
+      'Mỗi phần vốn là một phần của khoản vay. Giá là phần trăm số gốc người vay còn nợ trên phần vốn đó: 98% nghĩa là trả 98% dư nợ gốc còn lại. Phần vốn còn nợ ít hơn mệnh giá thì tiền mỗi phần vốn cũng ít hơn.',
     );
 
   const renderBody = () => {
@@ -114,10 +113,10 @@ export default function OrderBookScreen() {
               onPress={explainNote}
               hitSlop={8}
               accessibilityRole="button"
-              accessibilityLabel={`Mỗi Note ${formatDong(data.noteDenomination)}. Giải thích giá theo phần trăm dư nợ`}
+              accessibilityLabel={`Mỗi phần vốn ${formatDong(data.noteDenomination)}. Giải thích giá theo phần trăm dư nợ`}
               style={styles.noteInfo}
             >
-              <Text style={styles.noteInfoText} maxFontSizeMultiplier={1.3}>{`1 Note = ${formatDong(data.noteDenomination)}`}</Text>
+              <Text style={styles.noteInfoText} maxFontSizeMultiplier={1.3}>{`1 phần vốn = ${formatDong(data.noteDenomination)}`}</Text>
               <Icon name="info" size={18} color={Colors.authMuted} />
             </Pressable>
           }
@@ -175,9 +174,9 @@ export default function OrderBookScreen() {
           <WaveBackdrop background={HOME_WAVES} width={width} />
           <View style={styles.content}>
             <BookHeader
-              title={book.data ? `Khoản vay #${book.data.loanId}` : 'Sổ lệnh'}
+              title="Sổ lệnh"
+              subtitle={book.data?.purpose ?? undefined}
               topInset={insets.top}
-              right={<LiveBadge connection={book.connection} />}
             />
             {renderBody()}
           </View>

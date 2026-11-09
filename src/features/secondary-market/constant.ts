@@ -50,23 +50,23 @@ export const STATUS_TONE: Record<BookOrderStatus, 'blue' | 'green' | 'amber' | '
 export const CANCEL_REASON_LABEL: Record<CancelReason, string> = {
   USER: 'Bạn đã huỷ phần chưa khớp.',
   SELF_TRADE_PREVENTED: 'Lệnh chạm vào lệnh của chính bạn nên phần còn lại bị huỷ.',
-  NOTE_UNAVAILABLE: 'Note trong lệnh không còn giao được nên phần còn lại bị huỷ.',
+  NOTE_UNAVAILABLE: 'Phần vốn trong lệnh không còn giao được nên phần còn lại bị huỷ.',
   DEFAULT_NOT_ACKNOWLEDGED: 'Khoản vay chuyển nợ xấu sau khi bạn đặt lệnh nên lệnh mua bị huỷ; đặt lại nếu vẫn muốn mua.',
-  BOOK_CLOSED: 'Khoản vay đã tất toán, không còn Note để giao dịch nên lệnh bị huỷ.',
+  BOOK_CLOSED: 'Khoản vay đã tất toán, không còn phần vốn để giao dịch nên lệnh bị huỷ.',
   UNKNOWN: 'Phần chưa khớp đã bị huỷ.',
 };
 
 export const MARKET_INTRO =
-  'Mua lại Note của nhà đầu tư khác, hoặc bán Note đang giữ để lấy tiền trước hạn. Lệnh khớp ngay khi giá mua chạm giá bán.';
+  'Mua lại phần vốn của nhà đầu tư khác, hoặc chuyển nhượng phần vốn đang giữ để lấy tiền trước hạn. Lệnh khớp ngay khi giá mua chạm giá bán.';
 
 export const MARKET_NOTE =
-  `Giá tính theo % dư nợ gốc còn lại của mỗi Note, tối đa 100%. Nền tảng thu ${FEE_RATE_PERCENT}% trên tiền bán, trừ vào tiền người bán nhận.`;
+  `Giá tính theo % dư nợ gốc còn lại của mỗi phần vốn, tối đa 100%. Nền tảng thu ${FEE_RATE_PERCENT}% trên tiền bán, trừ vào tiền người bán nhận.`;
 
 export const BUY_NOTE =
   'Tiền mua được giữ tạm trong ví ngay khi đặt lệnh. Khớp ở giá thấp hơn thì phần giữ thừa trả lại ví khi lệnh xong.';
 
 export const SELL_NOTE =
-  `Note trong lệnh bán vẫn là của bạn và vẫn nhận gốc lãi cho tới khi khớp. Bạn nhận tiền sau khi trừ phí ${FEE_RATE_PERCENT}%.`;
+  `Phần vốn trong lệnh bán vẫn là của bạn và vẫn nhận gốc lãi cho tới khi khớp. Bạn nhận tiền sau khi trừ phí ${FEE_RATE_PERCENT}%.`;
 
 /**
  * Mốc hình minh hoạ trong `wallet-background.png` (pixel ảnh gốc, đo bằng PIL) — cùng số đo màn

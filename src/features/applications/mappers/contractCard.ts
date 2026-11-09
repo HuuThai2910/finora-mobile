@@ -1,11 +1,16 @@
 import type { LoanContractStatus, LoanContractSummary } from '@/types/contract';
 import { formatAnnualRateShort, formatDate, formatDong } from '@/utils/format';
+import { displayCodeLine, loanSummaryLine } from '@/utils/loanSummary';
 import { CONTRACT_FILTER_ORDER, type StatusMeta } from '../constant';
 import { contractStatusMeta } from './statusMeta';
 
 /** Dữ liệu đã sẵn sàng để vẽ một thẻ ở màn "Hợp đồng của tôi". */
 export type ContractCardView = {
   contractNumber: string;
+  /** Tiêu đề thẻ theo mục đích vay ("Vay kinh doanh"), thay cho mã kỹ thuật `LC-…`. */
+  title: string;
+  /** "Mã hợp đồng HĐ-…" ở dòng phụ; `null` khi backend chưa trả mã hiển thị. */
+  codeLine: string | null;
   amount: string;
   term: string;
   rate: string;
@@ -47,16 +52,22 @@ export function toContractCardView(contract: LoanContractSummary): ContractCardV
   const term = `${contract.termMonths} tháng`;
   const rate = formatAnnualRateShort(contract.annualInterestRate);
   const dateLine = dateLineOf(contract);
+  // Số tiền, kỳ hạn đã có dòng riêng trên thẻ nên tiêu đề chỉ nói vay để làm gì.
+  const title = loanSummaryLine({ purposeCode: contract.purposeCode });
+  const codeLine = displayCodeLine('Mã hợp đồng', contract.contractCode);
 
   return {
     contractNumber: contract.contractNumber,
+    title,
+    codeLine,
     amount,
     term,
     rate,
     dateLine,
     status,
     accessibilityLabel:
-      `Hợp đồng ${contract.contractNumber}, ${status.label}. Số tiền ${amount}, ` +
+      `Hợp đồng ${title.toLowerCase()}${contract.contractCode ? ` ${contract.contractCode}` : ''}, ` +
+      `${status.label}. Số tiền ${amount}, ` +
       `kỳ hạn ${term}, lãi suất ${rate}. ${dateLine}.`,
   };
 }

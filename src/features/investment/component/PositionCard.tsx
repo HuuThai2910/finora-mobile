@@ -3,17 +3,9 @@ import { Icon } from '@/components/ui';
 import { Colors } from '@/constants/colors';
 import { FontFamily, Radius, SoftShadow, Spacing, tabularNums } from '@/theme';
 import type { InvestmentContract, PortfolioPosition } from '@/types/invest';
+import { NEUTRAL_PURPOSE_ICON, PURPOSE_ICONS } from '@/features/applications';
 import { formatDong, formatPercentValue } from '@/utils/format';
-
-/** Hạng A xanh lá, B xanh dương, C/D hổ phách, E đỏ — cùng cặp màu viên hạng trên Sàn. */
-const GRADE_TONE: Record<string, { bg: string; fg: string }> = {
-  A: { bg: Colors.greenBg, fg: Colors.tagGreenText },
-  B: { bg: Colors.blueBg, fg: Colors.tagBlueText },
-  C: { bg: Colors.amberBg, fg: Colors.tagAmberText },
-  D: { bg: Colors.amberBg, fg: Colors.tagAmberText },
-  E: { bg: Colors.redBg, fg: Colors.tagRedText },
-};
-const NEUTRAL = { bg: Colors.grayBg, fg: Colors.tagGrayText };
+import { displayCodesLine, purposeCodeFromLabel, splitPurpose } from '@/utils/loanSummary';
 
 /** Vị thế đã kết thúc vẫn hiện để giữ lịch sử; nhãn nói rõ vì sao không còn dòng tiền. */
 const ENDED_LABEL: Partial<Record<PortfolioPosition['status'], { text: string; bg: string; fg: string }>> = {
@@ -33,11 +25,10 @@ type Props = {
 };
 
 /**
- * Một khoản vay trong danh mục: tên và hạng, thanh gốc đã thu hồi, dư nợ còn lại và lãi đã nhận,
- * rồi lối sang chợ Notes để bán Note trước hạn.
+ * Một khoản vay trong danh mục, cùng cách gọi tên với thẻ trên Sàn: biểu tượng và tên theo mục đích vay, viên lãi
+ * suất (không hiện hạng), dòng kỳ hạn; rồi thanh gốc đã thu hồi, dư nợ còn lại, lãi đã nhận và lối sang chợ Notes.
  */
 export default function PositionCard({ position: p, contract, onViewContract, onSell }: Props) {
-  const tone = (p.grade && GRADE_TONE[p.grade]) || NEUTRAL;
   const rate = formatPercentValue(p.annualRate);
   // Phần gốc đã về túi; thanh không được tràn khung nếu backend làm tròn dư một chút.
   const repaidShare = p.principal > 0 ? Math.min(Math.max(p.principalRepaid / p.principal, 0), 1) : 0;
@@ -45,30 +36,40 @@ export default function PositionCard({ position: p, contract, onViewContract, on
   const ended = ENDED_LABEL[p.status];
   // Chỉ Note còn hoạt động mới bán được trên chợ; khoản đã tất toán không còn Note để bán.
   const canSell = p.status === 'ACTIVE';
+  // Tiêu đề là mục đích vay; kỳ hạn và phương án người vay tự viết ở dòng phụ; mã HS-/HĐ- dòng dưới cùng.
+  const purpose = splitPurpose(p.purpose ?? contract?.purpose);
+  const title = purpose.label || 'Khoản vay';
+  const code = purposeCodeFromLabel(purpose.label);
+  const icon = (code && PURPOSE_ICONS[code]) || NEUTRAL_PURPOSE_ICON;
+  const meta = [p.termMonths ? `${p.termMonths} tháng` : null, purpose.detail].filter(Boolean).join(' · ');
+  const codes = contract ? displayCodesLine(contract.applicationCode, contract.contractCode) : null;
 
   return (
     <View style={styles.card}>
       <View style={styles.top}>
         <View style={styles.tile}>
-          <Icon name="chart" size={22} color={Colors.authPrimary} />
+          <Icon name={icon} size={22} color={Colors.authPrimary} />
         </View>
         <View style={styles.titleBlock}>
           <View style={styles.titleRow}>
             <Text style={styles.title} maxFontSizeMultiplier={1.4}>
-              {contract?.loanNumber ?? contract?.applicationNumber ?? `Khoản vay nội bộ #${p.loanId}`}
+              {title}
             </Text>
-            <View style={[styles.pill, { backgroundColor: tone.bg }]}>
-              <Text style={[styles.pillText, { color: tone.fg }]} maxFontSizeMultiplier={1.4}>
-                {p.grade ? `${p.grade} - ${rate}` : rate}
+            {/* Viên lãi suất một màu như thẻ Sàn: không hiện hạng. */}
+            <View style={[styles.pill, styles.ratePill]}>
+              <Text style={[styles.pillText, styles.ratePillText]} maxFontSizeMultiplier={1.4}>
+                {rate}
               </Text>
             </View>
           </View>
-          <Text style={styles.meta} numberOfLines={1} maxFontSizeMultiplier={1.4}>
-            {[p.purpose, `${p.termMonths} tháng`].filter(Boolean).join(', ')}
-          </Text>
-          {contract ? (
+          {meta ? (
+            <Text style={styles.meta} numberOfLines={1} maxFontSizeMultiplier={1.4}>
+              {meta}
+            </Text>
+          ) : null}
+          {codes ? (
             <Text style={styles.references} numberOfLines={2} maxFontSizeMultiplier={1.3}>
-              {`Hồ sơ ${contract.applicationNumber} · Hợp đồng ${contract.reference}`}
+              {codes}
             </Text>
           ) : null}
           {ended ? (
@@ -84,7 +85,7 @@ export default function PositionCard({ position: p, contract, onViewContract, on
           {`Đã thu hồi ${repaidPercent}% gốc`}
         </Text>
         <Text style={styles.progressLabel} maxFontSizeMultiplier={1.4}>
-          {`${p.noteCount} Note, ${formatPercentValue(p.sharePercent)} khoản vay`}
+          {`${p.noteCount} phần vốn, ${formatPercentValue(p.sharePercent)} khoản vay`}
         </Text>
       </View>
 
@@ -118,7 +119,7 @@ export default function PositionCard({ position: p, contract, onViewContract, on
         <Pressable
           onPress={() => onViewContract(contract.reference)}
           accessibilityRole="button"
-          accessibilityLabel={`Xem hợp đồng ${contract.reference}`}
+          accessibilityLabel={contract.contractCode ? `Xem hợp đồng ${contract.contractCode}` : 'Xem hợp đồng'}
           style={({ pressed }) => [styles.action, pressed && styles.pressed]}
         >
           <Icon name="file" size={18} color={Colors.authPrimary} />
@@ -131,11 +132,11 @@ export default function PositionCard({ position: p, contract, onViewContract, on
         <Pressable
           onPress={onSell}
           accessibilityRole="button"
-          accessibilityLabel={`Bán Note của khoản vay ${p.loanId} trên chợ Notes`}
+          accessibilityLabel={`Chuyển nhượng phần vốn của khoản vay ${p.loanId} trên chợ chuyển nhượng`}
           style={({ pressed }) => [styles.action, pressed && styles.pressed]}
         >
           <Icon name="layers" size={18} color={Colors.authPrimary} />
-          <Text style={styles.actionText} maxFontSizeMultiplier={1.4}>Chuyển nhượng Note</Text>
+          <Text style={styles.actionText} maxFontSizeMultiplier={1.4}>Chuyển nhượng phần vốn</Text>
           <Icon name="chevronRight" size={18} color={Colors.chevronMuted} />
         </Pressable>
       ) : null}
@@ -176,6 +177,8 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: Spacing.sm },
   title: { flexShrink: 1, fontFamily: FontFamily.bold, fontSize: 16, lineHeight: 23, color: Colors.authInk },
   pill: { borderRadius: Radius.pill, paddingHorizontal: 10, paddingVertical: 3 },
+  ratePill: { backgroundColor: Colors.blueBg },
+  ratePillText: { color: Colors.tagBlueText },
   endedPill: { alignSelf: 'flex-start', marginTop: Spacing.xs },
   pillText: { fontFamily: FontFamily.semibold, fontSize: 12, lineHeight: 17, ...tabularNums },
   meta: { marginTop: 2, fontFamily: FontFamily.regular, fontSize: 13, lineHeight: 18, color: Colors.authMuted },

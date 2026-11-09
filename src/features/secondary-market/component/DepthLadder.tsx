@@ -68,7 +68,7 @@ function SideColumn({
       </View>
       <View style={styles.columnLabels}>
         <Text style={styles.columnLabel} maxFontSizeMultiplier={1.2}>Giá</Text>
-        <Text style={styles.columnLabel} maxFontSizeMultiplier={1.2}>Số Note</Text>
+        <Text style={styles.columnLabel} maxFontSizeMultiplier={1.2}>Số phần</Text>
       </View>
 
       <View>
@@ -115,7 +115,7 @@ function LadderRow({
     <Pressable
       onPress={() => onPick(isAsk ? 'BID' : 'ASK', level.price)}
       accessibilityRole="button"
-      accessibilityLabel={`${isAsk ? 'Bán' : 'Mua'} ${level.quantity} Note giá ${price}, ${level.orderCount} lệnh`}
+      accessibilityLabel={`${isAsk ? 'Bán' : 'Mua'} ${level.quantity} phần vốn giá ${price}, ${level.orderCount} lệnh`}
       accessibilityHint={isAsk ? 'Đặt lệnh mua ở giá này' : 'Đặt lệnh bán ở giá này'}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
     >

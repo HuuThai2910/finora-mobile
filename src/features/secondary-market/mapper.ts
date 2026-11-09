@@ -40,6 +40,8 @@ export interface BookSummaryDto {
   bestAskPercent: string | null;
   lastTradePercent: string | null;
   lastTradeAt: string | null;
+  purpose?: string | null;
+  purposeCode?: string | null;
 }
 
 /** Đúng như `OrderBookSnapshotResponse`. */
@@ -61,6 +63,8 @@ export interface BookSnapshotDto {
   bids: { pricePercent: string; quantity: number; orderCount: number }[];
   asks: { pricePercent: string; quantity: number; orderCount: number }[];
   recentTrades: { pricePercent: string; quantity: number; aggressorSide: string; executedAt: string }[];
+  purpose?: string | null;
+  purposeCode?: string | null;
 }
 
 /** Đúng như `BookOrderResponse`. */
@@ -68,6 +72,7 @@ export interface BookOrderDto {
   orderReference: string;
   listingId: number;
   loanId: number | null;
+  loanPurpose?: string | null;
   side: string;
   pricePercent: string;
   quantity: number;
@@ -165,6 +170,8 @@ export function toBookSummary(dto: BookSummaryDto): BookSummary {
     bestAsk: toOptional(dto.bestAskPercent),
     lastTrade: toOptional(dto.lastTradePercent),
     lastTradeAt: dto.lastTradeAt,
+    purpose: dto.purpose?.trim() || null,
+    purposeCode: dto.purposeCode ?? null,
   };
 }
 
@@ -187,6 +194,8 @@ export function toBookSnapshot(dto: BookSnapshotDto): BookSnapshot {
     bids: dto.bids.map(toLevel),
     asks: dto.asks.map(toLevel),
     recentTrades: dto.recentTrades.map(toTick),
+    purpose: dto.purpose?.trim() || null,
+    purposeCode: dto.purposeCode ?? null,
   };
 }
 
@@ -195,6 +204,7 @@ export function toBookOrder(dto: BookOrderDto): BookOrder {
     reference: dto.orderReference,
     listingId: dto.listingId,
     loanId: dto.loanId,
+    loanPurpose: dto.loanPurpose?.trim() || null,
     side: toSide(dto.side),
     price: toNumber(dto.pricePercent),
     quantity: dto.quantity,

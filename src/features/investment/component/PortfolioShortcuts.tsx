@@ -7,7 +7,7 @@ import { FontFamily, MIN_TOUCH, Radius, SoftShadow, Spacing } from '@/theme';
 export type PortfolioShortcut = { icon: IconName; label: string; onPress: () => void };
 
 /**
- * Ba lối tắt của nhà đầu tư ngay dưới thẻ tổng quan: chợ Notes, Auto-Invest, hợp đồng chờ ký. Ô
+ * Lối tắt của nhà đầu tư ngay dưới thẻ tổng quan: hợp đồng của tôi, chợ chuyển nhượng Notes. Ô
  * trắng chia đều một hàng, cùng dáng hàng nút tắt của thẻ ví nhưng nằm ngoài thẻ.
  */
 export default function PortfolioShortcuts({ items }: { items: readonly PortfolioShortcut[] }) {

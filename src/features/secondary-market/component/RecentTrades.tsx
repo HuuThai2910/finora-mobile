@@ -44,7 +44,7 @@ export default function RecentTrades({ trades, expanded }: { trades: TradeTick[]
             key={`${t.executedAt}-${i}`}
             style={[styles.row, i > 0 && styles.divider]}
             accessible
-            accessibilityLabel={`${formatTime(t.executedAt)}, ${buy ? 'bên mua' : 'bên bán'} khớp ${t.quantity} Note giá ${formatBookPrice(t.price)}`}
+            accessibilityLabel={`${formatTime(t.executedAt)}, ${buy ? 'bên mua' : 'bên bán'} khớp ${t.quantity} phần vốn giá ${formatBookPrice(t.price)}`}
           >
             <Text style={styles.time} maxFontSizeMultiplier={1.3}>{formatTime(t.executedAt)}</Text>
             <View style={[styles.side, { backgroundColor: buy ? Colors.bookBidBar : Colors.bookAskBar }]}>
@@ -53,7 +53,7 @@ export default function RecentTrades({ trades, expanded }: { trades: TradeTick[]
               </Text>
             </View>
             <Text style={styles.price} maxFontSizeMultiplier={1.3}>{formatBookPrice(t.price)}</Text>
-            <Text style={styles.quantity} maxFontSizeMultiplier={1.3}>{`${t.quantity} Note`}</Text>
+            <Text style={styles.quantity} maxFontSizeMultiplier={1.3}>{`${t.quantity} phần`}</Text>
           </View>
         );
       })}

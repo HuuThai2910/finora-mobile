@@ -33,7 +33,7 @@ export type RegisteredDeviceDto = {
 };
 
 /**
- * Trạng thái đăng ký push trên máy này, hiển thị ở màn Cài đặt thông báo.
+ * Trạng thái đăng ký push trên máy này, dùng cho công tắc thông báo đẩy ở màn Hồ sơ.
  * - `unsupported`: web hoặc máy không nhận được push từ xa;
  * - `mocked`: miền `notification` đang chạy dữ liệu giả, không có backend để đăng ký;
  * - `not-configured`: bản build chưa có EAS projectId nên Expo không cấp token;

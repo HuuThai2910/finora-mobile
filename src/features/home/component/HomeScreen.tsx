@@ -12,7 +12,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useBalance, useTransactions } from '@/features/wallet';
 import { useMyApplications } from '@/features/applications';
 import type { HomeStackParamList, TabParamList } from '@/navigation/types';
-import { PROMO_SLIDES, type PromoTarget } from '../constant';
+import { INVESTOR_PROMO_SLIDES, PROMO_SLIDES, type PromoTarget } from '../constant';
 import { useUnreadCount } from '../hook/useHome';
 import Greeting from './Greeting';
 import HomeHeader from './HomeHeader';
@@ -43,10 +43,12 @@ export default function HomeScreen() {
   const { width: windowWidth } = useWindowDimensions();
   const width = Math.min(windowWidth, MAX_WIDTH);
   const { session } = useAuth();
+  // Nhà đầu tư không vay nên Trang chủ của họ không mời vay, không có mục hồ sơ vay; lối tắt dẫn tới sàn và danh mục.
+  const investor = session?.profile.role === 'INVESTOR';
   const balance = useBalance();
   // Giao dịch gần đây đọc thẳng lịch sử ví của Payment Service, cùng nguồn với màn Lịch sử ví.
   const transactions = useTransactions();
-  const applications = useMyApplications();
+  const applications = useMyApplications({ skip: investor });
   const unread = useUnreadCount();
   const hasFocused = useRef(false);
 
@@ -86,19 +88,32 @@ export default function HomeScreen() {
         return nav.navigate('Ví', { screen: 'TopUp' });
       case 'payInstallment':
         return nav.navigate('Hồ sơ', { screen: 'LoanServicingList' });
+      case 'market':
+        return nav.navigate('Sàn', { screen: 'Market' });
+      case 'notesMarket':
+        return nav.navigate('Ví', { screen: 'SecondaryMarket' });
     }
   };
 
-  const actions: readonly WalletAction[] = [
+  const walletActions: readonly WalletAction[] = [
     { icon: 'wallet', label: 'Nạp', onPress: () => nav.navigate('Ví', { screen: 'TopUp' }) },
     { icon: 'download', label: 'Rút', onPress: () => nav.navigate('Ví', { screen: 'Withdraw' }) },
-    { icon: 'file', label: 'Vay', onPress: openProducts },
-    {
-      icon: 'coins',
-      label: 'Hồ sơ',
-      onPress: () => nav.navigate('Hồ sơ', { screen: 'MyApplications' }),
-    },
   ];
+  const actions: readonly WalletAction[] = investor
+    ? [
+        ...walletActions,
+        { icon: 'chart', label: 'Đầu tư', onPress: () => nav.navigate('Sàn', { screen: 'Market' }) },
+        { icon: 'coins', label: 'Danh mục', onPress: () => nav.navigate('Ví', { screen: 'Portfolio' }) },
+      ]
+    : [
+        ...walletActions,
+        { icon: 'file', label: 'Vay', onPress: openProducts },
+        {
+          icon: 'coins',
+          label: 'Hồ sơ',
+          onPress: () => nav.navigate('Hồ sơ', { screen: 'MyApplications' }),
+        },
+      ];
 
   const latest = applications.data?.[0];
 
@@ -129,7 +144,7 @@ export default function HomeScreen() {
 
           <View style={styles.hero}>
             <Greeting fullName={session?.profile.fullName} />
-            <PromoCarousel slides={PROMO_SLIDES} onOpen={openPromo} />
+            <PromoCarousel slides={investor ? INVESTOR_PROMO_SLIDES : PROMO_SLIDES} onOpen={openPromo} />
           </View>
 
           <WalletCard
@@ -142,22 +157,24 @@ export default function HomeScreen() {
             width={width - CONTENT_PADDING * 2}
           />
 
-          <View style={styles.section}>
-            <LatestApplicationSection
-              application={latest}
-              contract={
-                latest ? applications.contractsByApplication.get(latest.applicationNumber) : undefined
-              }
-              loading={applications.loading}
-              error={applications.error}
-              onRetry={applications.reload}
-              onOpen={applicationNumber =>
-                nav.navigate('Hồ sơ', { screen: 'ApplicationDetail', params: { applicationNumber } })
-              }
-              onSeeAll={() => nav.navigate('Hồ sơ', { screen: 'MyApplications' })}
-              onBrowseProducts={openProducts}
-            />
-          </View>
+          {investor ? null : (
+            <View style={styles.section}>
+              <LatestApplicationSection
+                application={latest}
+                contract={
+                  latest ? applications.contractsByApplication.get(latest.applicationNumber) : undefined
+                }
+                loading={applications.loading}
+                error={applications.error}
+                onRetry={applications.reload}
+                onOpen={applicationNumber =>
+                  nav.navigate('Hồ sơ', { screen: 'ApplicationDetail', params: { applicationNumber } })
+                }
+                onSeeAll={() => nav.navigate('Hồ sơ', { screen: 'MyApplications' })}
+                onBrowseProducts={openProducts}
+              />
+            </View>
+          )}
 
           <View style={styles.section}>
             <RecentActivitySection

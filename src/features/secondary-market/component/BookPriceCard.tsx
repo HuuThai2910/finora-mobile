@@ -5,7 +5,7 @@ import { Colors } from '@/constants/colors';
 import type { IconName } from '@/constants/icons';
 import { FontFamily, Radius, tabularNums } from '@/theme';
 import type { BookSnapshot } from '@/types/orderBook';
-import { formatAnnualRateShort, formatTime } from '@/utils/format';
+import { formatPercentValue, formatTime } from '@/utils/format';
 import { BOOK_MASCOT } from '../constant';
 import { formatBookPrice, formatDenomination } from '../format';
 
@@ -15,16 +15,15 @@ const MASCOT_WIDTH = Math.round((MASCOT_HEIGHT * 480) / 510);
 
 /**
  * Thẻ đầu sổ lệnh theo mockup 02/10: nền xanh đậm dần như thẻ ví, robot cầm đồng xu ở góc phải,
- * con số lớn là giá khớp gần nhất, dưới cùng là ba chip có biểu tượng cho hạng, lãi suất và kỳ hạn
- * của khoản vay gốc. Mascot vẽ trước nên nằm dưới chữ.
+ * con số lớn là giá khớp gần nhất, dưới cùng là hai chip có biểu tượng cho lãi suất và kỳ hạn
+ * của khoản vay gốc (không hiện hạng, như thẻ trên Sàn). Mascot vẽ trước nên nằm dưới chữ.
  */
 export default function BookPriceCard({ book }: { book: BookSnapshot }) {
-  // Máy hẹp (360pt): chip nhỏ lại một chút để ba chip vẫn nằm trên một hàng.
+  // Máy hẹp (360pt): chip nhỏ lại một chút để các chip vẫn nằm trên một hàng.
   const compact = useWindowDimensions().width < 380;
   const last = book.lastTrade;
   const chips: { icon: IconName; label: string }[] = [
-    ...(book.grade ? [{ icon: 'shieldCheck' as const, label: `Hạng ${book.grade}` }] : []),
-    { icon: 'chartNoAxesColumn', label: formatAnnualRateShort(book.annualRate) },
+    { icon: 'chartNoAxesColumn', label: formatPercentValue(book.annualRate) },
     { icon: 'clock', label: `${book.termMonths} tháng` },
   ];
 
@@ -62,7 +61,7 @@ export default function BookPriceCard({ book }: { book: BookSnapshot }) {
       </View>
       <Text style={styles.sub} maxFontSizeMultiplier={1.4}>
         {book.lastTradeAt ? `Khớp lúc ${formatTime(book.lastTradeAt)}, ` : ''}
-        {`mỗi Note ${formatDenomination(book.noteDenomination)}`}
+        {`mỗi phần vốn ${formatDenomination(book.noteDenomination)}`}
       </Text>
 
       <View style={styles.chips}>

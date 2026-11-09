@@ -22,9 +22,9 @@ export default function ContractSummaryCard({ contract }: { contract: Investment
   const [detailsOpen, setDetailsOpen] = useState(false);
   const status = STATUS[contract.status];
   const details = [
-    { label: 'Mã hồ sơ vay', value: contract.applicationNumber },
+    ...(contract.applicationCode ? [{ label: 'Mã hồ sơ vay', value: contract.applicationCode }] : []),
     ...(contract.loanNumber ? [{ label: 'Mã khoản vay', value: contract.loanNumber }] : []),
-    { label: 'Số Note', value: String(contract.noteCount) },
+    { label: 'Số phần vốn', value: String(contract.noteCount) },
     { label: 'Nhà đầu tư chưa ký', value: String(contract.remainingLenderSignatures) },
   ];
   const signingWindow = contract.status === 'PENDING_SIGNATURE' || contract.status === 'SIGNING';
@@ -35,7 +35,11 @@ export default function ContractSummaryCard({ contract }: { contract: Investment
         <View style={[styles.pill, { backgroundColor: status.bg }]}>
           <Text style={[styles.pillText, { color: status.fg }]} maxFontSizeMultiplier={1.4}>{status.label}</Text>
         </View>
-        <Text style={styles.reference} numberOfLines={1} maxFontSizeMultiplier={1.3}>{contract.reference}</Text>
+        {contract.contractCode ? (
+          <Text style={styles.reference} numberOfLines={1} selectable maxFontSizeMultiplier={1.3}>
+            {contract.contractCode}
+          </Text>
+        ) : null}
       </View>
 
       <Text style={styles.label} maxFontSizeMultiplier={1.4}>Vốn của bạn trong hợp đồng</Text>

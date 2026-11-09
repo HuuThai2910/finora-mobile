@@ -1,6 +1,7 @@
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ProfileStackParamList } from '@/navigation/types';
+import { displayCodeLine, loanSummaryLine } from '@/utils/loanSummary';
 import { REPAYMENT_LABELS } from '../constant';
 import { useApplicationDetail } from '../hook/useApplicationDetail';
 import { contractActionOf } from '../mappers/applicationSummary';
@@ -32,7 +33,7 @@ export default function ApplicationDetailScreen() {
 
   if (state.loading) {
     return (
-      <ApplicationDetailScaffold applicationNumber={applicationNumber}>
+      <ApplicationDetailScaffold>
         <ApplicationDetailSkeleton />
       </ApplicationDetailScaffold>
     );
@@ -40,11 +41,7 @@ export default function ApplicationDetailScreen() {
 
   if (state.loadError || !state.view) {
     return (
-      <ApplicationDetailScaffold
-        applicationNumber={applicationNumber}
-        onRefresh={state.reload}
-        refreshing={state.refreshing}
-      >
+      <ApplicationDetailScaffold onRefresh={state.reload} refreshing={state.refreshing}>
         <ApplicationDetailError
           message={state.loadError ?? 'Không tải được chi tiết hồ sơ vay.'}
           retrying={state.refreshing}
@@ -73,7 +70,13 @@ export default function ApplicationDetailScreen() {
 
   return (
     <ApplicationDetailScaffold
-      applicationNumber={application.applicationNumber}
+      summary={loanSummaryLine({
+        purposeCode: application.purposeCode,
+        amount: application.requestedAmount,
+        termMonths: application.requestedTermMonths,
+        date: application.submittedAt,
+      })}
+      codeLine={displayCodeLine('Mã hồ sơ', application.applicationCode)}
       onRefresh={state.reload}
       refreshing={state.refreshing}
     >

@@ -78,7 +78,7 @@ export const TERMS_SECTIONS: readonly TermsSection[] = [
         'FINORA không bảo đảm lợi nhuận và không cam kết hoàn vốn. Lợi nhuận hiển thị là lợi nhuận dự kiến nếu người ' +
           'vay trả đúng hạn.',
         'Hạng tín dụng, điểm đánh giá và thông tin người vay chỉ để tham khảo; bạn tự quyết định đầu tư vào khoản nào.',
-        'Mỗi khoản đầu tư được ghi nhận dưới dạng Note gắn với một khoản vay. Bạn có thể bán Note trên sàn, nhưng ' +
+        'Mỗi khoản đầu tư được ghi nhận dưới dạng phần vốn (phần cho vay theo mệnh giá) gắn với một khoản vay. Bạn có thể chuyển nhượng phần vốn trên chợ chuyển nhượng, nhưng ' +
           'FINORA không bảo đảm luôn có người mua hoặc mua đúng giá bạn mong muốn.',
         'Khi bật Đầu tư tự động, FINORA đầu tư thay bạn theo đúng tiêu chí bạn đặt. Bạn chịu rủi ro như khi tự đầu tư ' +
           'và có thể tắt bất cứ lúc nào.',
@@ -146,7 +146,7 @@ export const TERMS_SECTIONS: readonly TermsSection[] = [
     title: '11. Tạm khóa và đóng tài khoản',
     blocks: [
       [
-        'Bạn có thể yêu cầu đóng tài khoản khi đã tất toán mọi khoản vay, không còn nắm giữ Note và đã rút hết số dư ví.',
+        'Bạn có thể yêu cầu đóng tài khoản khi đã tất toán mọi khoản vay, không còn nắm giữ phần vốn nào và đã rút hết số dư ví.',
         'FINORA có thể tạm khóa tài khoản khi bạn vi phạm điều khoản này hoặc theo yêu cầu của cơ quan có thẩm quyền.',
         'Tài khoản bị khóa không làm mất nghĩa vụ trả nợ hay quyền nhận tiền trả nợ đã phát sinh theo hợp đồng.',
       ],

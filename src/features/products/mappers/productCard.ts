@@ -2,6 +2,7 @@ import type { IconName } from '@/constants/icons';
 import type { LoanProductCatalog } from '@/types/loan';
 import { formatMoneyRange } from '@/utils/format';
 import { REPAYMENT_METHOD_LABEL } from '../constant';
+import { normalizeForMatch } from '@/utils/search';
 
 /** Một dòng thông số trên thẻ sản phẩm. */
 export type ProductAttribute = {
@@ -22,21 +23,6 @@ export type ProductCardView = {
   icon: IconName;
   attributes: ProductAttribute[];
 };
-
-/**
- * Chữ thường, bỏ dấu và gộp khoảng trắng để so khớp: người dùng hay gõ không
- * dấu ("tieu dung"), còn tên admin nhập có thể ở dạng Unicode dựng sẵn hoặc tổ
- * hợp. "đ" không tách dấu theo chuẩn Unicode nên phải đổi riêng.
- */
-function normalizeForMatch(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[đĐ]/g, 'd')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
-}
 
 /**
  * Contract `LoanProductCatalog` chưa có trường loại sản phẩm (tiêu dùng hay kinh

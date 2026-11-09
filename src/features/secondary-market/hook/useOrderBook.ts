@@ -30,7 +30,7 @@ export function usePlaceOrder(listingId: number) {
   const [error, setError] = useState<string | null>(null);
   const intent = useRef<{ fingerprint: string; key: string } | null>(null);
   const { requirePin } = usePinGuard();
-  const ekyc = useEkycGate('giao dịch Note');
+  const ekyc = useEkycGate('giao dịch phần vốn');
 
   const submit = useCallback(
     async (input: PlaceOrderInput): Promise<BookOrder | null> => {

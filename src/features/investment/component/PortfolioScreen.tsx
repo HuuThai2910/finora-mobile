@@ -67,7 +67,6 @@ export default function PortfolioScreen() {
 
   const shortcuts: readonly PortfolioShortcut[] = [
     { icon: 'file', label: 'Hợp đồng của tôi', onPress: () => nav.navigate('InvestorContracts') },
-    { icon: 'zap', label: 'Tự động đầu tư', onPress: () => nav.navigate('AutoInvest') },
     { icon: 'layers', label: 'Chợ chuyển nhượng', onPress: () => nav.navigate('SecondaryMarket') },
   ];
 
@@ -134,9 +133,9 @@ export default function PortfolioScreen() {
           {data.positions.length === 0 ? (
             <InvestStatusCard
               icon="chart"
-              title="Chưa có Note nào"
-              hint="Góp vốn vào một khoản vay trên Sàn, hoặc mua lại Note của nhà đầu tư khác trên chợ Notes."
-              action={{ label: 'Mở chợ Notes', onPress: () => nav.navigate('SecondaryMarket') }}
+              title="Chưa có phần vốn nào"
+              hint="Góp vốn vào một khoản vay trên Sàn, hoặc mua lại phần vốn của nhà đầu tư khác trên chợ chuyển nhượng."
+              action={{ label: 'Mở chợ chuyển nhượng', onPress: () => nav.navigate('SecondaryMarket') }}
             />
           ) : (
             data.positions.map(position => (

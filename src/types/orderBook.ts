@@ -38,6 +38,10 @@ export interface BookSummary {
   bestAsk: number | null;
   lastTrade: number | null;
   lastTradeAt: string | null;
+  /** Mục đích vay (nhãn) để gọi tên khoản vay; `null` với backend cũ. */
+  purpose: string | null;
+  /** Mã `LoanPurpose` để chọn biểu tượng; `null` thì dùng biểu tượng hồ sơ chung. */
+  purposeCode: string | null;
 }
 
 /** Một mức giá: tổng số Note còn chờ khớp và số lệnh góp vào. */
@@ -76,6 +80,10 @@ export interface BookSnapshot {
   bids: PriceLevel[];
   asks: PriceLevel[];
   recentTrades: TradeTick[];
+  /** Mục đích vay (nhãn) để gọi tên khoản vay; `null` với backend cũ. */
+  purpose: string | null;
+  /** Mã `LoanPurpose` để chọn biểu tượng; `null` thì dùng biểu tượng hồ sơ chung. */
+  purposeCode: string | null;
 }
 
 /** Lệnh của chính người đang đăng nhập. */
@@ -84,6 +92,8 @@ export interface BookOrder {
   listingId: number;
   /** Khoản vay gốc của sổ; null nếu backend không tìm thấy (khoản đã bị gỡ). */
   loanId: number | null;
+  /** Mục đích vay của khoản gốc để gọi tên khoản vay; `null` với backend cũ. */
+  loanPurpose: string | null;
   side: OrderSide;
   price: number;
   quantity: number;

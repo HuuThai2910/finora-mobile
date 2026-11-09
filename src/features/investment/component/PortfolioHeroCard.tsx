@@ -63,7 +63,7 @@ export default function PortfolioHeroCard({ summary, width }: { summary: Portfol
         {invested}
       </Text>
       <Text style={styles.sub} maxFontSizeMultiplier={1.4}>
-        {`${summary.activeNoteCount} Note trên ${summary.positionCount} khoản vay`}
+        {`${summary.activeNoteCount} phần vốn trên ${summary.positionCount} khoản vay`}
       </Text>
 
       {/* Ba dòng nhãn–số trong một khung mờ: số tiền đủ tám chữ số không vừa ba ô ngang trên máy hẹp. */}

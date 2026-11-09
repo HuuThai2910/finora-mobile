@@ -45,7 +45,7 @@ export default function OrderEstimate({ side, price, quantity, referenceOutstand
       buy ? 'Vì sao giữ tạm tiền?' : 'Số tiền bán',
       buy
         ? 'Đặt lệnh mua thì số tiền này được giữ trong ví để bảo đảm lệnh khớp được. Đây là mức tối đa theo dư nợ hiện tại; khớp ở giá thấp hơn hoặc huỷ lệnh thì phần thừa trả lại ví.'
-        : `Tiền bán = giá × dư nợ gốc còn lại × số Note. FINORA trừ phí ${FEE_RATE_PERCENT}% lúc khớp; số chính thức chốt khi lệnh khớp.`,
+        : `Tiền bán = giá × dư nợ gốc còn lại × số phần vốn. FINORA trừ phí ${FEE_RATE_PERCENT}% lúc khớp; số chính thức chốt khi lệnh khớp.`,
     );
 
   return (
@@ -72,7 +72,7 @@ export default function OrderEstimate({ side, price, quantity, referenceOutstand
           </View>
         ))
       ) : (
-        <Text style={styles.note}>Nhập giá và số Note hợp lệ để xem số tiền.</Text>
+        <Text style={styles.note}>Nhập giá và số phần vốn hợp lệ để xem số tiền.</Text>
       )}
       <View style={styles.noteRow}>
         <Text style={styles.note}>{buy ? BUY_NOTE : SELL_NOTE}</Text>

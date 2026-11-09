@@ -35,6 +35,9 @@ export interface PendingLoanActivation {
   loanApplicationId: number;
   applicationNumber: string;
   contractNumber: string;
+  /** Mã hiển thị `HS-…`/`HĐ-…`; backend cũ chưa trả thì không hiện mã. */
+  applicationCode?: string | null;
+  contractCode?: string | null;
   principalAmount: number;
   currency: string;
   status: PendingLoanActivationStatus;

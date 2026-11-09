@@ -8,8 +8,6 @@ import { WALLET_HISTORY_ART, WALLET_HISTORY_PADDING } from '../constant';
 
 type Props = {
   title: string;
-  /** Biểu tượng tải sao kê ở góc phải, chỉ màn "Lịch sử ví" có. */
-  statementIcon?: boolean;
   /** Bề rộng cột nội dung (đã giới hạn trên web); ảnh nền phóng theo bề rộng này. */
   width: number;
   topInset: number;
@@ -24,17 +22,11 @@ const TITLE_GAP = Spacing.xs;
 const GROUND_GAP = Spacing.xs;
 
 /**
- * Biểu tượng thuần trang trí. `aria-hidden` được View của React Native đổi sang
- * cặp `accessibilityElementsHidden` / `importantForAccessibility` trên iOS/Android.
- */
-const hiddenFromReader = { 'aria-hidden': true } as const;
-
-/**
  * Đầu các màn ví trên nền `WALLET_HISTORY_WAVES` ("Lịch sử ví", "Nạp tiền vào ví"): nút quay lại
  * (khi có chỗ để về) cùng tiêu đề ở góc trái, hai linh vật (thuộc ảnh nền) phía dưới bên phải. Khối
  * này cao tới chân linh vật để thẻ đầu tiên nằm ngay dưới hình.
  */
-export default function WalletHeader({ title, statementIcon = false, width, topInset }: Props) {
+export default function WalletHeader({ title, width, topInset }: Props) {
   const nav = useNavigation();
   // Lịch sử ví là màn gốc của tab Ví; quay lại vẫn được nhờ lịch sử tab.
   const canGoBack = nav.canGoBack();
@@ -73,13 +65,6 @@ export default function WalletHeader({ title, statementIcon = false, width, topI
         >
           {title}
         </Text>
-        {/* Chưa có API xuất sao kê: giữ biểu tượng như mockup nhưng không làm nút,
-            tránh một nút bấm không làm gì. */}
-        {statementIcon ? (
-          <View style={styles.download} {...hiddenFromReader}>
-            <Icon name="download" size={24} color={Colors.authInk} />
-          </View>
-        ) : null}
       </View>
     </View>
   );
@@ -104,12 +89,5 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     letterSpacing: -0.3,
     color: Colors.authInk,
-  },
-  download: {
-    marginLeft: 'auto',
-    width: MIN_TOUCH,
-    height: MIN_TOUCH,
-    alignItems: 'flex-end',
-    justifyContent: 'center',
   },
 });

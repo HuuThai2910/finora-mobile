@@ -25,6 +25,8 @@ const ME = 'me';
 type MockBook = {
   listingId: number;
   loanId: number;
+  purpose: string;
+  purposeCode: string;
   grade: CreditGrade;
   annualRate: number;
   termMonths: number;
@@ -41,9 +43,9 @@ type MockBook = {
 type MockOrder = BookOrder & { investor: string; sequence: number };
 
 const BOOKS: MockBook[] = [
-  { listingId: 31, loanId: 3041, grade: 'A', annualRate: 13.5, termMonths: 12, denomination: 1_000_000, outstanding: 1_000_000, defaulted: false, myNotes: 6, sequence: 0, trades: [] },
-  { listingId: 24, loanId: 2044, grade: 'B', annualRate: 15, termMonths: 9, denomination: 1_000_000, outstanding: 820_000, defaulted: false, myNotes: 0, sequence: 0, trades: [] },
-  { listingId: 18, loanId: 1877, grade: 'D', annualRate: 18, termMonths: 6, denomination: 500_000, outstanding: 410_000, defaulted: true, myNotes: 2, sequence: 0, trades: [] },
+  { listingId: 31, loanId: 3041, purpose: 'Mở rộng cửa hàng tạp hoá', purposeCode: 'SMALL_BUSINESS', grade: 'A', annualRate: 13.5, termMonths: 12, denomination: 1_000_000, outstanding: 1_000_000, defaulted: false, myNotes: 6, sequence: 0, trades: [] },
+  { listingId: 24, loanId: 2044, purpose: 'Học phí cao học', purposeCode: 'EDUCATION', grade: 'B', annualRate: 15, termMonths: 9, denomination: 1_000_000, outstanding: 820_000, defaulted: false, myNotes: 0, sequence: 0, trades: [] },
+  { listingId: 18, loanId: 1877, purpose: 'Sửa chữa nhà', purposeCode: 'HOME_IMPROVEMENT', grade: 'D', annualRate: 18, termMonths: 6, denomination: 500_000, outstanding: 410_000, defaulted: true, myNotes: 2, sequence: 0, trades: [] },
 ];
 
 const ORDERS: MockOrder[] = [];
@@ -68,6 +70,7 @@ function newOrder(
     reference: `OB-MOCK-${referenceSeq}`,
     listingId,
     loanId: requireBook(listingId).loanId,
+    loanPurpose: requireBook(listingId).purpose,
     side,
     price,
     quantity,
@@ -132,12 +135,14 @@ function snapshotOf(book: MockBook): BookSnapshot {
     referenceOutstanding: book.outstanding,
     defaulted: book.defaulted,
     defaultWarning: book.defaulted
-      ? 'Khoản vay gốc đang trong tình trạng nợ xấu; Note có thể không thu hồi đủ gốc lãi'
+      ? 'Khoản vay gốc đang trong tình trạng nợ xấu; phần vốn có thể không thu hồi đủ gốc lãi'
       : null,
     bestBid: bids[0]?.price ?? null,
     bestAsk: asks[0]?.price ?? null,
     lastTrade: last?.price ?? null,
     lastTradeAt: last?.executedAt ?? null,
+    purpose: book.purpose,
+    purposeCode: book.purposeCode,
     bids,
     asks,
     recentTrades: book.trades.slice(0, 20),
@@ -201,6 +206,8 @@ export const listOrderBooks = (): Promise<BookSummary[]> =>
         bestAsk: s.bestAsk,
         lastTrade: s.lastTrade,
         lastTradeAt: s.lastTradeAt,
+        purpose: s.purpose,
+        purposeCode: s.purposeCode,
       };
     }),
   );
@@ -235,7 +242,7 @@ export const placeOrder = (listingId: number, input: PlaceOrderInput): Promise<B
   }
   if (input.side === 'ASK' && book.myNotes - lockedNotes(listingId) < input.quantity) {
     return Promise.reject(new ApiError(409, 'mock', 'INSUFFICIENT_FREE_NOTES',
-      `Bạn chỉ còn ${Math.max(book.myNotes - lockedNotes(listingId), 0)} Note của khoản vay này chưa nằm trong lệnh bán nào`));
+      `Bạn chỉ còn ${Math.max(book.myNotes - lockedNotes(listingId), 0)} phần vốn của khoản vay này chưa nằm trong lệnh bán nào`));
   }
   book.sequence += 1;
   const order = newOrder(listingId, ME, input.side, input.price, input.quantity, book.sequence);

@@ -257,7 +257,7 @@ export const Colors = {
   bookAskColumn: 'rgba(194,38,58,0.04)',
   /** Viền chip trên thẻ giá xanh: tách chip khỏi nền gradient như mockup. */
   bookChipBorder: 'rgba(255,255,255,0.32)',
-  /** Chấm "Trực tiếp" khi đang nhận đẩy qua SSE. */
+  /** Chấm xanh lá của trạng thái tích cực (đợt gọi vốn đã đủ vốn). */
   bookLive: '#22c55e',
 
   // Màn "Thông báo" (09/10/2026). Thẻ, chip, chữ, ô icon dùng lại nhóm auth*/tint*/red*/amber*

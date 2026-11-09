@@ -18,10 +18,7 @@ import type {
   WithdrawalBank,
 } from '@/types/wallet';
 import type {
-  AutoInvestConfig,
-  AutoInvestMatch,
   BorrowerProfile,
-  BorrowerRuleResult,
   InvestmentContract,
   MarketLoan,
   PortfolioSummary,
@@ -217,6 +214,8 @@ export const MARKET_LOANS: MarketLoan[] = [
   {
     id: 'LN-2041',
     applicationNumber: 'LA-MOCK-2041',
+    applicationCode: 'HS-20261102-K7QM',
+    borrowerName: 'Nguyễn Văn An',
     amount: 60_000_000,
     committedAmount: 47_000_000,
     remainingAmount: 13_000_000,
@@ -224,6 +223,7 @@ export const MARKET_LOANS: MarketLoan[] = [
     termMonths: 18,
     repaymentMethod: 'EQUAL_PRINCIPAL',
     purpose: 'Bổ sung vốn kinh doanh tạp hóa',
+    purposeCode: 'SMALL_BUSINESS',
     region: 'Hà Nội',
     grade: 'A',
     score: 82,
@@ -234,6 +234,8 @@ export const MARKET_LOANS: MarketLoan[] = [
   {
     id: 'LN-2043',
     applicationNumber: 'LA-MOCK-2043',
+    applicationCode: 'HS-20261103-3RXA',
+    borrowerName: 'Trần Thị Bích',
     amount: 35_000_000,
     committedAmount: 16_000_000,
     remainingAmount: 19_000_000,
@@ -241,6 +243,7 @@ export const MARKET_LOANS: MarketLoan[] = [
     termMonths: 12,
     repaymentMethod: 'ANNUITY',
     purpose: 'Sửa chữa xe tải chở hàng',
+    purposeCode: 'CAR',
     region: 'Đồng Nai',
     grade: 'B',
     score: 71,
@@ -251,6 +254,8 @@ export const MARKET_LOANS: MarketLoan[] = [
   {
     id: 'LN-2044',
     applicationNumber: 'LA-MOCK-2044',
+    applicationCode: 'HS-20261104-P9TW',
+    borrowerName: 'Lê Minh Khang',
     amount: 90_000_000,
     committedAmount: 83_000_000,
     remainingAmount: 7_000_000,
@@ -258,6 +263,7 @@ export const MARKET_LOANS: MarketLoan[] = [
     termMonths: 24,
     repaymentMethod: 'EQUAL_PRINCIPAL',
     purpose: 'Mở rộng xưởng may gia công',
+    purposeCode: 'SMALL_BUSINESS',
     region: 'TP.HCM',
     grade: 'A',
     score: 88,
@@ -268,6 +274,8 @@ export const MARKET_LOANS: MarketLoan[] = [
   {
     id: 'LN-2046',
     applicationNumber: 'LA-MOCK-2046',
+    applicationCode: 'HS-20261105-HC4N',
+    borrowerName: 'Phạm Thu Hà',
     amount: 25_000_000,
     committedAmount: 3_000_000,
     remainingAmount: 22_000_000,
@@ -275,6 +283,7 @@ export const MARKET_LOANS: MarketLoan[] = [
     termMonths: 9,
     repaymentMethod: 'ANNUITY',
     purpose: 'Nhập hàng bán Tết',
+    purposeCode: 'SMALL_BUSINESS',
     region: 'Cần Thơ',
     grade: 'C',
     score: 58,
@@ -285,32 +294,6 @@ export const MARKET_LOANS: MarketLoan[] = [
 ];
 
 /* ---------------- Hồ sơ người vay của khoản vay trên sàn (Loan Service) ---------------- */
-
-/** Mô tả năm luật của chính sách tín dụng hiện hành, chép từ `finora-ai/config/product_config.json`. */
-const RULE_TEXT = {
-  burden: 'Tiền trả hàng tháng trên thu nhập tháng — càng thấp càng tốt',
-  dti: 'Tỷ lệ nợ trên thu nhập hiện có (DTI) — càng thấp càng tốt',
-  seeking: 'Số lần bị tra cứu CIC 6 tháng — tìm vốn dồn dập là dấu hiệu khát tiền',
-  cic: 'Điểm tín dụng CIC — lịch sử trả nợ tại các tổ chức tín dụng',
-  home: 'Tình trạng nhà ở — đại diện cho tài sản tích lũy và độ ổn định cư trú',
-};
-
-/**
- * Bảng luật mẫu: mỗi luật tối đa 20 điểm, tổng điểm bằng `score` của khoản vay trên sàn. CIC `null`
- * là thiếu dữ liệu (AI cho điểm trung tính 8) để xem được dòng "thiếu dữ liệu".
- */
-const mockRules = (
-  values: { burden: number; dti: number; inquiries: number; cic: number | null; home: string },
-  points: [number, number, number, number, number],
-): BorrowerRuleResult[] => [
-  { code: 'CAPACITY_INSTALLMENT_BURDEN', description: RULE_TEXT.burden, field: 'ty_le_tra_no_thang', value: values.burden, points: points[0], maxPoints: 20, weight: 1, missingData: false },
-  { code: 'CAPACITY_EXISTING_DEBT', description: RULE_TEXT.dti, field: 'dti', value: values.dti, points: points[1], maxPoints: 20, weight: 1, missingData: false },
-  { code: 'CHARACTER_CREDIT_SEEKING', description: RULE_TEXT.seeking, field: 'so_lan_tra_cuu', value: values.inquiries, points: points[2], maxPoints: 20, weight: 1, missingData: false },
-  { code: 'CHARACTER_CIC_HISTORY', description: RULE_TEXT.cic, field: 'cic_score', value: values.cic, points: points[3], maxPoints: 20, weight: 1, missingData: values.cic === null },
-  { code: 'CAPITAL_RESIDENCE_STABILITY', description: RULE_TEXT.home, field: 'home_ownership', value: values.home, points: points[4], maxPoints: 20, weight: 1, missingData: false },
-];
-
-const NO_FINORA_HISTORY = { hasHistory: false, completedLoans: 0, delinquenciesLast2Years: 0, defaultedLoans: 0 };
 
 /** Theo `applicationNumber` của `MARKET_LOANS`; LA-MOCK-2046 dùng hồ sơ giả lập để xem ghi chú tương ứng. */
 export const BORROWER_PROFILES: Record<string, BorrowerProfile> = {
@@ -324,9 +307,7 @@ export const BORROWER_PROFILES: Record<string, BorrowerProfile> = {
     },
     capacity: { monthlyIncome: 45_000_000, monthlyDebt: 3_600_000, dtiPercent: 8, employmentMonths: 84, selfDeclared: true, capturedAt: daysFromNow(-6) },
     background: { age: 38, kycStatus: 'VERIFIED', mockProfile: false, homeOwnership: 'MORTGAGE', educationLevel: 'COLLEGE' },
-    creditHistory: { hasHistory: true, completedLoans: 1, delinquenciesLast2Years: 0, defaultedLoans: 0 },
     assessment: { evaluationScore: 86.4, grade: 'A', pdPercent: 11.8, ruleScore: 82, decisionSource: 'AI_POLICY', scoredAt: daysFromNow(-6) },
-    rules: mockRules({ burden: 0.0924, dti: 8, inquiries: 2, cic: 752, home: 'MORTGAGE' }, [20, 20, 6, 20, 16]),
   },
   'LA-MOCK-2043': {
     applicationNumber: 'LA-MOCK-2043',
@@ -338,9 +319,7 @@ export const BORROWER_PROFILES: Record<string, BorrowerProfile> = {
     },
     capacity: { monthlyIncome: 18_000_000, monthlyDebt: 1_600_000, dtiPercent: 8.89, employmentMonths: 30, selfDeclared: true, capturedAt: daysFromNow(-4) },
     background: { age: 29, kycStatus: 'VERIFIED', mockProfile: false, homeOwnership: 'RENT', educationLevel: 'HIGH_SCHOOL' },
-    creditHistory: NO_FINORA_HISTORY,
     assessment: { evaluationScore: 74.1, grade: 'B', pdPercent: 22.4, ruleScore: 71, decisionSource: 'ADMIN', scoredAt: daysFromNow(-4) },
-    rules: mockRules({ burden: 0.1783, dti: 8.89, inquiries: 0, cic: null, home: 'RENT' }, [15, 20, 20, 8, 8]),
   },
   'LA-MOCK-2044': {
     applicationNumber: 'LA-MOCK-2044',
@@ -352,9 +331,7 @@ export const BORROWER_PROFILES: Record<string, BorrowerProfile> = {
     },
     capacity: { monthlyIncome: 65_000_000, monthlyDebt: 3_900_000, dtiPercent: 6, employmentMonths: 120, selfDeclared: true, capturedAt: daysFromNow(-9) },
     background: { age: 41, kycStatus: 'VERIFIED', mockProfile: false, homeOwnership: 'OWN', educationLevel: 'UNIVERSITY' },
-    creditHistory: { hasHistory: true, completedLoans: 2, delinquenciesLast2Years: 0, defaultedLoans: 0 },
     assessment: { evaluationScore: 88.2, grade: 'A', pdPercent: 9.6, ruleScore: 88, decisionSource: 'AI_POLICY', scoredAt: daysFromNow(-9) },
-    rules: mockRules({ burden: 0.075, dti: 6, inquiries: 1, cic: 715, home: 'OWN' }, [20, 20, 13, 15, 20]),
   },
   'LA-MOCK-2046': {
     applicationNumber: 'LA-MOCK-2046',
@@ -366,9 +343,7 @@ export const BORROWER_PROFILES: Record<string, BorrowerProfile> = {
     },
     capacity: { monthlyIncome: 11_000_000, monthlyDebt: 2_900_000, dtiPercent: 26.36, employmentMonths: 14, selfDeclared: true, capturedAt: daysFromNow(-2) },
     background: { age: 30, kycStatus: 'VERIFIED', mockProfile: true, homeOwnership: 'MORTGAGE', educationLevel: null },
-    creditHistory: NO_FINORA_HISTORY,
     assessment: { evaluationScore: 58.7, grade: 'C', pdPercent: 33.9, ruleScore: 58, decisionSource: 'ADMIN', scoredAt: daysFromNow(-2) },
-    rules: mockRules({ burden: 0.2729, dti: 26.36, inquiries: 3, cic: 742, home: 'MORTGAGE' }, [8, 8, 6, 20, 16]),
   },
 };
 
@@ -406,23 +381,12 @@ export const PORTFOLIO: PortfolioSummary = {
   ],
 };
 
-export const AUTO_INVEST: AutoInvestConfig = {
-  enabled: true,
-  grades: ['A', 'B'],
-  minAnnualRate: 15,
-  maxTermMonths: 18,
-  amountPerLoan: 4_000_000,
-};
-
-export const AUTO_INVEST_MATCHES: AutoInvestMatch[] = [
-  { at: '2026-07-10T15:10:00Z', loanId: 'LN-2044', grade: 'A', annualRate: 15, matched: true, amount: 4_000_000 },
-  { at: '2026-07-09T08:44:00Z', loanId: 'LN-2046', grade: 'B', annualRate: 16, matched: false, reason: 'INSUFFICIENT_FUNDS' },
-];
-
 export const INVESTMENT_CONTRACT: InvestmentContract = {
   reference: 'INV_1036EB_1779470224528',
   loanApplicationId: 2044,
   applicationNumber: 'LA-MOCK-2044',
+  applicationCode: 'HS-20261104-P9TW',
+  contractCode: 'HĐ-20261106-WZ8E',
   loanNumber: null,
   purpose: 'Vay học phí',
   amount: 10_000_000,
@@ -519,7 +483,7 @@ const minutesAgo = (minutes: number): string => new Date(Date.now() - minutes * 
 /**
  * Tin mẫu rải trong hôm nay, hôm qua và vài ngày trước để màn Thông báo đủ các
  * nhóm ngày. Tin dòng tiền, cơ cấu và quá hạn viết theo mẫu câu của
- * finora-notification; giải ngân, Auto-Invest, sổ cái, bảo mật chưa có backend
+ * finora-notification; giải ngân, sổ cái, bảo mật chưa có backend
  * phát tin nên câu chữ chỉ là minh hoạ.
  */
 export const NOTIFICATIONS: AppNotification[] = [
@@ -527,7 +491,7 @@ export const NOTIFICATIONS: AppNotification[] = [
     id: 'N-1',
     kind: 'cashflow',
     title: 'Đã nhận khoản trả nợ',
-    message: 'LN-1975 vừa phân bổ 842.500 đ vào các Note của bạn.',
+    message: 'LN-1975 vừa phân bổ 842.500 đ vào các phần vốn của bạn.',
     highlight: '842.500 đ',
     unread: true,
     occurredAt: minutesAgo(18),
@@ -539,15 +503,6 @@ export const NOTIFICATIONS: AppNotification[] = [
     message: 'LN-2039 giải ngân thành công, bạn góp 8% vốn.',
     unread: true,
     occurredAt: minutesAgo(95),
-  },
-  {
-    id: 'N-3',
-    kind: 'autoinvest',
-    title: 'Auto-Invest đã khớp lệnh',
-    message: 'Đã rót 4.000.000 đ vào LN-2044 theo tiêu chí bạn đặt.',
-    highlight: '4.000.000 đ',
-    unread: true,
-    occurredAt: demoTime(1, 20, 41),
   },
   {
     id: 'N-4',
