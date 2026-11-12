@@ -9,8 +9,8 @@ import { normalizeEmail, normalizePhone } from '../schemas/authForms';
  * Bước 1 của đăng ký — gửi thông tin và nhận thử thách OTP.
  *
  * Không thu họ tên: hồ sơ để trống và tên được điền từ OCR CCCD khi quét eKYC.
- * Tài khoản chưa được tạo ở bước này: `finora-user` giữ thông tin trong Redis
- * khoảng 5 phút, hết hạn là phải khai lại từ đầu.
+ * Tài khoản chưa được tạo ở bước này: `finora-user` giữ thông tin ở kho tạm trên
+ * PostgreSQL của service khoảng 5 phút, hết hạn là phải khai lại từ đầu.
  */
 export function useRegistration() {
   const action = useCallback(

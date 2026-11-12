@@ -1,4 +1,5 @@
-import { investmentFetch, investmentStreamRequest } from '@/lib/api';
+import { investmentFetch } from '@/lib/api';
+import { WS_BASE_URL } from '@/lib/apiBaseUrl';
 import { PIN_TOKEN_HEADER } from '@/features/pin';
 import { isMocked } from '@/lib/mockFlag';
 import * as secondaryMock from '@/lib/mocks/secondary';
@@ -90,12 +91,26 @@ export const cancelBookOrder = async (reference: string): Promise<BookOrder> => 
   return toBookOrder(await investmentFetch<BookOrderDto>(`${BASE}/orders/${reference}`, { method: 'DELETE' }));
 };
 
-/** Bản mock không có luồng đẩy; màn hình hỏi lại định kỳ thay thế. */
+/** Bản mock không có kênh đẩy; màn hình hỏi lại định kỳ thay thế. */
 export const isStreamAvailable = (): boolean => !isMocked('secondary');
 
-export const orderBookStreamRequest = (listingId: number) =>
-  investmentStreamRequest(`${BASE}/${listingId}/stream`);
+/** Vé mở WebSocket của một sổ: dùng một lần, hết hạn sau khoảng 30 giây, chỉ cho đúng sổ đã xin. */
+type StreamTicketDto = { ticket: string; path: string; expiresAt: string };
 
-/** Ảnh chụp đẩy qua luồng có cùng dạng với `GET /{listingId}`. */
-export const parseStreamSnapshot = (data: string): BookSnapshot =>
-  toBookSnapshot(JSON.parse(data) as BookSnapshotDto);
+/** Tin server gửi trên kênh; hiện chỉ có `snapshot` (cả ảnh sổ, cùng dạng `GET /{listingId}`). */
+type StreamMessageDto = { type: string; data?: BookSnapshotDto };
+
+/**
+ * Địa chỉ WebSocket đã gắn vé. WebSocket không gắn được header `Authorization` nên xác thực bằng vé: xin vé qua REST
+ * (bearer token như mọi API) rồi đưa vào query lúc bắt tay. Mỗi lần nối lại phải xin vé mới.
+ */
+export const orderBookSocketUrl = async (listingId: number): Promise<string> => {
+  const ticket = await investmentFetch<StreamTicketDto>(`${BASE}/${listingId}/stream-ticket`, { method: 'POST' });
+  return `${WS_BASE_URL}${ticket.path}?ticket=${encodeURIComponent(ticket.ticket)}`;
+};
+
+/** Ảnh sổ trong một tin của kênh; tin loại khác trả `null`. */
+export const parseStreamMessage = (data: string): BookSnapshot | null => {
+  const message = JSON.parse(data) as StreamMessageDto;
+  return message.type === 'snapshot' && message.data ? toBookSnapshot(message.data) : null;
+};
