@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react';
 import {
-  Alert,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -22,6 +21,7 @@ import { PORTFOLIO_MAX_WIDTH, PORTFOLIO_PADDING } from '../constant';
 import { useRescheduleConsents } from '../hook/useInvestment';
 import InvestHeader from './InvestHeader';
 import InvestStatusCard from './InvestStatusCard';
+import RescheduleDecisionModal from './RescheduleDecisionModal';
 
 const STATUS: Record<InvestorRescheduleConsentStatus, { label: string; color: string; bg: string }> = {
   PENDING: { label: 'Chờ bạn quyết định', color: Colors.tagAmberText, bg: Colors.amberBg },
@@ -103,37 +103,37 @@ export default function RescheduleConsentsScreen() {
   const [viewportHeight, setViewportHeight] = useState(0);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [decision, setDecision] = useState<{
+    item: InvestorRescheduleConsent;
+    approve: boolean;
+  } | null>(null);
   const keys = useRef<Record<string, string>>({});
   const state = useRescheduleConsents();
 
-  const decide = async (item: InvestorRescheduleConsent, approve: boolean) => {
-    const action = approve ? 'đồng ý' : 'từ chối';
-    Alert.alert(
-      approve ? 'Đồng ý cơ cấu lịch trả?' : 'Từ chối đề nghị cơ cấu?',
-      approve
-        ? 'Sau khi toàn bộ nhà đầu tư đồng ý, hệ thống sẽ áp dụng lịch trả mới. Quyết định này không thể hoàn tác.'
-        : 'Một nhà đầu tư từ chối sẽ kết thúc đề nghị; lịch trả hiện tại tiếp tục có hiệu lực.',
-      [
-        { text: 'Quay lại', style: 'cancel' },
-        {
-          text: approve ? 'Đồng ý' : 'Từ chối',
-          style: approve ? 'default' : 'destructive',
-          onPress: () => {
-            const keyName = `${item.requestId}:${action}`;
-            keys.current[keyName] ??= generateIdempotencyKey();
-            setBusyId(item.requestId);
-            setActionError(null);
-            void decideRescheduleConsent(item.requestId, approve, keys.current[keyName])
-              .then(() => {
-                delete keys.current[keyName];
-                state.reload();
-              })
-              .catch((error: unknown) => setActionError(toUserMessage(error)))
-              .finally(() => setBusyId(null));
-          },
-        },
-      ],
-    );
+  const requestDecision = (item: InvestorRescheduleConsent, approve: boolean) => {
+    setActionError(null);
+    setDecision({ item, approve });
+  };
+
+  const submitDecision = async () => {
+    if (!decision || busyId) return;
+
+    const { item, approve } = decision;
+    const keyName = `${item.requestId}:${approve ? 'approve' : 'reject'}`;
+    keys.current[keyName] ??= generateIdempotencyKey();
+    setBusyId(item.requestId);
+    setActionError(null);
+
+    try {
+      await decideRescheduleConsent(item.requestId, approve, keys.current[keyName]);
+      delete keys.current[keyName];
+      setDecision(null);
+      state.reload();
+    } catch (error: unknown) {
+      setActionError(toUserMessage(error));
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const body = () => {
@@ -141,27 +141,43 @@ export default function RescheduleConsentsScreen() {
     if (state.error) return <InvestStatusCard icon="alert" danger title={state.error} hint="Kiểm tra kết nối rồi thử lại." action={{ label: 'Thử lại', onPress: state.reload }} />;
     if (!state.data?.length) return <InvestStatusCard icon="file" title="Không có đề nghị cần xử lý" hint="Khi người vay xin cơ cấu khoản vay bạn đang giữ phần vốn, đề nghị sẽ xuất hiện tại đây." />;
     return state.data.map(item => (
-      <ConsentCard key={item.requestId} item={item} busy={busyId === item.requestId} onDecide={(value, approve) => void decide(value, approve)} />
+      <ConsentCard key={item.requestId} item={item} busy={busyId === item.requestId} onDecide={requestDecision} />
     ));
   };
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={styles.scroll}
-      showsVerticalScrollIndicator={false}
-      onLayout={event => setViewportHeight(event.nativeEvent.layout.height)}
-      refreshControl={<RefreshControl refreshing={state.loading && !!state.data} onRefresh={state.reload} tintColor={Colors.authPrimary} colors={[Colors.authPrimary]} />}
-    >
-      <View style={{ width, minHeight: viewportHeight }}>
-        <WaveBackdrop background={HOME_WAVES} width={width} />
-        <View style={styles.content}>
-          <InvestHeader title="Đồng ý cơ cấu khoản vay" topInset={insets.top} />
-          {actionError ? <DetailNote tone="warn">{actionError}</DetailNote> : null}
-          {body()}
+    <>
+      <ScrollView
+        style={styles.root}
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        onLayout={event => setViewportHeight(event.nativeEvent.layout.height)}
+        refreshControl={<RefreshControl refreshing={state.loading && !!state.data} onRefresh={state.reload} tintColor={Colors.authPrimary} colors={[Colors.authPrimary]} />}
+      >
+        <View style={{ width, minHeight: viewportHeight }}>
+          <WaveBackdrop background={HOME_WAVES} width={width} />
+          <View style={styles.content}>
+            <InvestHeader title="Đồng ý cơ cấu khoản vay" topInset={insets.top} />
+            {actionError && !decision ? <DetailNote tone="warn">{actionError}</DetailNote> : null}
+            {body()}
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+      <RescheduleDecisionModal
+        visible={decision !== null}
+        approve={decision?.approve ?? true}
+        loanNumber={decision?.item.loanNumber}
+        busy={decision ? busyId === decision.item.requestId : false}
+        error={actionError}
+        onCancel={() => {
+          if (!busyId) {
+            setActionError(null);
+            setDecision(null);
+          }
+        }}
+        onConfirm={() => void submitDecision()}
+      />
+    </>
   );
 }
 
