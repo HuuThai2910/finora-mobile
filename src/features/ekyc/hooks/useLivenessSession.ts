@@ -31,6 +31,11 @@ type Options = {
   onReview: (result: EkycResultResponse) => void;
   /** Hồ sơ đã sang trạng thái cuối (ví dụ chờ duyệt tay sau 3 lần trượt). */
   onFinal: (result: EkycResultResponse) => void;
+  /**
+   * Phiên đã chuyển nhân viên duyệt từ bước thẻ (hệ thống xác minh lỗi): mọi video gửi kèm `reviewMode=MANUAL`,
+   * server chỉ lưu làm bằng chứng.
+   */
+  manualMode?: boolean;
 };
 
 const intro = (notice: LivenessNotice | null): LivenessPhase => ({ kind: 'intro', notice });
@@ -38,8 +43,12 @@ const intro = (notice: LivenessNotice | null): LivenessPhase => ({ kind: 'intro'
 const CAPTURE_FAILED_NOTICE = 'Chưa ghi được hình khuôn mặt. Vui lòng thử lại.';
 
 /** Request multipart và danh sách tệp tạm cần xoá sau khi gửi. */
-function toSubmission(challenge: LivenessChallenge, captured: CapturedLiveness) {
-  const common = { sessionId: challenge.sessionId, platform: CLIENT_PLATFORM };
+function toSubmission(challenge: LivenessChallenge, captured: CapturedLiveness, manual: boolean) {
+  const common = {
+    sessionId: challenge.sessionId,
+    platform: CLIENT_PLATFORM,
+    ...(manual ? { reviewMode: 'MANUAL' as const } : {}),
+  };
   if (captured.mode === 'VIDEO') {
     const submission: LivenessSubmission = { ...common, captureMode: 'VIDEO', video: captured.video };
     return { submission, files: [captured.video.uri] };
@@ -61,14 +70,20 @@ function toSubmission(challenge: LivenessChallenge, captured: CapturedLiveness) 
  * `recordAsync` lỗi hoặc không trả tệp thì tự xin thử thách mới và chạy chế độ ảnh liên tiếp
  * (một lần). Video/ảnh bị xoá khỏi cache sau khi gửi. Không `setState` sau khi rời màn; cờ
  * `running` chặn bấm "Bắt đầu" hai lần.
+ *
+ * Hệ thống xác minh lỗi đủ số lần (`manualOffer`): màn hiện nút gửi nhân viên duyệt, bấm thì quay lại theo thử
+ * thách mới như thường nhưng gửi kèm `reviewMode=MANUAL` (`start(true)`).
  */
-export function useLivenessSession({ onReview, onFinal }: Options) {
+export function useLivenessSession({ onReview, onFinal, manualMode = false }: Options) {
   const recorder = useLivenessRecorder();
   const { prepare, capture, currentMode, switchToStills } = recorder;
   const { raise, restore } = useScreenBrightness();
   const [phase, setPhase] = useState<LivenessPhase>(intro(null));
   const [steps, setSteps] = useState<LivenessStep[]>([]);
   const [stepIndex, setStepIndex] = useState(-1);
+  const [manualOffer, setManualOffer] = useState(false);
+  /** Lượt đang chạy gửi ở chế độ duyệt tay — để màn đổi chữ khi đang gửi. */
+  const [sendingManual, setSendingManual] = useState(false);
   const mounted = useRef(true);
   const running = useRef(false);
 
@@ -95,6 +110,7 @@ export function useLivenessSession({ onReview, onFinal }: Options) {
       } else if (route.kind === 'FINAL') {
         onFinal(route.outcome);
       } else if (route.kind === 'RETRY') {
+        setManualOffer(route.manualReview === true);
         show(intro({ tone: route.tone, text: route.message }));
       } else if (route.kind === 'RESTART_CAPTURE' || route.kind === 'CONSENT') {
         show({ kind: 'blocked', action: route.kind, message: route.message });
@@ -130,7 +146,7 @@ export function useLivenessSession({ onReview, onFinal }: Options) {
   );
 
   const runAttempt = useCallback(
-    async (notice: LivenessNotice | null): Promise<'done' | 'fallback'> => {
+    async (notice: LivenessNotice | null, manual: boolean): Promise<'done' | 'fallback'> => {
       show({ kind: 'preparing', notice });
       let challenge: LivenessChallenge;
       try {
@@ -163,7 +179,7 @@ export function useLivenessSession({ onReview, onFinal }: Options) {
       if (!captured) return 'done';
 
       show({ kind: 'uploading' });
-      const { submission, files } = toSubmission(challenge, captured);
+      const { submission, files } = toSubmission(challenge, captured, manual);
       try {
         const result = await submitLiveness(submission);
         if (mounted.current) applyRoute(routeAfterLiveness(result), result);
@@ -178,18 +194,24 @@ export function useLivenessSession({ onReview, onFinal }: Options) {
     [applyRoute, prepare, raise, record, restore, show],
   );
 
-  const start = useCallback(async () => {
-    if (running.current) return;
-    running.current = true;
-    try {
-      if ((await runAttempt(null)) === 'fallback' && mounted.current) {
-        switchToStills();
-        await runAttempt({ tone: 'warn', text: STILLS_FALLBACK_NOTICE });
+  const start = useCallback(
+    async (requestManual = false) => {
+      if (running.current) return;
+      running.current = true;
+      const manual = requestManual || manualMode;
+      setManualOffer(false);
+      setSendingManual(manual);
+      try {
+        if ((await runAttempt(null, manual)) === 'fallback' && mounted.current) {
+          switchToStills();
+          await runAttempt({ tone: 'warn', text: STILLS_FALLBACK_NOTICE }, manual);
+        }
+      } finally {
+        running.current = false;
       }
-    } finally {
-      running.current = false;
-    }
-  }, [runAttempt, switchToStills]);
+    },
+    [manualMode, runAttempt, switchToStills],
+  );
 
-  return { phase, steps, stepIndex, start, recorder };
+  return { phase, steps, stepIndex, start, recorder, manualOffer, sendingManual };
 }

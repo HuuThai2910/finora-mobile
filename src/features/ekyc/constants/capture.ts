@@ -40,8 +40,11 @@ export const LIVE_QR_FRESH_MS = 4000;
 /** Ảnh cắt góc phần tư khi dò QR trên ảnh tĩnh (Android) — đủ nét mà không quá nặng. */
 export const QR_SCAN_CROP_MAX_WIDTH = 2000;
 
-/** Cùng một mặt bị yêu cầu chụp lại từng này lần liên tiếp thì cho chọn ảnh có sẵn. */
-export const RETAKE_GALLERY_AFTER = 2;
+/**
+ * Lần bấm "Sai thông tin" thứ mấy trên màn soát thì gửi hồ sơ cho nhân viên thay vì chụp lại (đếm trong phiên trên app;
+ * server không kiểm số lần).
+ */
+export const REPORT_TO_STAFF_AT = 3;
 
 export type ZoomPreset = { label: string; value: number };
 

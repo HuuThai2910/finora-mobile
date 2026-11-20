@@ -6,17 +6,20 @@ import { Icon } from '@/components/ui';
 
 type Props = {
   status: KycStatus;
-  /** Có khi người dùng còn phải định danh — cùng điều kiện với nhãn định danh bấm được. */
+  /** Có khi nhãn định danh bấm được: còn phải định danh, hoặc đang chờ duyệt (mở màn chờ duyệt). */
   onStartEkyc?: () => void;
 };
 
-type NoteCopy = { text: string; action?: string };
+type NoteCopy = { text: string; action?: string; hint?: string };
+
+const START_HINT = 'Bắt đầu định danh điện tử: đọc điều khoản, chụp CCCD, kiểm tra khuôn mặt';
 
 /**
  * Lời ghi chú đổi theo trạng thái định danh: chỉ khi đã định danh mới được nói
  * thông tin "lấy từ hồ sơ eKYC"; chưa định danh thì nói thẳng là chưa có và mời
  * đi định danh. Chờ duyệt / bị từ chối đến từ `ekycStatus` của hồ sơ (duyệt tay
- * trên web admin) — chỉ nêu đúng trạng thái, không hứa thời hạn duyệt.
+ * trên web admin) — chỉ nêu đúng trạng thái, không hứa thời hạn duyệt. Đang chờ duyệt
+ * thì có lối mở màn chờ duyệt để rút lại hồ sơ.
  */
 const NOTE: Record<KycStatus, NoteCopy> = {
   KYC_VERIFIED: {
@@ -28,7 +31,11 @@ const NOTE: Record<KycStatus, NoteCopy> = {
     text: 'Bạn chưa định danh (eKYC). Thông tin cá nhân sẽ được lấy từ căn cước công dân sau khi bạn định danh.',
     action: 'Định danh ngay',
   },
-  PENDING_REVIEW: { text: 'Hồ sơ định danh (eKYC) của bạn đang chờ duyệt.' },
+  PENDING_REVIEW: {
+    text: 'Hồ sơ định danh (eKYC) của bạn đang chờ duyệt.',
+    action: 'Xem hoặc rút lại hồ sơ',
+    hint: 'Mở màn hồ sơ đang chờ duyệt, nơi bạn có thể rút lại hồ sơ để gửi lại',
+  },
   REJECTED: {
     text: 'Hồ sơ định danh (eKYC) chưa được duyệt. Vui lòng định danh lại hoặc liên hệ hỗ trợ.',
     action: 'Định danh lại',
@@ -53,7 +60,7 @@ export default function AccountInfoNote({ status, onStartEkyc }: Props) {
             hitSlop={{ top: 12, bottom: 12 }}
             accessibilityRole="button"
             accessibilityLabel={copy.action}
-            accessibilityHint="Bắt đầu định danh điện tử: đọc điều khoản, chụp CCCD, kiểm tra khuôn mặt"
+            accessibilityHint={copy.hint ?? START_HINT}
             style={({ pressed }) => [styles.action, pressed && styles.pressed]}
           >
             <Text style={styles.actionText}>{copy.action}</Text>

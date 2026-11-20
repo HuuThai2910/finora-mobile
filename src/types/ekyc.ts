@@ -38,10 +38,10 @@ export type EkycResultCode =
 export type EkycCardSide = 'FRONT' | 'BACK';
 
 /**
- * Nguồn ảnh thẻ do app tự khai. Trong Expo Go không chứng minh được nguồn nên server
- * chỉ ghi nhật ký; riêng `GALLERY` khiến hồ sơ tối đa là "chờ duyệt".
+ * Nguồn ảnh thẻ do app tự khai — luôn là ảnh chụp trực tiếp (camera trong app hoặc app Camera của máy); server không nhận
+ * ảnh chọn từ thư viện. Trong Expo Go không chứng minh được nguồn nên server chỉ ghi nhật ký.
  */
-export type EkycImageSource = 'IN_APP_CAMERA' | 'SYSTEM_CAMERA' | 'GALLERY';
+export type EkycImageSource = 'IN_APP_CAMERA' | 'SYSTEM_CAMERA';
 
 /** Cách app đọc được mã QR trên thẻ. */
 export type EkycQrMethod = 'LIVE_SCAN' | 'STILL_SCAN' | 'SCANNER';
@@ -194,7 +194,7 @@ export interface EkycResultResponse {
   message: string;
   ocrWarnings: string[];
   cardType: EkycCardType | null;
-  /** Hồ sơ sẽ vào duyệt tay sau khi xác nhận (nguồn yếu, ảnh thư viện, liveness vùng xám...). */
+  /** Hồ sơ sẽ vào duyệt tay sau khi xác nhận (nguồn yếu, liveness vùng xám...). */
   reviewRequired: boolean;
   /** Chỉ có phần tử khi `resultCode === 'RETAKE'` ở bước quét thẻ. */
   retake: EkycRetakeItem[];
@@ -203,6 +203,23 @@ export interface EkycResultResponse {
   /** Số lần thử liveness còn lại trong 24 giờ; `null` khi không áp dụng. */
   attemptsLeft: number | null;
   liveness: EkycLivenessSummary | null;
+  /**
+   * Hệ thống xác minh lỗi đủ số lần liên tiếp (server tự đếm): app hiện nút "Gửi nhân viên duyệt".
+   * Bước thẻ → `POST /ekyc-manual-review`; bước liveness → gửi lại video kèm `reviewMode=MANUAL`.
+   */
+  manualReviewAvailable: boolean;
+  /** Phiên đang ở chế độ gửi nhân viên duyệt: video sắp quay chỉ lưu làm bằng chứng, không chấm tự động. */
+  manualReviewMode: boolean;
+}
+
+/** `POST /users/profile/ekyc-withdraw` — trạng thái sau khi rút lại hồ sơ đang chờ duyệt. */
+export interface EkycWithdrawResult {
+  ekycStatus: EkycStatus;
+  /** `WITHDRAWN` khi rút thành công. */
+  latestAttemptStatus: string | null;
+  submittedAt: string | null;
+  decidedAt: string | null;
+  rejectionReason: string | null;
 }
 
 /* ---------------- Liveness ---------------- */
@@ -241,8 +258,11 @@ export interface UploadFile {
   type: string;
 }
 
-/** `POST /users/profile/ekyc/liveness` (multipart): video, hoặc loạt ảnh khi máy không quay được. */
-export type LivenessSubmission =
+/**
+ * `POST /users/profile/ekyc/liveness` (multipart): video, hoặc loạt ảnh khi máy không quay được.
+ * `reviewMode: 'MANUAL'` khi hệ thống xác minh đang lỗi và người dùng chọn gửi nhân viên duyệt.
+ */
+export type LivenessSubmission = (
   | { sessionId: string; captureMode: 'VIDEO'; platform: ClientPlatform; video: UploadFile }
   | {
       sessionId: string;
@@ -251,7 +271,8 @@ export type LivenessSubmission =
       frames: UploadFile[];
       /** Thời điểm chụp từng ảnh tính từ lúc bắt đầu lịch nhắc, cùng thứ tự với `frames`. */
       frameTimesMs: number[];
-    };
+    }
+) & { reviewMode?: 'MANUAL' };
 
 /* ---------------- Xác nhận ---------------- */
 
@@ -260,4 +281,9 @@ export type EkycConfirmEdits = Partial<Record<EkycEditableFieldKey, string>>;
 /** `POST /users/profile/ekyc-confirm` — body tuỳ chọn, chỉ gửi trường người dùng đã sửa. */
 export interface EkycConfirmRequest {
   edits?: EkycConfirmEdits;
+  /** Người dùng báo thông tin đọc từ thẻ chưa đúng: server bỏ qua `edits`, hồ sơ luôn chuyển nhân viên duyệt. */
+  reportIncorrect?: boolean;
 }
+
+/** Tuỳ chọn của bước xác nhận phía app. */
+export type EkycConfirmOptions = Pick<EkycConfirmRequest, 'reportIncorrect'>;

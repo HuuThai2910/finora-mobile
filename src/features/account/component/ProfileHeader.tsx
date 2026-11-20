@@ -3,7 +3,7 @@ import type { UserProfile } from '@/types/auth';
 import { Colors } from '@/constants/colors';
 import { FontFamily, FontSize, LineHeight, Spacing, lh } from '@/theme';
 import { Tag } from '@/components/ui';
-import { PROFILE_MASCOT, canStartEkyc } from '../constant';
+import { PROFILE_MASCOT, ekycEntry } from '../constant';
 import KycBadge from './KycBadge';
 
 type Props = {
@@ -55,7 +55,7 @@ export default function ProfileHeader({ profile, width, onStartEkyc }: Props) {
           </Text>
 
           <View style={styles.badges}>
-            <KycBadge status={profile.kycStatus} onPress={canStartEkyc(profile.kycStatus) ? onStartEkyc : undefined} />
+            <KycBadge status={profile.kycStatus} onPress={ekycEntry(profile.kycStatus) ? onStartEkyc : undefined} />
             {/* Điểm tín dụng chưa có trong `GET /users/me`; ẩn hẳn thay vì hiện số rỗng. */}
             {profile.creditGrade && profile.creditScore !== null ? (
               <Tag tone="blue" small>{`Điểm ${profile.creditGrade}+ · ${profile.creditScore}`}</Tag>

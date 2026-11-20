@@ -43,6 +43,8 @@ export function normalizeEkycResult(raw: EkycResultWire): EkycResultResponse {
     nextStep: raw.nextStep ?? 'NONE',
     attemptsLeft: raw.attemptsLeft ?? null,
     liveness,
+    manualReviewAvailable: raw.manualReviewAvailable ?? false,
+    manualReviewMode: raw.manualReviewMode ?? false,
   };
 }
 
@@ -107,6 +109,8 @@ export function pendingOutcome(message: string | null): EkycResultResponse {
     nextStep: 'NONE',
     attemptsLeft: null,
     liveness: null,
+    manualReviewAvailable: false,
+    manualReviewMode: false,
   };
 }
 
@@ -114,7 +118,8 @@ export function pendingOutcome(message: string | null): EkycResultResponse {
 export type LivenessRoute =
   | { kind: 'REVIEW' }
   | { kind: 'FINAL'; outcome: EkycResultResponse }
-  | { kind: 'RETRY'; tone: 'warn' | 'error'; message: string }
+  /** `manualReview`: hệ thống xác minh lỗi đủ số lần — màn liveness hiện nút gửi nhân viên duyệt. */
+  | { kind: 'RETRY'; tone: 'warn' | 'error'; message: string; manualReview?: boolean }
   | { kind: 'RESTART_CAPTURE'; message: string }
   | { kind: 'CONSENT'; message: string };
 
@@ -146,6 +151,13 @@ export function routeAfterLiveness(result: EkycResultResponse): LivenessRoute {
       return { kind: 'RESTART_CAPTURE', message: resultMessage(result.resultCode, result.message) };
     case 'CONSENT_REQUIRED':
       return { kind: 'CONSENT', message: resultMessage(result.resultCode, result.message) };
+    case 'AI_UNAVAILABLE':
+      return {
+        kind: 'RETRY',
+        tone: 'warn',
+        message: resultMessage(result.resultCode, result.message),
+        manualReview: result.manualReviewAvailable,
+      };
     default:
       // CHALLENGE_EXPIRED, RATE_LIMITED, AI_UNAVAILABLE, STORAGE_UNAVAILABLE, mã lạ: thử lại.
       return { kind: 'RETRY', tone: 'warn', message: resultMessage(result.resultCode, result.message) };

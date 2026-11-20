@@ -90,8 +90,11 @@ export type ProfileStackParamList = {
   EkycCapture: { side?: 'front' | 'back' } | undefined;
   /** Kiểm tra khuôn mặt (liveness) bằng video camera trước theo thử thách của server. */
   EkycLiveness: undefined;
-  /** Soát bản nháp (nhãn nguồn từng trường) và xác nhận, hoặc kết quả cuối của luồng. */
-  EkycResult: undefined;
+  /**
+   * Soát bản nháp (nhãn nguồn từng trường) và xác nhận, hoặc kết quả cuối của luồng. `pending`: mở từ tab Hồ sơ
+   * khi hồ sơ đang chờ duyệt (xem trạng thái, rút lại hồ sơ).
+   */
+  EkycResult: { pending?: boolean } | undefined;
   MyApplications: undefined;
   ApplicationDetail: { applicationNumber: string };
   /** Hợp đồng đã ký: của người vay, hoặc phần vốn đã ký của nhà đầu tư (theo vai trò). */

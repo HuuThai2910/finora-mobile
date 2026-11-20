@@ -7,7 +7,7 @@ import { Radius, Spacing, Text_ } from '@/theme';
 import { FormStepProgress, Screen } from '@/components/phone';
 import { Button, InfoNote } from '@/components/ui';
 import type { ProfileStackParamList } from '@/navigation/types';
-import { pickCardFromGallery } from '../capture/gallery';
+import type { EkycResultResponse } from '@/types/ekyc';
 import { cardCaptureSource } from '../capture/source';
 import type { CardShot, CccdSide } from '../capture/types';
 import QrReadBadge from '../components/QrReadBadge';
@@ -17,13 +17,14 @@ import {
   CCCD_FRAME_HEIGHT,
   EKYC_STEP_LABEL,
   EKYC_STEP_TOTAL,
-  RETAKE_GALLERY_AFTER,
 } from '../constants/capture';
-import { resultMessage } from '../constants/messages';
+import { MANUAL_REVIEW_COPY, resultMessage } from '../constants/messages';
 import { useEkycFlow } from '../hooks/useEkycFlow';
+import { useEkycManualReview } from '../hooks/useEkycManualReview';
 import { useEkycSession } from '../hooks/useEkycSession';
 import { useEkycVerify } from '../hooks/useEkycVerify';
-import { routeAfterVerify, toVerifyRequest } from '../mappers/result';
+import { useRefreshProfile } from '../hooks/useRefreshProfile';
+import { isFinalOutcome, routeAfterVerify, toVerifyRequest } from '../mappers/result';
 
 type Nav = NativeStackNavigationProp<ProfileStackParamList, 'EkycCapture'>;
 
@@ -37,6 +38,9 @@ const { CaptureView } = cardCaptureSource;
  * thì gửi cả hai ảnh đi đọc thẻ và định tuyến theo `resultCode`:
  * `DRAFT_READY` → liveness; `RETAKE` → về đúng mặt bị lỗi kèm lý do; lỗi tạm thời → báo tại chỗ;
  * còn lại → màn kết quả.
+ *
+ * Hệ thống xác minh lỗi nhiều lần liên tiếp (`manualReviewAvailable`): dưới câu báo sự cố có nút "Gửi nhân viên
+ * duyệt" — gửi lại đúng hai ảnh đang có, rồi sang bước quay video ở chế độ duyệt tay.
  */
 export default function EkycCaptureScreen() {
   const nav = useNavigation<Nav>();
@@ -45,8 +49,11 @@ export default function EkycCaptureScreen() {
   const session = useEkycSession();
   const flow = useEkycFlow();
   const verify = useEkycVerify();
+  const manual = useEkycManualReview();
+  const refreshProfile = useRefreshProfile();
   const [inlineError, setInlineError] = useState<string | null>(null);
-  const [galleryBusy, setGalleryBusy] = useState(false);
+  /** Lần gửi vừa rồi server báo đã đủ số lần lỗi để chuyển nhân viên duyệt. */
+  const [manualOffer, setManualOffer] = useState(false);
 
   const shot = session.shots[side];
   const otherSide = side === 'front' ? 'back' : 'front';
@@ -63,27 +70,22 @@ export default function EkycCaptureScreen() {
 
   const onCaptured = (next: CardShot) => {
     setInlineError(null);
+    setManualOffer(false);
     session.setShot(side, next);
   };
 
-  const onPickGallery = async () => {
-    setGalleryBusy(true);
-    setInlineError(null);
-    try {
-      const picked = await pickCardFromGallery(!!session.shots[otherSide]?.qr);
-      if (picked) onCaptured(picked);
-    } catch (e) {
-      console.warn('Chọn ảnh thẻ thất bại:', e instanceof Error ? e.message : 'lỗi không xác định');
-      setInlineError('Không đọc được ảnh đã chọn, vui lòng chọn ảnh khác.');
-    } finally {
-      setGalleryBusy(false);
-    }
+  /** Hồ sơ sang trạng thái cuối (chờ duyệt / đã xác minh): tải lại hồ sơ để tab Hồ sơ đổi nhãn ngay. */
+  const showFinal = (result: EkycResultResponse) => {
+    flow.showFinal(result);
+    void refreshProfile();
   };
 
   const onSubmit = async () => {
     const { front, back } = session.shots;
     if (!front || !back || !session.consentVersion) return;
     setInlineError(null);
+    setManualOffer(false);
+    manual.clearError();
 
     const result = await verify.submit(toVerifyRequest(front, back, session.consentVersion));
     if (!result) return; // lỗi vận chuyển — `verify.error` đã giữ thông điệp
@@ -100,13 +102,36 @@ export default function EkycCaptureScreen() {
       }
       case 'RETRY_INLINE':
         setInlineError(resultMessage(result.resultCode, result.message));
+        setManualOffer(result.resultCode === 'AI_UNAVAILABLE' && result.manualReviewAvailable);
         return;
       case 'CONSENT':
         flow.restartFromConsent();
         return;
       default:
-        if (result.resultCode === 'VERIFIED' || result.resultCode === 'REVIEW_PENDING') flow.showFinal(result);
+        if (isFinalOutcome(result)) showFinal(result);
         else flow.showResult(result);
+    }
+  };
+
+  /** Gửi nhân viên duyệt: server lưu hai ảnh làm bằng chứng, bước tiếp là quay video (không chấm tự động). */
+  const onManualReview = async () => {
+    const { front, back } = session.shots;
+    if (!front || !back || !session.consentVersion) return;
+    setInlineError(null);
+
+    const result = await manual.submit(toVerifyRequest(front, back, session.consentVersion));
+    if (!result) return; // lỗi vận chuyển hoặc 409 — `manual.error` đã giữ thông điệp
+
+    setManualOffer(false);
+    if (result.resultCode === 'DRAFT_READY') {
+      session.setDraftResult(result);
+      nav.navigate('EkycLiveness');
+    } else if (result.resultCode === 'CONSENT_REQUIRED') {
+      flow.restartFromConsent();
+    } else if (isFinalOutcome(result)) {
+      showFinal(result);
+    } else {
+      setInlineError(resultMessage(result.resultCode, result.message));
     }
   };
 
@@ -135,8 +160,8 @@ export default function EkycCaptureScreen() {
     );
   }
 
-  const busy = verify.submitting || galleryBusy;
-  const showGallery = !shot && retake.streak >= RETAKE_GALLERY_AFTER;
+  const busy = verify.submitting || manual.submitting;
+  const shownError = inlineError ?? verify.error ?? manual.error;
 
   return (
     <Screen light>
@@ -168,9 +193,9 @@ export default function EkycCaptureScreen() {
         />
       )}
 
-      {inlineError ?? verify.error ? (
+      {shownError ? (
         <Text style={styles.error} accessibilityLiveRegion="polite">
-          {inlineError ?? verify.error}
+          {shownError}
         </Text>
       ) : null}
 
@@ -180,7 +205,10 @@ export default function EkycCaptureScreen() {
             <Button
               label="Chụp lại"
               variant="outline"
-              onPress={() => session.setShot(side, null)}
+              onPress={() => {
+                setManualOffer(false);
+                session.setShot(side, null);
+              }}
               disabled={busy}
               style={styles.grow}
             />
@@ -196,23 +224,20 @@ export default function EkycCaptureScreen() {
           {verify.submitting ? (
             <Text style={styles.waiting}>Đang đọc thông tin trên thẻ, có thể mất đến một phút…</Text>
           ) : null}
+          {manualOffer && side === 'back' ? (
+            <View style={styles.manual}>
+              <Button
+                label={MANUAL_REVIEW_COPY.button}
+                variant="outline"
+                icon="users"
+                loading={manual.submitting}
+                disabled={busy}
+                onPress={() => void onManualReview()}
+              />
+              <Text style={styles.hint}>{MANUAL_REVIEW_COPY.hint}</Text>
+            </View>
+          ) : null}
         </>
-      ) : null}
-
-      {showGallery ? (
-        <View style={styles.gallery}>
-          <Button
-            label="Chọn ảnh có sẵn"
-            variant="outline"
-            icon="folder"
-            loading={galleryBusy}
-            disabled={busy}
-            onPress={() => void onPickGallery()}
-          />
-          <Text style={styles.galleryHint}>
-            Ảnh chọn từ thư viện sẽ được nhân viên FINORA duyệt thêm trước khi xác minh xong.
-          </Text>
-        </View>
       ) : null}
     </Screen>
   );
@@ -255,6 +280,6 @@ const styles = StyleSheet.create({
   action: { marginTop: Spacing.md },
   waiting: { ...Text_.micro, color: Colors.ink2, textAlign: 'center', marginTop: Spacing.md },
   error: { ...Text_.micro, color: Colors.red, textAlign: 'center', marginTop: Spacing.lg },
-  gallery: { marginTop: Spacing.xl, gap: Spacing.sm },
-  galleryHint: { ...Text_.caption, color: Colors.ink3, textAlign: 'center' },
+  manual: { marginTop: Spacing.lg, gap: Spacing.sm },
+  hint: { ...Text_.caption, color: Colors.ink3, textAlign: 'center' },
 });

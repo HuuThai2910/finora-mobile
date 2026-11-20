@@ -21,15 +21,27 @@ export const KYC_LABEL: Record<KycStatus, string> = {
 
 /**
  * Trạng thái còn phải (hoặc được phép) làm eKYC: chưa định danh, hoặc bị từ chối sau duyệt tay
- * (người dùng làm lại được). Đang chờ duyệt thì không mở lại luồng — server sẽ chỉ trả
+ * (người dùng làm lại được). Đang chờ duyệt thì không mở lại luồng chụp thẻ — server sẽ chỉ trả
  * "đang được duyệt" sau khi người dùng đã mất công chụp thẻ.
  */
 export const canStartEkyc = (status: KycStatus): boolean => status === 'NOT_STARTED' || status === 'REJECTED';
 
+/**
+ * Màn eKYC mở khi chạm nhãn/dòng định danh: còn phải định danh thì vào màn điều khoản; đang chờ duyệt thì mở màn
+ * "đang chờ duyệt" (xem trạng thái, rút lại hồ sơ để gửi lại); đã định danh thì không mở gì.
+ */
+export type EkycEntry = { screen: 'EkycConsent' } | { screen: 'EkycResult'; pending: true } | null;
+
+export function ekycEntry(status: KycStatus): EkycEntry {
+  if (canStartEkyc(status)) return { screen: 'EkycConsent' };
+  if (status === 'PENDING_REVIEW') return { screen: 'EkycResult', pending: true };
+  return null;
+}
+
 /** Chữ phụ của dòng "Xác thực eKYC" theo trạng thái. */
 export const EKYC_ROW_SUBTITLE: Record<KycStatus, string> = {
   NOT_STARTED: 'Chụp CCCD và kiểm tra khuôn mặt',
-  PENDING_REVIEW: 'Hồ sơ đang chờ FINORA duyệt',
+  PENDING_REVIEW: 'Đang chờ FINORA duyệt — xem hoặc rút lại hồ sơ',
   KYC_VERIFIED: 'Đã định danh',
   REJECTED: 'Hồ sơ chưa được duyệt — định danh lại',
 };
