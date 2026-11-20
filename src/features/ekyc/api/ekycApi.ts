@@ -4,11 +4,13 @@ import { isMocked } from '@/lib/mockFlag';
 import * as ekycMock from '@/lib/mocks/ekyc';
 import type {
   EkycConfirmEdits,
+  EkycConfirmOptions,
   EkycConfirmRequest,
   EkycConsent,
   EkycConsentAcceptRequest,
   EkycResultResponse,
   EkycVerifyRequest,
+  EkycWithdrawResult,
   LivenessChallenge,
   LivenessSubmission,
 } from '@/types/ekyc';
@@ -84,6 +86,36 @@ export const verifyEkyc = async (request: EkycVerifyRequest): Promise<EkycResult
   return normalizeEkycResult(response.data);
 };
 
+/**
+ * Hệ thống xác minh lỗi đủ số lần liên tiếp ở bước quét thẻ (`manualReviewAvailable`): gửi lại đúng hai ảnh để
+ * lưu làm bằng chứng và chuyển nhân viên duyệt. Kết quả `DRAFT_READY` + `manualReviewMode` → sang bước quay video
+ * (video cũng chỉ được lưu để nhân viên xem). Server tự kiểm ngưỡng: chưa đủ thì `409 MANUAL_REVIEW_UNAVAILABLE`.
+ */
+export const startManualReview = async (request: EkycVerifyRequest): Promise<EkycResultResponse> => {
+  if (isMocked('ekyc')) return ekycMock.startManualReview(request);
+
+  const response = await authFetchWithToken<BaseResponse<EkycResultWire>>('/users/profile/ekyc-manual-review', {
+    method: 'POST',
+    body: JSON.stringify(request),
+    timeoutMs: VERIFY_TIMEOUT_MS,
+  });
+  return normalizeEkycResult(response.data);
+};
+
+/**
+ * Rút lại hồ sơ đang chờ nhân viên duyệt để làm lại từ đầu. Nhân viên vừa xử lý xong thì
+ * `409 ATTEMPT_ALREADY_DECIDED`; không còn hồ sơ chờ duyệt thì `409 EKYC_NOT_WITHDRAWABLE`.
+ */
+export const withdrawEkycReview = async (): Promise<EkycWithdrawResult> => {
+  if (isMocked('ekyc')) return ekycMock.withdrawEkycReview();
+
+  const response = await authFetchWithToken<BaseResponse<EkycWithdrawResult>>('/users/profile/ekyc-withdraw', {
+    method: 'POST',
+    timeoutMs: DEFAULT_TIMEOUT_MS,
+  });
+  return response.data;
+};
+
 /** Xin thử thách liveness dùng một lần (sống 90 giây) — gọi ngay trước khi quay. */
 export const requestLivenessChallenge = async (): Promise<LivenessChallenge> => {
   if (isMocked('ekyc')) return ekycMock.requestLivenessChallenge();
@@ -107,6 +139,7 @@ function toLivenessForm(submission: LivenessSubmission): FormData {
   form.append('sessionId', submission.sessionId);
   form.append('captureMode', submission.captureMode);
   form.append('platform', submission.platform);
+  if (submission.reviewMode) form.append('reviewMode', submission.reviewMode);
 
   if (submission.captureMode === 'VIDEO') {
     appendFile(form, 'video', submission.video);
@@ -131,10 +164,18 @@ export const submitLiveness = async (submission: LivenessSubmission): Promise<Ek
 
 /**
  * Bước xác nhận. Chỉ gửi `edits` cho trường người dùng đã sửa (server chỉ nhận trường
- * `editable`, trường khác → `400 EDIT_NOT_ALLOWED`). Kết quả: `VERIFIED` hoặc `REVIEW_PENDING`.
+ * `editable`, trường khác → `400 EDIT_NOT_ALLOWED`). `reportIncorrect`: người dùng báo thông tin chưa đúng ở lần soát
+ * thứ `REPORT_TO_STAFF_AT` — không gửi `edits`, kết quả luôn `REVIEW_PENDING`. Kết quả: `VERIFIED` hoặc `REVIEW_PENDING`.
  */
-export const confirmEkyc = async (edits?: EkycConfirmEdits): Promise<EkycResultResponse> => {
-  const request: EkycConfirmRequest = edits && Object.keys(edits).length > 0 ? { edits } : {};
+export const confirmEkyc = async (
+  edits?: EkycConfirmEdits,
+  options?: EkycConfirmOptions,
+): Promise<EkycResultResponse> => {
+  const request: EkycConfirmRequest = options?.reportIncorrect
+    ? { reportIncorrect: true }
+    : edits && Object.keys(edits).length > 0
+      ? { edits }
+      : {};
   if (isMocked('ekyc')) return ekycMock.confirmEkyc(request);
 
   const response = await authFetchWithToken<BaseResponse<EkycResultWire>>('/users/profile/ekyc-confirm', {

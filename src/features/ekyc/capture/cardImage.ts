@@ -15,7 +15,7 @@ type FinalizeOptions = {
 };
 
 /**
- * Phần xử lý chung cho mọi nguồn ảnh (camera trong app, camera hệ thống, thư viện):
+ * Phần xử lý chung cho mọi nguồn ảnh (camera trong app, camera hệ thống):
  * 1. chưa có QR thì dò trên **ảnh gốc** độ phân giải đầy đủ (trước khi thu nhỏ);
  * 2. cắt theo khung ngắm (nếu có), thu về ≤ 1600 px, đổi sang JPEG và nén **một lần** 0.9;
  * 3. xoá ảnh gốc khỏi cache.

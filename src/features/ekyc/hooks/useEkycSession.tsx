@@ -6,8 +6,6 @@ import { toCccdSide, type CardShot, type CccdSide } from '../capture/types';
 export type { CccdSide } from '../capture/types';
 
 type RetakeState = {
-  /** Số lần liên tiếp server bắt chụp lại mặt này — đủ 2 thì cho chọn ảnh có sẵn. */
-  streak: number;
   /** Lý do server vừa trả, hiện trên màn chụp lại; xoá khi đã có ảnh mới. */
   notice: string | null;
 };
@@ -17,8 +15,8 @@ type Retakes = Record<CccdSide, RetakeState>;
 
 const NO_SHOTS: Shots = { front: null, back: null };
 const NO_RETAKES: Retakes = {
-  front: { streak: 0, notice: null },
-  back: { streak: 0, notice: null },
+  front: { notice: null },
+  back: { notice: null },
 };
 
 type EkycSessionValue = {
@@ -30,8 +28,8 @@ type EkycSessionValue = {
   setShot: (side: CccdSide, shot: CardShot | null) => void;
   retake: Retakes;
   /**
-   * Ghi một kết quả RETAKE: mặt bị yêu cầu thì tăng chuỗi, xoá ảnh, đặt lời nhắc; mặt còn
-   * lại về 0 (không còn "liên tiếp"). Trả các mặt cần chụp lại, mặt trước đứng trước.
+   * Ghi một kết quả RETAKE: mặt bị yêu cầu thì xoá ảnh, đặt lời nhắc; mặt còn lại xoá lời nhắc. Trả các mặt cần chụp
+   * lại, mặt trước đứng trước.
    */
   applyRetake: (items: readonly EkycRetakeItem[], fallbackMessage: string) => CccdSide[];
   /** Quét đạt — giữ bản nháp (DRAFT_READY) cho màn soát sau bước liveness. */
@@ -40,6 +38,10 @@ type EkycSessionValue = {
   /** Kết quả màn Kết quả đang hiển thị: liveness đạt, chờ duyệt, thành công hoặc bị từ chối. */
   outcome: EkycResultResponse | null;
   setOutcome: (result: EkycResultResponse) => void;
+  /** Số lần người dùng đã bấm "Sai thông tin — Chụp lại" trong phiên; giữ qua các lần chụp lại, xoá khi `reset`. */
+  incorrectReports: number;
+  /** Ghi một lần báo sai (trước khi chụp lại từ đầu). */
+  countIncorrectReport: () => void;
   /** Làm lại từ bước chụp thẻ, giữ phiên bản điều khoản đã đồng ý. */
   restartCapture: () => void;
   /** Xoá sạch phiên — khi hoàn tất, rút lại đồng ý hoặc phải đọc lại điều khoản. */
@@ -62,13 +64,14 @@ export function EkycSessionProvider({ children }: { children: React.ReactNode })
   const [retake, setRetake] = useState<Retakes>(NO_RETAKES);
   const [draftResult, setDraftResultState] = useState<EkycResultResponse | null>(null);
   const [outcome, setOutcomeState] = useState<EkycResultResponse | null>(null);
+  const [incorrectReports, setIncorrectReports] = useState(0);
 
   const setConsentVersion = useCallback((version: string) => setConsentVersionState(version), []);
 
   const setShot = useCallback((side: CccdSide, shot: CardShot | null) => {
     setShots(prev => ({ ...prev, [side]: shot }));
-    // Đã có ảnh mới thì lời nhắc chụp lại hết tác dụng; chuỗi RETAKE giữ nguyên tới lần gửi sau.
-    if (shot) setRetake(prev => ({ ...prev, [side]: { ...prev[side], notice: null } }));
+    // Đã có ảnh mới thì lời nhắc chụp lại hết tác dụng.
+    if (shot) setRetake(prev => ({ ...prev, [side]: { notice: null } }));
   }, []);
 
   const applyRetake = useCallback((items: readonly EkycRetakeItem[], fallbackMessage: string) => {
@@ -81,14 +84,10 @@ export function EkycSessionProvider({ children }: { children: React.ReactNode })
     }
 
     const sides = (['front', 'back'] as const).filter(side => messages[side].length > 0);
-    setRetake(prev => ({
-      front: sides.includes('front')
-        ? { streak: prev.front.streak + 1, notice: Array.from(new Set(messages.front)).join('\n') }
-        : { streak: 0, notice: null },
-      back: sides.includes('back')
-        ? { streak: prev.back.streak + 1, notice: Array.from(new Set(messages.back)).join('\n') }
-        : { streak: 0, notice: null },
-    }));
+    setRetake({
+      front: { notice: sides.includes('front') ? Array.from(new Set(messages.front)).join('\n') : null },
+      back: { notice: sides.includes('back') ? Array.from(new Set(messages.back)).join('\n') : null },
+    });
     setShots(prev => ({
       front: sides.includes('front') ? null : prev.front,
       back: sides.includes('back') ? null : prev.back,
@@ -98,11 +97,13 @@ export function EkycSessionProvider({ children }: { children: React.ReactNode })
 
   const setDraftResult = useCallback((result: EkycResultResponse) => {
     setDraftResultState(result);
-    // Quét đạt thì chuỗi chụp lại không còn "liên tiếp".
+    // Quét đạt thì xoá lời nhắc chụp lại.
     setRetake(NO_RETAKES);
   }, []);
 
   const setOutcome = useCallback((result: EkycResultResponse) => setOutcomeState(result), []);
+
+  const countIncorrectReport = useCallback(() => setIncorrectReports(count => count + 1), []);
 
   const restartCapture = useCallback(() => {
     setShots(NO_SHOTS);
@@ -114,6 +115,7 @@ export function EkycSessionProvider({ children }: { children: React.ReactNode })
   const reset = useCallback(() => {
     restartCapture();
     setConsentVersionState(null);
+    setIncorrectReports(0);
   }, [restartCapture]);
 
   const value = useMemo(
@@ -128,6 +130,8 @@ export function EkycSessionProvider({ children }: { children: React.ReactNode })
       setDraftResult,
       outcome,
       setOutcome,
+      incorrectReports,
+      countIncorrectReport,
       restartCapture,
       reset,
     }),
@@ -142,6 +146,8 @@ export function EkycSessionProvider({ children }: { children: React.ReactNode })
       setDraftResult,
       outcome,
       setOutcome,
+      incorrectReports,
+      countIncorrectReport,
       restartCapture,
       reset,
     ],

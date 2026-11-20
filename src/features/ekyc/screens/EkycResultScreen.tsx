@@ -1,5 +1,5 @@
 import { StyleSheet, Text } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '@/constants/colors';
 import { Spacing, Text_ } from '@/theme';
@@ -10,9 +10,11 @@ import type { EkycResultResponse } from '@/types/ekyc';
 import DraftReview from '../components/DraftReview';
 import OutcomeView from '../components/OutcomeView';
 import { EKYC_STEP_LABEL, EKYC_STEP_TOTAL } from '../constants/capture';
-import { resultMessage } from '../constants/messages';
+import { WITHDRAW_COPY, resultMessage } from '../constants/messages';
 import { useEkycFlow } from '../hooks/useEkycFlow';
 import { useEkycSession } from '../hooks/useEkycSession';
+import { useEkycWithdraw } from '../hooks/useEkycWithdraw';
+import { pendingOutcome } from '../mappers/result';
 
 type Nav = NativeStackNavigationProp<ProfileStackParamList, 'EkycResult'>;
 
@@ -24,7 +26,8 @@ const RETRYABLE = new Set<string>(['RATE_LIMITED', 'AI_UNAVAILABLE', 'STORAGE_UN
 /**
  * Màn kết quả của luồng eKYC, chọn nội dung theo `resultCode` đang giữ trong phiên:
  * - liveness đạt / vùng xám → soát bản nháp và xác nhận;
- * - `VERIFIED` → thành công; `REVIEW_PENDING` → đang chờ duyệt;
+ * - `VERIFIED` → thành công; `REVIEW_PENDING` → đang chờ duyệt, kèm nút "Rút lại hồ sơ" (nhân viên chưa
+ *   xử lý thì người dùng được rút để làm lại từ đầu). Tab Hồ sơ mở thẳng màn này bằng `{ pending: true }`;
  * - còn lại (thẻ hết hạn, CMND, dưới 18 tuổi, số đã dùng, bản nháp hết hạn...) → lý do + lối
  *   làm lại phù hợp.
  */
@@ -32,7 +35,9 @@ export default function EkycResultScreen() {
   const nav = useNavigation<Nav>();
   const session = useEkycSession();
   const flow = useEkycFlow();
-  const outcome = session.outcome;
+  const pendingFromProfile = useRoute<RouteProp<ProfileStackParamList, 'EkycResult'>>().params?.pending === true;
+  // Mở từ tab Hồ sơ khi hồ sơ đang chờ duyệt: phiên eKYC trong bộ nhớ đã mất, dựng kết quả "chờ duyệt" chuẩn.
+  const outcome = session.outcome ?? (pendingFromProfile ? pendingOutcome(null) : null);
 
   // Không có kết quả nghĩa là màn bị mở ngoài luồng — không bịa dữ liệu.
   if (!outcome) {
@@ -51,7 +56,7 @@ export default function EkycResultScreen() {
       <Screen light>
         <PHeader title="Kiểm tra thông tin" back />
         <FormStepProgress current={4} total={EKYC_STEP_TOTAL} label={EKYC_STEP_LABEL.review} />
-        <DraftReview outcome={outcome} scan={session.draftResult} onRescan={flow.restartCapture} />
+        <DraftReview outcome={outcome} scan={session.draftResult} onRescan={flow.reportIncorrectAndRescan} />
       </Screen>
     );
   }
@@ -73,12 +78,7 @@ export default function EkycResultScreen() {
   if (outcome.resultCode === 'REVIEW_PENDING') {
     return (
       <Screen light>
-        <OutcomeView tone="pending" title="Hồ sơ đang được duyệt" message={resultMessage(outcome.resultCode, outcome.message)}>
-          <Text style={styles.extra}>
-            Trong lúc chờ, bạn vẫn dùng được ứng dụng nhưng chưa vay hoặc đầu tư được.
-          </Text>
-          <Button label="Về trang hồ sơ" onPress={flow.finish} />
-        </OutcomeView>
+        <PendingOutcome message={resultMessage(outcome.resultCode, outcome.message)} onDone={flow.finish} />
       </Screen>
     );
   }
@@ -88,6 +88,34 @@ export default function EkycResultScreen() {
       <PHeader title={TITLE} back />
       <RejectedOutcome outcome={outcome} onRetry={() => nav.goBack()} />
     </Screen>
+  );
+}
+
+/** Hồ sơ đang chờ nhân viên duyệt: về trang hồ sơ, hoặc rút lại để gửi hồ sơ mới (có hộp xác nhận). */
+function PendingOutcome({ message, onDone }: { message: string; onDone: () => void }) {
+  const withdraw = useEkycWithdraw();
+
+  return (
+    <OutcomeView tone="pending" title="Hồ sơ đang được duyệt" message={message}>
+      <Text style={styles.extra}>
+        Trong lúc chờ, bạn vẫn dùng được ứng dụng nhưng chưa vay hoặc đầu tư được.
+      </Text>
+      <Button label="Về trang hồ sơ" onPress={onDone} disabled={withdraw.submitting} />
+      <Button
+        label={WITHDRAW_COPY.button}
+        variant="outline"
+        icon="refreshCw"
+        loading={withdraw.submitting}
+        disabled={withdraw.submitting}
+        onPress={withdraw.confirmAndWithdraw}
+        style={styles.secondary}
+      />
+      {withdraw.error ? (
+        <Text style={styles.error} accessibilityLiveRegion="polite">
+          {withdraw.error}
+        </Text>
+      ) : null}
+    </OutcomeView>
   );
 }
 
@@ -115,4 +143,5 @@ function RejectedOutcome({ outcome, onRetry }: { outcome: EkycResultResponse; on
 const styles = StyleSheet.create({
   extra: { ...Text_.micro, color: Colors.ink3, textAlign: 'center', marginBottom: Spacing.xl },
   secondary: { marginTop: Spacing.md },
+  error: { ...Text_.micro, color: Colors.red, textAlign: 'center', marginTop: Spacing.lg },
 });

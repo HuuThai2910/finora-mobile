@@ -7,6 +7,7 @@ import type {
   EkycResultResponse,
   EkycStatus,
   EkycVerifyRequest,
+  EkycWithdrawResult,
   LivenessAction,
   LivenessChallenge,
   LivenessStep,
@@ -31,6 +32,12 @@ const state: {
   liveness: 'PASS' | 'REVIEW' | null;
   livenessAttempts: number;
   livenessFails: number;
+  /** Số lần hệ thống xác minh lỗi liên tiếp (kịch bản `ekyc-ai-down`), như bộ đếm phía server. */
+  aiFailures: number;
+  /** Bản nháp tạo ở chế độ gửi nhân viên duyệt (AI lỗi ở bước thẻ) — video sau đó không chấm tự động. */
+  manualDraft: boolean;
+  /** Luồng giả đã đổi trạng thái hồ sơ: hồ sơ thật (`/users/me`) lấy trạng thái định danh theo mock. */
+  touched: boolean;
 } = {
   acceptedAt: null,
   profile: 'PENDING',
@@ -40,7 +47,36 @@ const state: {
   liveness: null,
   livenessAttempts: 0,
   livenessFails: 0,
+  aiFailures: 0,
+  manualDraft: false,
+  touched: false,
 };
+
+const AI_FAILURE_THRESHOLD = 3;
+const AI_DOWN_MESSAGE = 'Hệ thống xác minh đang gặp sự cố tạm thời.';
+const REVIEW_PENDING_MESSAGE = 'Hồ sơ của bạn đang được duyệt. FINORA sẽ thông báo khi có kết quả.';
+
+/**
+ * Trạng thái eKYC giả của hồ sơ, `null` khi luồng giả chưa đổi gì — để `getMyProfile` (luôn gọi thật) hiện đúng
+ * "Đang chờ duyệt"/"Chưa định danh" sau khi gửi duyệt tay hoặc rút lại trong chế độ API giả.
+ */
+export const mockEkycStatus = (): EkycStatus | null => (state.touched ? state.profile : null);
+
+function setProfile(next: EkycStatus) {
+  state.profile = next;
+  state.touched = true;
+}
+
+/** Một lần hệ thống xác minh không trả lời; đủ ngưỡng thì kèm cờ mở lối duyệt tay. */
+function aiDown(nextStep: EkycResultResponse['nextStep']): Promise<EkycResultResponse> {
+  state.aiFailures += 1;
+  return reply({
+    resultCode: 'AI_UNAVAILABLE',
+    message: AI_DOWN_MESSAGE,
+    nextStep,
+    manualReviewAvailable: state.aiFailures >= AI_FAILURE_THRESHOLD,
+  });
+}
 
 const MAX_RETAKES = 2;
 const MAX_LIVENESS_FAILS = 3;
@@ -57,6 +93,8 @@ const reply = (patch: Partial<EkycResultResponse> & Pick<EkycResultResponse, 're
     nextStep: 'NONE',
     attemptsLeft: null,
     liveness: null,
+    manualReviewAvailable: false,
+    manualReviewMode: false,
     ...patch,
   });
 
@@ -94,6 +132,7 @@ export const verifyEkyc = (request: EkycVerifyRequest): Promise<EkycResultRespon
   if (!state.acceptedAt) {
     return reply({ resultCode: 'CONSENT_REQUIRED', message: 'Vui lòng đọc và đồng ý điều khoản trước khi xác minh.' });
   }
+  if (hasMockScenario('ekyc-ai-down')) return aiDown('NONE');
   if (hasMockScenario('ekyc-reject')) {
     return reply({ resultCode: 'CARD_EXPIRED', message: 'Thẻ căn cước đã hết hạn. Vui lòng dùng thẻ còn hiệu lực.' });
   }
@@ -113,17 +152,61 @@ export const verifyEkyc = (request: EkycVerifyRequest): Promise<EkycResultRespon
   }
 
   // Có QR → nguồn tất định đầy đủ; không QR → một số trường do AI đọc, phải duyệt tay.
-  // Ảnh thư viện luôn đưa hồ sơ về duyệt tay (server coi GALLERY là nguồn yếu).
-  const base = request.qr && !hasMockScenario('ekyc-retake') ? EKYC_DRAFT_RESULT : EKYC_DRAFT_AI_RESULT;
-  const fromGallery = request.frontSource === 'GALLERY' || request.backSource === 'GALLERY';
   const draft: EkycResultResponse = {
-    ...base,
-    reviewRequired: base.reviewRequired || fromGallery,
+    ...(request.qr && !hasMockScenario('ekyc-retake') ? EKYC_DRAFT_RESULT : EKYC_DRAFT_AI_RESULT),
   };
   state.retakeCount = 0;
+  state.aiFailures = 0;
+  state.manualDraft = false;
   state.draft = draft;
   state.liveness = null;
   return mockResponse('ekyc', draft);
+};
+
+/** Bước thẻ chuyển nhân viên duyệt khi hệ thống xác minh lỗi đủ số lần — server tự kiểm ngưỡng. */
+export const startManualReview = (_request: EkycVerifyRequest): Promise<EkycResultResponse> => {
+  if (state.profile === 'MANUAL_REVIEW') {
+    return reply({ resultCode: 'REVIEW_PENDING', message: REVIEW_PENDING_MESSAGE, reviewRequired: true });
+  }
+  if (state.aiFailures < AI_FAILURE_THRESHOLD) {
+    return fail(409, 'MANUAL_REVIEW_UNAVAILABLE', 'Chưa thể gửi hồ sơ cho nhân viên duyệt lúc này. Vui lòng thử xác minh lại.');
+  }
+  const draft = reply({
+    resultCode: 'DRAFT_READY',
+    message: 'Đã nhận ảnh thẻ. Tiếp tục quay video khuôn mặt để gửi hồ sơ cho nhân viên FINORA duyệt.',
+    reviewRequired: true,
+    nextStep: 'LIVENESS',
+    manualReviewMode: true,
+  });
+  return draft.then(result => {
+    state.draft = result;
+    state.manualDraft = true;
+    state.liveness = null;
+    return result;
+  });
+};
+
+/** Rút lại hồ sơ đang chờ duyệt (nhân viên chưa xử lý) — hồ sơ về chưa định danh. */
+export const withdrawEkycReview = (): Promise<EkycWithdrawResult> => {
+  if (state.profile !== 'MANUAL_REVIEW') {
+    return fail(409, 'EKYC_NOT_WITHDRAWABLE', 'Không có hồ sơ nào đang chờ duyệt để rút lại.');
+  }
+  if (hasMockScenario('ekyc-withdraw-race')) {
+    setProfile('VERIFIED');
+    return fail(409, 'ATTEMPT_ALREADY_DECIDED', 'Hồ sơ vừa được nhân viên xử lý, vui lòng tải lại để xem kết quả.');
+  }
+  setProfile('PENDING');
+  state.draft = null;
+  state.manualDraft = false;
+  state.aiFailures = 0;
+  const now = new Date().toISOString();
+  return mockResponse('ekyc', {
+    ekycStatus: 'PENDING',
+    latestAttemptStatus: 'WITHDRAWN',
+    submittedAt: now,
+    decidedAt: now,
+    rejectionReason: null,
+  });
 };
 
 /** Ba hành động khác nhau theo thứ tự ngẫu nhiên, xen bước nhìn thẳng — đúng khuôn server. */
@@ -169,7 +252,7 @@ export const requestLivenessChallenge = (): Promise<LivenessChallenge> => {
 function livenessFailure(code: 'LIVENESS_FAILED' | 'FACE_MISMATCH'): Promise<EkycResultResponse> {
   state.livenessFails += 1;
   if (state.livenessFails >= MAX_LIVENESS_FAILS) {
-    state.profile = 'MANUAL_REVIEW';
+    setProfile('MANUAL_REVIEW');
     state.draft = null;
     return reply({
       status: 'MANUAL_REVIEW',
@@ -208,6 +291,19 @@ export const submitLiveness = (submission: LivenessSubmission): Promise<EkycResu
   if (!draft) {
     return reply({ resultCode: 'DRAFT_EXPIRED', message: 'Phiên xác minh đã hết hạn, vui lòng chụp lại CCCD.' });
   }
+
+  // Chế độ duyệt tay: chỉ lưu video, hồ sơ sang chờ nhân viên duyệt (không chấm tự động).
+  if (submission.reviewMode === 'MANUAL' || state.manualDraft) {
+    if (!state.manualDraft && state.aiFailures < AI_FAILURE_THRESHOLD) {
+      return fail(409, 'MANUAL_REVIEW_UNAVAILABLE', 'Chưa thể gửi hồ sơ cho nhân viên duyệt lúc này. Vui lòng thử xác minh lại.');
+    }
+    setProfile('MANUAL_REVIEW');
+    state.draft = null;
+    state.manualDraft = false;
+    state.aiFailures = 0;
+    return reply({ status: 'MANUAL_REVIEW', resultCode: 'REVIEW_PENDING', message: REVIEW_PENDING_MESSAGE, reviewRequired: true });
+  }
+  if (hasMockScenario('ekyc-ai-down')) return aiDown('LIVENESS');
 
   state.livenessAttempts += 1;
   if (hasMockScenario('ekyc-liveness-fail')) {
@@ -255,19 +351,22 @@ export const confirmEkyc = (request: EkycConfirmRequest): Promise<EkycResultResp
       nextStep: 'LIVENESS',
     });
   }
-  const notEditable = Object.keys(request.edits ?? {}).find(
-    key => !draft.draft?.[key as keyof NonNullable<EkycResultResponse['draft']>]?.editable,
-  );
+  // Báo sai: bỏ qua chỗ sửa, hồ sơ luôn chuyển nhân viên duyệt (như server).
+  const notEditable = request.reportIncorrect
+    ? undefined
+    : Object.keys(request.edits ?? {}).find(
+        key => !draft.draft?.[key as keyof NonNullable<EkycResultResponse['draft']>]?.editable,
+      );
   if (notEditable) {
     return fail(400, 'EDIT_NOT_ALLOWED', 'Thông tin này được đọc trực tiếp từ thẻ nên không sửa được.');
   }
 
-  const needsReview = draft.reviewRequired || state.liveness === 'REVIEW';
+  const needsReview = request.reportIncorrect === true || draft.reviewRequired || state.liveness === 'REVIEW';
   state.draft = null;
   state.liveness = null;
   state.livenessAttempts = 0;
   state.livenessFails = 0;
-  state.profile = needsReview ? 'MANUAL_REVIEW' : 'VERIFIED';
+  setProfile(needsReview ? 'MANUAL_REVIEW' : 'VERIFIED');
 
   return needsReview
     ? reply({

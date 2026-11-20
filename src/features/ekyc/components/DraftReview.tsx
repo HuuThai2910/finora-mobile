@@ -1,12 +1,15 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { Spacing, Text_ } from '@/theme';
 import { Button, InfoNote } from '@/components/ui';
 import type { EkycResultResponse } from '@/types/ekyc';
-import { CARD_TYPE_LABEL, resultMessage, warningLabels } from '../constants/messages';
+import { REPORT_TO_STAFF_AT } from '../constants/capture';
+import { CARD_TYPE_LABEL, REPORT_TO_STAFF_COPY, resultMessage, warningLabels } from '../constants/messages';
 import { isEditableKey, reviewData, toDraftRows } from '../mappers/draftFields';
 import { useDraftEdits } from '../hooks/useDraftEdits';
 import { useEkycConfirm } from '../hooks/useEkycConfirm';
+import { useEkycSession } from '../hooks/useEkycSession';
 import DraftFieldRow from './DraftFieldRow';
 
 const REVIEW_NOTE = 'Hồ sơ sẽ được nhân viên FINORA duyệt thêm sau khi bạn xác nhận.';
@@ -17,22 +20,28 @@ type Props = {
   outcome: EkycResultResponse;
   /** Kết quả bước quét thẻ (`DRAFT_READY`) — nguồn dự phòng của bản nháp. */
   scan: EkycResultResponse | null;
+  /** Báo sai khi chưa tới lần gửi nhân viên: đếm một lần rồi chụp lại từ đầu. */
   onRescan: () => void;
 };
 
 /**
  * Soát bản nháp trước khi lưu. Hồ sơ CHƯA được ghi gì cho tới khi bấm xác nhận.
  *
- * Mỗi trường mang nhãn nguồn; chỉ trường "AI đọc" có ô sửa. Hồ sơ cần duyệt thêm (nguồn yếu,
- * ảnh thư viện, khuôn mặt vùng xám) thì nói rõ trước khi xác nhận để người dùng không bất ngờ.
+ * Mỗi trường mang nhãn nguồn; chỉ trường "AI đọc" có ô sửa. Hồ sơ cần duyệt thêm (nguồn yếu, khuôn mặt vùng xám) thì
+ * nói rõ trước khi xác nhận để người dùng không bất ngờ. Từ lần soát thứ `REPORT_TO_STAFF_AT`, nút báo sai gửi hồ sơ cho
+ * nhân viên đối chiếu với ảnh thẻ thay vì bắt chụp lại (không hỏi lại, không gửi chỗ sửa).
  */
 export default function DraftReview({ outcome, scan, onRescan }: Props) {
   const data = reviewData(outcome, scan);
   const rows = data.draft ? toDraftRows(data.draft, data.cardType) : [];
   const edits = useDraftEdits(rows);
   const confirm = useEkycConfirm();
+  const session = useEkycSession();
+  /** Lần gửi đang chạy là báo sai — chỉ nút đó hiện vòng quay. */
+  const [reporting, setReporting] = useState(false);
   const warnings = warningLabels(data.warnings);
   const livenessReview = outcome.resultCode === 'LIVENESS_REVIEW';
+  const sendToStaff = session.incorrectReports >= REPORT_TO_STAFF_AT - 1;
 
   return (
     <View>
@@ -87,16 +96,29 @@ export default function DraftReview({ outcome, scan, onRescan }: Props) {
       <Button
         label="Thông tin chính xác — Xác nhận"
         variant="emerald"
-        loading={confirm.submitting}
+        loading={confirm.submitting && !reporting}
         disabled={confirm.submitting || edits.hasErrors || rows.length === 0}
-        onPress={() => void confirm.submit(edits.changedEdits())}
+        onPress={() => {
+          setReporting(false);
+          void confirm.submit(edits.changedEdits());
+        }}
         style={styles.action}
       />
+      {sendToStaff ? <Text style={styles.staffNote}>{REPORT_TO_STAFF_COPY.note(REPORT_TO_STAFF_AT - 1)}</Text> : null}
       <Button
-        label="Sai thông tin — Chụp lại"
+        label={sendToStaff ? REPORT_TO_STAFF_COPY.button : 'Sai thông tin — Chụp lại'}
         variant="outline"
+        icon={sendToStaff ? 'users' : undefined}
+        loading={confirm.submitting && reporting}
         disabled={confirm.submitting}
-        onPress={onRescan}
+        onPress={
+          sendToStaff
+            ? () => {
+                setReporting(true);
+                void confirm.submit({}, { reportIncorrect: true });
+              }
+            : onRescan
+        }
         style={styles.secondary}
       />
     </View>
@@ -111,5 +133,6 @@ const styles = StyleSheet.create({
   note: { marginTop: Spacing.lg },
   error: { ...Text_.micro, color: Colors.red, marginTop: Spacing.lg },
   action: { marginTop: Spacing.xl },
+  staffNote: { ...Text_.micro, color: Colors.ink2, textAlign: 'center', marginTop: Spacing.lg },
   secondary: { marginTop: Spacing.md },
 });

@@ -107,6 +107,8 @@ export const EKYC_DRAFT_RESULT: EkycResultResponse = {
   nextStep: 'LIVENESS',
   attemptsLeft: null,
   liveness: null,
+  manualReviewAvailable: false,
+  manualReviewMode: false,
 };
 
 /**

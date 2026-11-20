@@ -46,6 +46,6 @@ export type CaptureViewProps = {
  * nguồn. Chọn nguồn bằng `EXPO_PUBLIC_EKYC_CAPTURE_SOURCE` (xem `source.ts`).
  */
 export interface CardCaptureSource {
-  readonly kind: Exclude<EkycImageSource, 'GALLERY'>;
+  readonly kind: EkycImageSource;
   readonly CaptureView: ComponentType<CaptureViewProps>;
 }

@@ -43,14 +43,24 @@ const parse = (raw: string | undefined): ReadonlySet<string> =>
 /**
  * Kịch bản nghiệp vụ giả, bật qua `EXPO_PUBLIC_MOCK_SCENARIOS` (cách nhau bằng dấu phẩy),
  * để xem các nhánh hiếm gặp khi demo mà không cần backend:
- * - `ekyc-retake`: server bắt chụp lại mặt trước hai lần liên tiếp rồi mới ra bản nháp
- *   (hiện nút "Chọn ảnh có sẵn"); bản nháp lúc đó cần duyệt tay;
+ * - `ekyc-retake`: server bắt chụp lại mặt trước hai lần liên tiếp rồi mới ra bản nháp; bản nháp
+ *   lúc đó cần duyệt tay;
  * - `ekyc-reject`: thẻ bị từ chối (hết hạn);
  * - `ekyc-review`: kiểm tra khuôn mặt rơi vào vùng xám → xác nhận xong là chờ duyệt;
  * - `ekyc-liveness-fail`: quay lại vì tối → trượt động tác → mặt không khớp → đủ 3 lần
  *   trượt thì hồ sơ chuyển duyệt tay.
  */
-export type MockScenario = 'ekyc-retake' | 'ekyc-reject' | 'ekyc-review' | 'ekyc-liveness-fail';
+/**
+ * `ekyc-ai-down`: hệ thống xác minh (finora-ai) không trả lời — sau 3 lần liên tiếp mở lối gửi nhân viên duyệt.
+ * `ekyc-withdraw-race`: nhân viên duyệt đúng lúc người dùng rút lại hồ sơ → `409 ATTEMPT_ALREADY_DECIDED`.
+ */
+export type MockScenario =
+  | 'ekyc-retake'
+  | 'ekyc-reject'
+  | 'ekyc-review'
+  | 'ekyc-liveness-fail'
+  | 'ekyc-ai-down'
+  | 'ekyc-withdraw-race';
 
 const MOCKED = parse(process.env.EXPO_PUBLIC_MOCK_DOMAINS);
 const FAILING = parse(process.env.EXPO_PUBLIC_MOCK_FAIL);

@@ -9,16 +9,18 @@ import { SCREEN_PADDING, Spacing, Text_ } from '@/theme';
 import { FormStepProgress, PHeader, Screen } from '@/components/phone';
 import { Button, InfoNote } from '@/components/ui';
 import type { ProfileStackParamList } from '@/navigation/types';
-import type { LivenessStep } from '@/types/ekyc';
+import type { EkycResultResponse, LivenessStep } from '@/types/ekyc';
 import CameraPermissionGate from '../components/CameraPermissionGate';
 import FaceOvalFrame from '../components/FaceOvalFrame';
 import LivenessPrompt from '../components/LivenessPrompt';
 import LivenessTips from '../components/LivenessTips';
 import { EKYC_STEP_LABEL, EKYC_STEP_TOTAL } from '../constants/capture';
 import { ACTION_ICON, ACTION_PROMPT, UNKNOWN_ACTION_PROMPT } from '../constants/liveness';
+import { MANUAL_REVIEW_COPY } from '../constants/messages';
 import { useEkycFlow } from '../hooks/useEkycFlow';
 import { useEkycSession } from '../hooks/useEkycSession';
 import { useLivenessSession, type LivenessPhase } from '../hooks/useLivenessSession';
+import { useRefreshProfile } from '../hooks/useRefreshProfile';
 
 type Nav = NativeStackNavigationProp<ProfileStackParamList, 'EkycLiveness'>;
 
@@ -53,6 +55,9 @@ function promptOf(phase: LivenessPhase, steps: readonly LivenessStep[], stepInde
  * `CameraView` đặt `mode="video"` ngay từ lúc mở màn (Android chỉ gắn bộ ghi video ở chế độ này),
  * `mute` nên không cần quyền micro. Trong lúc quay/gửi thì khoá cử chỉ và nút quay lại để không
  * bỏ dở một lượt đã tính vào giới hạn của server. Không bao giờ cho chọn video có sẵn.
+ *
+ * Hệ thống xác minh gặp sự cố: câu báo sự cố kèm nút "Gửi nhân viên duyệt" khi server cho phép; phiên đã chuyển
+ * duyệt tay từ bước thẻ thì có dòng ghi chú và video gửi thẳng cho nhân viên.
  */
 export default function EkycLivenessScreen() {
   const nav = useNavigation<Nav>();
@@ -60,9 +65,16 @@ export default function EkycLivenessScreen() {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const session = useEkycSession();
   const flow = useEkycFlow();
-  const { phase, steps, stepIndex, start, recorder } = useLivenessSession({
+  const refreshProfile = useRefreshProfile();
+  const manualMode = session.draftResult?.manualReviewMode === true;
+  const { phase, steps, stepIndex, start, recorder, manualOffer, sendingManual } = useLivenessSession({
     onReview: flow.showResult,
-    onFinal: flow.showFinal,
+    // Hồ sơ sang chờ duyệt (3 lần trượt hoặc gửi nhân viên vì sự cố): tab Hồ sơ phải đổi nhãn ngay.
+    onFinal: (result: EkycResultResponse) => {
+      flow.showFinal(result);
+      void refreshProfile();
+    },
+    manualMode,
   });
   const [mountError, setMountError] = useState<string | null>(null);
 
@@ -110,6 +122,11 @@ export default function EkycLivenessScreen() {
     <Screen light>
       <PHeader title={SCREEN_TITLE} back={!locked} />
       <FormStepProgress current={3} total={EKYC_STEP_TOTAL} label={EKYC_STEP_LABEL.liveness} />
+      {manualMode ? (
+        <InfoNote tone="info" style={styles.notice}>
+          {MANUAL_REVIEW_COPY.livenessNote}
+        </InfoNote>
+      ) : null}
 
       <CameraPermissionGate>
         {/* Lời nhắc đặt phía trên oval, gần camera trước: mắt nhìn chữ cũng là nhìn gần ống
@@ -177,9 +194,11 @@ export default function EkycLivenessScreen() {
           <View style={styles.waiting} accessibilityLiveRegion="polite">
             <ActivityIndicator color={Colors.brand} />
             <Text style={styles.waitingText}>
-              {phase.kind === 'uploading'
-                ? 'Đang gửi và so khớp khuôn mặt, có thể mất tới một phút.'
-                : 'Đang chuẩn bị bước kiểm tra khuôn mặt…'}
+              {phase.kind !== 'uploading'
+                ? 'Đang chuẩn bị bước kiểm tra khuôn mặt…'
+                : sendingManual
+                  ? MANUAL_REVIEW_COPY.uploading
+                  : 'Đang gửi và so khớp khuôn mặt, có thể mất tới một phút.'}
             </Text>
           </View>
         ) : null}
@@ -198,6 +217,20 @@ export default function EkycLivenessScreen() {
               }}
               style={styles.action}
             />
+            {manualOffer && !manualMode ? (
+              <View style={styles.manual}>
+                <Button
+                  label={MANUAL_REVIEW_COPY.button}
+                  variant="outline"
+                  icon="users"
+                  onPress={() => {
+                    setMountError(null);
+                    void start(true);
+                  }}
+                />
+                <Text style={styles.hint}>{MANUAL_REVIEW_COPY.hint}</Text>
+              </View>
+            ) : null}
             <LivenessTips />
           </>
         ) : null}
@@ -210,6 +243,8 @@ const styles = StyleSheet.create({
   mode: { ...Text_.captionBold, color: Colors.ink2, textAlign: 'center', marginTop: Spacing.sm },
   notice: { marginTop: Spacing.lg },
   action: { marginTop: Spacing.xl },
+  manual: { marginTop: Spacing.md, gap: Spacing.sm },
+  hint: { ...Text_.caption, color: Colors.ink3, textAlign: 'center' },
   waiting: { alignItems: 'center', gap: Spacing.md, marginTop: Spacing.lg },
   waitingText: { ...Text_.micro, color: Colors.ink2, textAlign: 'center', marginTop: Spacing.sm },
 });

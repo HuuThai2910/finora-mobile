@@ -21,7 +21,8 @@ export const RESULT_FALLBACK_MESSAGE: Record<EkycResultCode, string> = {
   ID_MISMATCH: 'Số CCCD trên thẻ không khớp với hồ sơ của bạn.',
   ID_TAKEN: 'Số CCCD này đã được đăng ký cho một tài khoản khác.',
   RATE_LIMITED: 'Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.',
-  AI_UNAVAILABLE: 'Dịch vụ xác minh đang bận, vui lòng thử lại sau.',
+  // Hải chốt 17/11: chỉ báo sự cố, giống hệt `EkycMessages.java`.
+  AI_UNAVAILABLE: 'Hệ thống xác minh đang gặp sự cố tạm thời.',
   RETAKE: 'Cần chụp lại ảnh thẻ cho rõ hơn.',
   CARD_EXPIRED: 'Thẻ căn cước đã hết hạn. Vui lòng dùng thẻ còn hiệu lực.',
   CARD_UNSUPPORTED: 'FINORA chỉ nhận thẻ Căn cước công dân gắn chip hoặc thẻ Căn cước.',
@@ -36,6 +37,32 @@ export const RESULT_FALLBACK_MESSAGE: Record<EkycResultCode, string> = {
   LIVENESS_FAILED: 'Chưa làm đúng các động tác. Hãy làm chậm và rõ từng động tác.',
   FACE_MISMATCH: 'Khuôn mặt chưa khớp với ảnh trên thẻ căn cước.',
 };
+
+/** Lối gửi nhân viên duyệt khi hệ thống xác minh lỗi nhiều lần — nút và một dòng phụ ngắn dưới nút. */
+export const MANUAL_REVIEW_COPY = {
+  button: 'Gửi nhân viên duyệt',
+  hint: 'Nhân viên FINORA sẽ xem ảnh thẻ và video của bạn.',
+  /** Màn liveness khi phiên đã chuyển sang duyệt tay. */
+  livenessNote: 'Video này được gửi để nhân viên FINORA duyệt, không cần chờ hệ thống tự kiểm tra.',
+  uploading: 'Đang gửi video cho nhân viên duyệt…',
+} as const;
+
+/** Màn soát từ lần báo sai thứ `REPORT_TO_STAFF_AT`: gửi nhân viên đối chiếu thay vì chụp lại. */
+export const REPORT_TO_STAFF_COPY = {
+  button: 'Sai thông tin — Gửi nhân viên kiểm tra',
+  note: (rescans: number) =>
+    `Bạn đã chụp lại ${rescans} lần. Lần này hồ sơ sẽ được gửi để nhân viên FINORA đối chiếu với ảnh thẻ.`,
+} as const;
+
+/** Rút lại hồ sơ đang chờ duyệt. */
+export const WITHDRAW_COPY = {
+  button: 'Rút lại hồ sơ',
+  confirmTitle: 'Rút lại hồ sơ?',
+  confirmBody:
+    'Hồ sơ đang chờ duyệt sẽ bị huỷ cùng ảnh thẻ và video đã gửi. Bạn sẽ làm lại định danh từ đầu.',
+  confirmAction: 'Rút lại',
+  cancel: 'Giữ hồ sơ',
+} as const;
 
 /** Mã kết quả lạ (backend vừa thêm) mà server cũng không kèm thông điệp. */
 const GENERIC_RESULT_MESSAGE = 'Chưa xác minh được. Vui lòng thử lại.';

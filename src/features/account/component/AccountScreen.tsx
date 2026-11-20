@@ -18,7 +18,7 @@ import {
   LOGOUT_CONFIRM_TITLE,
   PROFILE_MAX_WIDTH,
   SECURITY_SETTINGS,
-  canStartEkyc,
+  ekycEntry,
   type UpcomingSetting,
 } from '../constant';
 import { useMyProfile } from '../hook/useAccount';
@@ -54,8 +54,13 @@ export default function AccountScreen() {
   const push = usePushToggle();
 
   const openInfo = () => nav.navigate('AccountInfo');
-  // Luôn vào qua màn điều khoản; đã đồng ý bản hiện hành thì màn đó tự chuyển sang chụp thẻ.
-  const startEkyc = () => nav.navigate('EkycConsent');
+  // Còn phải định danh: luôn vào qua màn điều khoản (đã đồng ý bản hiện hành thì tự chuyển sang chụp thẻ).
+  // Đang chờ duyệt: mở màn chờ duyệt để xem trạng thái hoặc rút lại hồ sơ.
+  const openEkyc = () => {
+    const entry = p ? ekycEntry(p.kycStatus) : null;
+    if (entry?.screen === 'EkycConsent') nav.navigate('EkycConsent');
+    else if (entry?.screen === 'EkycResult') nav.navigate('EkycResult', { pending: true });
+  };
 
   const onLogout = () =>
     Alert.alert(LOGOUT_CONFIRM_TITLE, LOGOUT_CONFIRM_BODY, [
@@ -127,7 +132,7 @@ export default function AccountScreen() {
   } else {
     body = (
       <>
-        <ProfileHeader profile={p} width={width} onStartEkyc={startEkyc} />
+        <ProfileHeader profile={p} width={width} onStartEkyc={openEkyc} />
 
         <View style={styles.shortcuts}>
           <ProfileShortcuts items={shortcuts} />
@@ -135,14 +140,15 @@ export default function AccountScreen() {
 
         <View style={styles.groups}>
           <SettingsCard icon="user" title="Tài khoản">
-            {/* Chỉ còn hiện khi còn việc phải làm; đã định danh thì nhãn ở đầu trang đã đủ.
-                Đang chờ duyệt thì dòng hiện mờ, không bấm được: chưa có việc gì để làm. */}
+            {/* Chỉ còn hiện khi chưa định danh xong; đã định danh thì nhãn ở đầu trang đã đủ.
+                Đang chờ duyệt thì dòng vẫn bấm được: mở màn chờ duyệt, nơi người dùng rút lại hồ sơ
+                (khi nhân viên chưa xử lý) để gửi hồ sơ mới. */}
             {!verified ? (
               <SettingsRow
                 icon="scan"
                 title="Xác thực eKYC"
                 subtitle={EKYC_ROW_SUBTITLE[p.kycStatus]}
-                onPress={canStartEkyc(p.kycStatus) ? startEkyc : undefined}
+                onPress={ekycEntry(p.kycStatus) ? openEkyc : undefined}
               />
             ) : null}
             <SettingsRow

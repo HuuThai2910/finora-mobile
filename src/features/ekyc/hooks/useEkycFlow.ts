@@ -36,6 +36,12 @@ export function useEkycFlow() {
       nav.navigate('EkycCapture', { side: 'front' });
       session.restartCapture();
     },
+    /** Người dùng báo thông tin đọc từ thẻ chưa đúng: đếm một lần rồi chụp lại từ mặt trước. */
+    reportIncorrectAndRescan() {
+      session.countIncorrectReport();
+      nav.navigate('EkycCapture', { side: 'front' });
+      session.restartCapture();
+    },
     /** Đồng ý không còn hiệu lực (điều khoản đổi hoặc đã rút) — đọc lại điều khoản từ đầu. */
     restartFromConsent() {
       nav.reset({ index: 1, routes: [{ name: 'Profile' }, { name: 'EkycConsent' }] });
