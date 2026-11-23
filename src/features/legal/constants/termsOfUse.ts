@@ -112,7 +112,7 @@ export const TERMS_SECTIONS: readonly TermsSection[] = [
       [
         'FINORA chỉ thu thập dữ liệu cần thiết để cung cấp dịch vụ: thông tin tài khoản, hồ sơ vay, giao dịch và dữ ' +
           'liệu xác minh danh tính.',
-        'Dữ liệu xác minh danh tính (ảnh thẻ, video khuôn mặt) được xử lý theo Điều khoản eKYC riêng mà bạn đồng ý ' +
+        'Dữ liệu xác minh danh tính (ảnh thẻ căn cước) được xử lý theo Điều khoản eKYC riêng mà bạn đồng ý ' +
           'trước khi xác minh.',
         'Máy chủ của FINORA đặt ngoài Việt Nam, vì vậy dữ liệu của bạn được chuyển ra nước ngoài để xử lý và lưu trữ có ' +
           'mã hóa.',

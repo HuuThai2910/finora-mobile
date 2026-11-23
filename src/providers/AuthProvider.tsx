@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { getMyProfile, logout as revokeSession, refreshTokens } from '@/features/auth/api';
 import { unregisterPushDevice } from '@/features/push-notifications';
+import { ApiError } from '@/lib/api';
 import { getAccessToken, setAccessToken, setRefreshHandler } from '@/lib/authSession';
 import { clearRefreshToken, readRefreshToken, saveRefreshToken } from '@/lib/secureStorage';
 import type { AuthTokens, Session, UserProfile } from '@/types/auth';
@@ -14,13 +15,25 @@ type AuthContextValue = {
   signOut: () => void;
   /** Cập nhật hồ sơ trong phiên — ví dụ sau khi xác nhận eKYC xong. */
   updateProfile: (profile: UserProfile) => void;
+  /**
+   * Lý do phiên bị đóng ngoài ý người dùng mà họ cần biết (tài khoản bị khóa); màn đăng nhập hiển thị.
+   * `null` khi phiên chỉ hết hạn bình thường.
+   */
+  signOutReason: string | null;
+  clearSignOutReason: () => void;
 };
+
+/** Tài khoản bị quản trị viên khóa: finora-user trả `403 ACCOUNT_LOCKED` khi đăng nhập hoặc làm mới phiên. */
+const lockedMessage = (error: unknown): string | null =>
+  error instanceof ApiError && error.code === 'ACCOUNT_LOCKED' ? error.userMessage : null;
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [restoring, setRestoring] = useState(true);
+  const [signOutReason, setSignOutReason] = useState<string | null>(null);
+  const clearSignOutReason = useCallback(() => setSignOutReason(null), []);
 
   /**
    * Refresh token mới nhất, giữ trong ref để tầng HTTP đọc được ngay cả khi
@@ -88,8 +101,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await applyTokens(renewed);
         setSession(prev => (prev ? { ...prev, tokens: renewed } : prev));
         return renewed.accessToken;
-      } catch {
-        // Refresh token hỏng hoặc đã bị thu hồi — buộc đăng nhập lại
+      } catch (e) {
+        // Refresh token hỏng hoặc đã bị thu hồi — buộc đăng nhập lại; bị khóa thì nói rõ lý do ở màn đăng nhập.
+        setSignOutReason(lockedMessage(e));
         await clearSession();
         return null;
       }
@@ -114,8 +128,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!alive) return;
 
         await signIn(tokens);
-      } catch {
+      } catch (e) {
         // Phiên cũ không dùng được nữa — xoá đi và để người dùng đăng nhập lại
+        setSignOutReason(lockedMessage(e));
         await clearSession();
       } finally {
         if (alive) setRestoring(false);
@@ -132,8 +147,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ session, restoring, signIn, signOut, updateProfile }),
-    [session, restoring, signIn, signOut, updateProfile],
+    () => ({ session, restoring, signIn, signOut, updateProfile, signOutReason, clearSignOutReason }),
+    [session, restoring, signIn, signOut, updateProfile, signOutReason, clearSignOutReason],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

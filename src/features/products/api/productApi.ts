@@ -8,6 +8,9 @@ import type {
 } from '@/types/loan';
 
 const productApi = loanApi.injectEndpoints({
+  // Fast Refresh chạy lại module này và tiêm lại cùng endpoint: cho ghi đè ở bản dev để RTK Query không báo lỗi
+  // "override already-existing endpointName". Bản build thật chỉ chạy một lần.
+  overrideExisting: __DEV__,
   endpoints: builder => ({
     listProducts: builder.query<PageResponse<LoanProductCatalog>, { page?: number; size?: number }>({
       query: params => ({ url: '/loan-products', params }),

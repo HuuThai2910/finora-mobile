@@ -5,6 +5,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '@/constants/colors';
 import { FontFamily, MIN_TOUCH, Spacing, Text_ } from '@/theme';
 import type { AuthStackParamList } from '@/navigation/types';
+import { useAuth } from '@/providers/AuthProvider';
 import AuthButton from '../components/AuthButton';
 import AuthField from '../components/AuthField';
 import AuthLayout from '../components/AuthLayout';
@@ -32,12 +33,15 @@ export default function LoginScreen() {
   const passwordRef = useRef<TextInputInstance>(null);
   const { errors, validateField, clearField, validateSubmit } = useFieldErrors(validateLogin);
   const { submit, submitting, error } = useLogin();
+  // Phiên trước bị đóng vì tài khoản bị khóa: báo lý do cho tới lần đăng nhập tiếp theo.
+  const { signOutReason, clearSignOutReason } = useAuth();
 
   const values = { email, password };
 
   const onSubmit = () => {
     if (!validateSubmit(values)) return;
 
+    clearSignOutReason();
     void submit({ email, password });
   };
 
@@ -98,7 +102,7 @@ export default function LoginScreen() {
         <Text style={styles.forgotText}>Quên mật khẩu?</Text>
       </Pressable>
 
-      <FormError message={error} />
+      <FormError message={error ?? signOutReason} />
 
       <AuthButton
         label="Đăng nhập"

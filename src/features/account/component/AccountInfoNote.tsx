@@ -12,7 +12,7 @@ type Props = {
 
 type NoteCopy = { text: string; action?: string; hint?: string };
 
-const START_HINT = 'Bắt đầu định danh điện tử: đọc điều khoản, chụp CCCD, kiểm tra khuôn mặt';
+const START_HINT = 'Bắt đầu định danh điện tử: đọc điều khoản, chụp hai mặt CCCD, kiểm tra thông tin';
 
 /**
  * Lời ghi chú đổi theo trạng thái định danh: chỉ khi đã định danh mới được nói

@@ -16,6 +16,9 @@ import type {
 } from '@/types/contract';
 
 const applicationApi = loanApi.injectEndpoints({
+  // Fast Refresh chạy lại module này và tiêm lại cùng endpoint: cho ghi đè ở bản dev để RTK Query không báo lỗi
+  // "override already-existing endpointName". Bản build thật chỉ chạy một lần.
+  overrideExisting: __DEV__,
   endpoints: builder => ({
     createApplication: builder.mutation<LoanApplication, {
       body: CreateLoanApplicationRequest;

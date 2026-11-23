@@ -38,7 +38,7 @@ export function ekycGateCopy(status: KycStatus, doing: string): EkycGateCopy {
     default:
       return {
         title: 'Bạn chưa xác minh danh tính',
-        message: `Bạn cần hoàn tất eKYC (chụp CCCD và kiểm tra khuôn mặt) trước khi ${doing}. Chỉ mất khoảng 2 phút.`,
+        message: `Bạn cần hoàn tất eKYC (chụp hai mặt CCCD và xác nhận thông tin) trước khi ${doing}. Chỉ mất khoảng 2 phút.`,
         action: { label: 'Xác minh ngay', kind: 'start' },
       };
   }

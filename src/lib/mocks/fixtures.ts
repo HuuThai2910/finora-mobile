@@ -71,11 +71,11 @@ export const PROFILE_MENU = [
 
 /** Điều khoản hiện hành, chưa đồng ý. `textSha256` là giá trị giả — mock chỉ so khớp chuỗi. */
 export const EKYC_CONSENT: EkycConsent = {
-  version: 'ekyc-2026-10',
+  version: 'ekyc-2026-11',
   title: 'Điều khoản xử lý dữ liệu khi xác minh danh tính (eKYC)',
   body: EKYC_CONSENT_BODY,
   consentLabel: 'Tôi đã đọc và đồng ý với Điều khoản xử lý dữ liệu khi xác minh danh tính.',
-  purposes: ['ID_DOCUMENT', 'FACE_BIOMETRIC', 'STORAGE_ABROAD', 'OWN_DOCUMENT'],
+  purposes: ['ID_DOCUMENT', 'STORAGE_ABROAD', 'OWN_DOCUMENT'],
   textSha256: 'mock0000000000000000000000000000000000000000000000000000000000ab',
   accepted: false,
   acceptedAt: null,
