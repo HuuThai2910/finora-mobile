@@ -41,7 +41,7 @@ export const RESULT_FALLBACK_MESSAGE: Record<EkycResultCode, string> = {
 /** Lối gửi nhân viên duyệt khi hệ thống xác minh lỗi nhiều lần — nút và một dòng phụ ngắn dưới nút. */
 export const MANUAL_REVIEW_COPY = {
   button: 'Gửi nhân viên duyệt',
-  hint: 'Nhân viên FINORA sẽ xem ảnh thẻ và video của bạn.',
+  hint: 'Nhân viên FINORA sẽ xem ảnh thẻ của bạn.',
   /** Màn liveness khi phiên đã chuyển sang duyệt tay. */
   livenessNote: 'Video này được gửi để nhân viên FINORA duyệt, không cần chờ hệ thống tự kiểm tra.',
   uploading: 'Đang gửi video cho nhân viên duyệt…',
@@ -49,7 +49,7 @@ export const MANUAL_REVIEW_COPY = {
 
 /** Màn soát từ lần báo sai thứ `REPORT_TO_STAFF_AT`: gửi nhân viên đối chiếu thay vì chụp lại. */
 export const REPORT_TO_STAFF_COPY = {
-  button: 'Sai thông tin — Gửi nhân viên kiểm tra',
+  button: 'Gửi nhân viên kiểm tra',
   note: (rescans: number) =>
     `Bạn đã chụp lại ${rescans} lần. Lần này hồ sơ sẽ được gửi để nhân viên FINORA đối chiếu với ảnh thẻ.`,
 } as const;
@@ -59,7 +59,7 @@ export const WITHDRAW_COPY = {
   button: 'Rút lại hồ sơ',
   confirmTitle: 'Rút lại hồ sơ?',
   confirmBody:
-    'Hồ sơ đang chờ duyệt sẽ bị huỷ cùng ảnh thẻ và video đã gửi. Bạn sẽ làm lại định danh từ đầu.',
+    'Hồ sơ đang chờ duyệt sẽ bị huỷ cùng ảnh thẻ đã gửi. Bạn sẽ làm lại định danh từ đầu.',
   confirmAction: 'Rút lại',
   cancel: 'Giữ hồ sơ',
 } as const;

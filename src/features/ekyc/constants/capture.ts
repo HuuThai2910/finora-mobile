@@ -42,9 +42,9 @@ export const QR_SCAN_CROP_MAX_WIDTH = 2000;
 
 /**
  * Lần bấm "Sai thông tin" thứ mấy trên màn soát thì gửi hồ sơ cho nhân viên thay vì chụp lại (đếm trong phiên trên app;
- * server không kiểm số lần).
+ * server không kiểm số lần). Hải chốt 23/11: 5 lần; xác nhận đúng ở bất kỳ lần nào là xác minh luôn.
  */
-export const REPORT_TO_STAFF_AT = 3;
+export const REPORT_TO_STAFF_AT = 5;
 
 export type ZoomPreset = { label: string; value: number };
 
@@ -95,8 +95,11 @@ export const SYSTEM_CAPTURE_TIPS: readonly string[] = [
   'Tránh đèn chiếu thẳng gây loá; tắt đèn flash.',
 ];
 
-/** Bốn bước của luồng định danh, hiển thị trên thanh tiến độ đầu các màn. */
-export const EKYC_STEP_TOTAL = 4;
+/**
+ * Ba bước của luồng định danh (chụp mặt trước, mặt sau, soát và xác nhận), hiển thị trên thanh tiến độ đầu các màn.
+ * Từ 23/11 server tắt bước kiểm tra khuôn mặt; màn liveness chỉ còn khi server bật lại.
+ */
+export const EKYC_STEP_TOTAL = 3;
 
 export const EKYC_STEP_LABEL = {
   front: 'Chụp mặt trước',
