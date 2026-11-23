@@ -40,7 +40,7 @@ export function ekycEntry(status: KycStatus): EkycEntry {
 
 /** Chữ phụ của dòng "Xác thực eKYC" theo trạng thái. */
 export const EKYC_ROW_SUBTITLE: Record<KycStatus, string> = {
-  NOT_STARTED: 'Chụp CCCD và kiểm tra khuôn mặt',
+  NOT_STARTED: 'Chụp hai mặt CCCD và xác nhận thông tin',
   PENDING_REVIEW: 'Đang chờ FINORA duyệt — xem hoặc rút lại hồ sơ',
   KYC_VERIFIED: 'Đã định danh',
   REJECTED: 'Hồ sơ chưa được duyệt — định danh lại',

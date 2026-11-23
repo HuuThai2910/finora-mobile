@@ -14,7 +14,7 @@ import type {
  * bảng này khi server không kèm thông điệp. Nội dung theo plan nền tảng EKYC-002 mục 3.6.
  */
 export const RESULT_FALLBACK_MESSAGE: Record<EkycResultCode, string> = {
-  DRAFT_READY: 'Đã đọc xong thẻ. Tiếp theo là bước kiểm tra khuôn mặt.',
+  DRAFT_READY: 'Đã đọc thông tin trên thẻ. Vui lòng kiểm tra và xác nhận.',
   DRAFT_EXPIRED: 'Phiên xác minh đã hết hạn, vui lòng chụp lại CCCD.',
   VERIFIED: 'Xác minh thành công.',
   OCR_FAILED: 'Chưa đọc được thông tin trên thẻ, vui lòng chụp lại rõ hơn.',

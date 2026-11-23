@@ -44,7 +44,7 @@ export default function KycBadge({ status, onPress }: Props) {
       hitSlop={{ top: 12, bottom: 12, left: 6, right: 6 }}
       accessibilityRole="button"
       accessibilityLabel={spoken}
-      accessibilityHint="Bắt đầu định danh điện tử: đọc điều khoản, chụp CCCD, kiểm tra khuôn mặt"
+      accessibilityHint="Bắt đầu định danh điện tử: đọc điều khoản, chụp hai mặt CCCD, kiểm tra thông tin"
       style={({ pressed }) => [styles.pill, { backgroundColor: look.background }, pressed && styles.pressed]}
     >
       {content}
