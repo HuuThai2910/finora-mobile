@@ -67,12 +67,13 @@ export function toVerifyRequest(front: CardShot, back: CardShot, consentVersion:
 }
 
 /** Bước tiếp theo sau khi quét thẻ. */
-export type VerifyRoute = 'LIVENESS' | 'RETAKE' | 'RETRY_INLINE' | 'CONSENT' | 'RESULT';
+export type VerifyRoute = 'LIVENESS' | 'REVIEW' | 'RETAKE' | 'RETRY_INLINE' | 'CONSENT' | 'RESULT';
 
 export function routeAfterVerify(result: EkycResultResponse): VerifyRoute {
   switch (result.resultCode) {
     case 'DRAFT_READY':
-      return 'LIVENESS';
+      // Server đã tắt bước kiểm tra khuôn mặt (23/11) thì đọc thẻ xong sang thẳng màn soát và xác nhận.
+      return result.nextStep === 'CONFIRM' ? 'REVIEW' : 'LIVENESS';
     case 'RETAKE':
       return 'RETAKE';
     // Lỗi tạm thời: ảnh trong phiên vẫn dùng được, chỉ cần bấm gửi lại.

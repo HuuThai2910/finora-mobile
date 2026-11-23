@@ -51,12 +51,18 @@ export default function EkycResultScreen() {
     );
   }
 
-  if (outcome.resultCode === 'LIVENESS_PASSED' || outcome.resultCode === 'LIVENESS_REVIEW') {
+  // Không có bước khuôn mặt: kết quả đọc thẻ (`DRAFT_READY`) chính là bản nháp cần soát.
+  const cardOnly = outcome.resultCode === 'DRAFT_READY';
+  if (cardOnly || outcome.resultCode === 'LIVENESS_PASSED' || outcome.resultCode === 'LIVENESS_REVIEW') {
     return (
       <Screen light>
         <PHeader title="Kiểm tra thông tin" back />
-        <FormStepProgress current={4} total={EKYC_STEP_TOTAL} label={EKYC_STEP_LABEL.review} />
-        <DraftReview outcome={outcome} scan={session.draftResult} onRescan={flow.reportIncorrectAndRescan} />
+        <FormStepProgress current={EKYC_STEP_TOTAL} total={EKYC_STEP_TOTAL} label={EKYC_STEP_LABEL.review} />
+        <DraftReview
+          outcome={outcome}
+          scan={cardOnly ? null : session.draftResult}
+          onRescan={flow.reportIncorrectAndRescan}
+        />
       </Screen>
     );
   }

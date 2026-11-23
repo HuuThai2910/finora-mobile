@@ -95,6 +95,10 @@ export default function EkycCaptureScreen() {
         session.setDraftResult(result);
         nav.navigate('EkycLiveness');
         return;
+      case 'REVIEW':
+        session.setDraftResult(result);
+        flow.showResult(result);
+        return;
       case 'RETAKE': {
         const sides = session.applyRetake(result.retake, resultMessage('RETAKE', result.message));
         if (sides.includes('front')) nav.navigate('EkycCapture', { side: 'front' });

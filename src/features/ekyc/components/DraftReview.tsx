@@ -16,7 +16,7 @@ const REVIEW_NOTE = 'Hồ sơ sẽ được nhân viên FINORA duyệt thêm sau
 const WAITING_NOTE = 'Trong lúc chờ, bạn vẫn dùng được ứng dụng nhưng chưa vay hoặc đầu tư được.';
 
 type Props = {
-  /** Kết quả liveness đạt (`LIVENESS_PASSED`) hoặc vùng xám (`LIVENESS_REVIEW`). */
+  /** Kết quả liveness đạt (`LIVENESS_PASSED`), vùng xám (`LIVENESS_REVIEW`), hoặc kết quả đọc thẻ khi không có liveness. */
   outcome: EkycResultResponse;
   /** Kết quả bước quét thẻ (`DRAFT_READY`) — nguồn dự phòng của bản nháp. */
   scan: EkycResultResponse | null;
@@ -41,6 +41,8 @@ export default function DraftReview({ outcome, scan, onRescan }: Props) {
   const [reporting, setReporting] = useState(false);
   const warnings = warningLabels(data.warnings);
   const livenessReview = outcome.resultCode === 'LIVENESS_REVIEW';
+  /** Server đã tắt bước kiểm tra khuôn mặt: soát ngay sau khi đọc thẻ, không có dòng kết quả khuôn mặt. */
+  const cardOnly = outcome.resultCode === 'DRAFT_READY';
   const sendToStaff = session.incorrectReports >= REPORT_TO_STAFF_AT - 1;
 
   return (
@@ -71,9 +73,11 @@ export default function DraftReview({ outcome, scan, onRescan }: Props) {
         ))
       )}
 
-      <Text style={styles.liveness}>
-        {livenessReview ? 'Kiểm tra khuôn mặt: cần duyệt thêm' : 'Kiểm tra khuôn mặt: đạt'}
-      </Text>
+      {cardOnly ? null : (
+        <Text style={styles.liveness}>
+          {livenessReview ? 'Kiểm tra khuôn mặt: cần duyệt thêm' : 'Kiểm tra khuôn mặt: đạt'}
+        </Text>
+      )}
 
       {warnings.length > 0 ? (
         <InfoNote tone="warn" style={styles.note}>
